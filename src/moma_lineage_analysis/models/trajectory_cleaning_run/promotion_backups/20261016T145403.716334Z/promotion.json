@@ -1,0 +1,70 @@
+{
+  "artifacts": {
+    "best_model.pt": {
+      "destination": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\best_model.pt",
+      "destination_sha256": "3943bd8fdba765844b9841a5f02fb84e2de66fc9a5aae34d554bcfd800716860",
+      "source": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\no_longruns_20260916\\cnn\\best_model.pt",
+      "source_sha256": "3943bd8fdba765844b9841a5f02fb84e2de66fc9a5aae34d554bcfd800716860"
+    },
+    "history.csv": {
+      "destination": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\history.csv",
+      "destination_sha256": "f8218140987fc2fc6874fda56820cdc106cff49c3c131ab6c4baa4b9dc2f73b7",
+      "source": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\no_longruns_20260916\\cnn\\history.csv",
+      "source_sha256": "f8218140987fc2fc6874fda56820cdc106cff49c3c131ab6c4baa4b9dc2f73b7"
+    },
+    "metrics.json": {
+      "destination": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\metrics.json",
+      "destination_sha256": "cb3db67c069c0936b3239477a2d78333514ffbe6fe3ba509b890128f41e6e45a",
+      "source": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\no_longruns_20260916\\cnn\\metrics.json",
+      "source_sha256": "cb3db67c069c0936b3239477a2d78333514ffbe6fe3ba509b890128f41e6e45a"
+    },
+    "splits.json": {
+      "destination": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\splits.json",
+      "destination_sha256": "6f69e99d81d39c58729e372c3d57e6aba5ca0324b02d40b115635b513b7d6c03",
+      "source": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\no_longruns_20260916\\cnn\\splits.json",
+      "source_sha256": "6f69e99d81d39c58729e372c3d57e6aba5ca0324b02d40b115635b513b7d6c03"
+    }
+  },
+  "backup_path": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\promotion_backups\\20260917T020651.764639Z",
+  "common_split_manifest": {
+    "sha256": "6f69e99d81d39c58729e372c3d57e6aba5ca0324b02d40b115635b513b7d6c03",
+    "source": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\no_longruns_20260916\\cnn\\splits.json"
+  },
+  "destination_dir": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run",
+  "promoted_at_utc": "2026-09-17T02:06:51.764639Z",
+  "run_dir": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\no_longruns_20260916",
+  "schema_version": 1,
+  "selected_model": "cnn",
+  "selection": {
+    "criterion": {
+      "primary": "arithmetic mean of validation.division_event.f1 and validation.point.excluded_point.f1",
+      "tie_breakers": [
+        "higher validation.point.excluded_point.f1",
+        "higher validation.division_event.f1",
+        "lower minimum validation_loss from history.csv",
+        "architecture name in ascending lexical order"
+      ]
+    },
+    "uses_test_metrics": false,
+    "validation_scores": {
+      "cnn": {
+        "division_event_f1": 0.9968415937803694,
+        "excluded_point_f1": 0.8490028490028491,
+        "mean_f1": 0.9229222213916093,
+        "minimum_validation_loss": 0.005740755833164903
+      },
+      "lstm": {
+        "division_event_f1": 0.9974523838408347,
+        "excluded_point_f1": 0.8406593406593407,
+        "mean_f1": 0.9190558622500877,
+        "minimum_validation_loss": 0.004451592313952489
+      },
+      "resnet": {
+        "division_event_f1": 0.9976950139512314,
+        "excluded_point_f1": 0.7816091954022989,
+        "mean_f1": 0.8896521046767651,
+        "minimum_validation_loss": 0.006447353424542278
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "analysis_id": "lineage_trajectory_construction",
+  "method_version": "1.0.0",
+  "entry_points": [
+    "Moma_lineage_streamlit.py (Streamlit app, sidebar Parameters)",
+    "moma_logic.process_channel_worker",
+    "moma_logic.get_one_trajectory"
+  ],
+  "inputs": [
+    "*_cells_df.csv exported by Moma_CPM_FOV.py"
+  ],
+  "analysis_unit": "single-cell lineage trajectory within one channel",
+  "independent_unit": "channel within FOV within experiment",
+  "populations": {
+    "observation_grain": "one detected cell per (FOV, channel, time point)",
+    "exclusions": [
+      "spine_length < min_spine_length removed before lineage linking (1.0.0)",
+      "optional start_time/stop_time window",
+      "channels empty after filtering skipped",
+      "trajectories shorter than min_duration rejected"
+    ]
+  },
+  "metrics": {
+    "SPINE_LENGTH": "spine_length (um), upstream-owned input field",
+    "TIME_H": "time_h (h), (time_s - min(time_s)) / time_scale",
+    "GENERATION_TIME": "division_time[1, :] (h), diff of consecutive division times",
+    "GROWTH_RATE_CYC": "growth_rate[1, :] (1/h), polyfit slope of ln(spine_length) vs time_h per cycle"
+  },
+  "parameters": {
+    "min_spine_length": {
+      "ui_default": 1.0,
+      "function_default": 0.0,
+      "unit": "um",
+      "ui_widget": "float slider with adjustable min/max bounds"
+    },
+    "division_threshold": {
+      "ui_default": 1.2
+    },
+    "time_unit": {
+      "ui_default": "d"
+    },
+    "mode": {
+      "ui_default": "longest_lineage"
+    },
+    "min_duration": {
+      "ui_default": 10.0,
+      "unit": "h"
+    }
+  },
+  "statistics": {
+    "per_cycle_fit": "OLS via numpy.polyfit deg 1 on ln(spine_length) vs time_h, R^2 reported"
+  },
+  "plots": {
+    "TRAJ_VIEWER": "spine_length (log y) vs time_h, per-cycle segments"
+  },
+  "outputs": [
+    "streamlit session_state.trajectory_dict",
+    "METHODS_LINEAGE_TRAJECTORY_CONSTRUCTION.md"
+  ],
+  "validation_gates": [
+    "no trajectory row with spine_length < min_spine_length when filter active",
+    "filter executes before get_cell_lineage (code order)",
+    "fully filtered channel returns None without error",
+    "sidebar parameter reaches process_channel_worker on Process Data"
+  ],
+  "evidence": {
+    "logic_version": 2.2,
+    "worker_forwards_param": true,
+    "worker_call_has_kwarg": true,
+    "smoke_test": "tests/smoke_min_spine_length_filter.py ALL GATES PASSED (round R001)"
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "totals": {
+    "files": 16,
+    "files_failed": 0,
+    "files_with_warnings": 10,
+    "rows": 8757,
+    "trajectories": 16,
+    "division_points": 553,
+    "excluded_points": 138,
+    "division_not_effective": 25,
+    "effective_not_division": 1
+  },
+  "overlap": {
+    "corpus": "datasets\\verified_merged_20261016\\verified_training_data.csv",
+    "overlapping_keys": [
+      "FOV_0_CH_16",
+      "FOV_0_CH_8",
+      "FOV_102_CH_14",
+      "FOV_10_CH_17",
+      "FOV_13_CH_18",
+      "FOV_13_CH_19",
+      "FOV_14_CH_3",
+      "FOV_56_CH_20",
+      "FOV_58_CH_6"
+    ]
+  },
+  "files": [
+    {
+      "file": "FOV_0_CH_16_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 1 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 432,
+      "trajectory_key": "FOV_0_CH_16",
+      "division_points": 42,
+      "excluded_points": 1,
+      "duration_h": 21.618,
+      "spine_length_range": [
+        2.292,
+        13.578
+      ],
+      "division_not_effective": 1,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_0_CH_8_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 1 division_point row(s) not effective, 1 effective-only row(s)"
+      ],
+      "rows": 432,
+      "trajectory_key": "FOV_0_CH_8",
+      "division_points": 41,
+      "excluded_points": 2,
+      "duration_h": 21.618,
+      "spine_length_range": [
+        2.463,
+        9.64
+      ],
+      "division_not_effective": 1,
+      "effective_not_division": 1
+    },
+    {
+      "file": "FOV_102_CH_14_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 1 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 432,
+      "trajectory_key": "FOV_102_CH_14",
+      "division_points": 44,
+      "excluded_points": 1,
+      "duration_h": 21.637,
+      "spine_length_range": [
+        2.137,
+        6.456
+      ],
+      "division_not_effective": 1,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_10_CH_17_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 2 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 600,
+      "trajectory_key": "FOV_10_CH_17",
+      "division_points": 60,
+      "excluded_points": 3,
+      "duration_h": 30.109,
+      "spine_length_range": [
+        2.314,
+        15.15
+      ],
+      "division_not_effective": 2,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_12_CH_17_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 2 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 599,
+      "trajectory_key": "FOV_12_CH_17",
+      "division_points": 62,
+      "excluded_points": 4,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.583,
+        7.967
+      ],
+      "division_not_effective": 2,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_13_CH_18_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 1 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 600,
+      "trajectory_key": "FOV_13_CH_18",
+      "division_points": 58,
+      "excluded_points": 2,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.507,
+        9.192
+      ],
+      "division_not_effective": 1,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_13_CH_19_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 13 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 600,
+      "trajectory_key": "FOV_13_CH_19",
+      "division_points": 36,
+      "excluded_points": 26,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.421,
+        14.472
+      ],
+      "division_not_effective": 13,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_14_CH_14_selected_labeled.csv",
+      "failures": [],
+      "warnings": [],
+      "rows": 600,
+      "trajectory_key": "FOV_14_CH_14",
+      "division_points": 17,
+      "excluded_points": 74,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.862,
+        10.066
+      ],
+      "division_not_effective": 0,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_14_CH_1_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 2 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 600,
+      "trajectory_key": "FOV_14_CH_1",
+      "division_points": 3,
+      "excluded_points": 8,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        3.076,
+        7.735
+      ],
+      "division_not_effective": 2,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_14_CH_3_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 1 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 600,
+      "trajectory_key": "FOV_14_CH_3",
+      "division_points": 3,
+      "excluded_points": 6,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.746,
+        8.448
+      ],
+      "division_not_effective": 1,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_15_CH_15_selected_labeled.csv",
+      "failures": [],
+      "warnings": [],
+      "rows": 600,
+      "trajectory_key": "FOV_15_CH_15",
+      "division_points": 42,
+      "excluded_points": 2,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.637,
+        10.212
+      ],
+      "division_not_effective": 0,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_15_CH_23_selected_labeled.csv",
+      "failures": [],
+      "warnings": [],
+      "rows": 600,
+      "trajectory_key": "FOV_15_CH_23",
+      "division_points": 2,
+      "excluded_points": 2,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.765,
+        10.705
+      ],
+      "division_not_effective": 0,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_15_CH_2_selected_labeled.csv",
+      "failures": [],
+      "warnings": [],
+      "rows": 598,
+      "trajectory_key": "FOV_15_CH_2",
+      "division_points": 2,
+      "excluded_points": 0,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.909,
+        6.868
+      ],
+      "division_not_effective": 0,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_15_CH_7_selected_labeled.csv",
+      "failures": [],
+      "warnings": [
+        "label-policy divergence: 1 division_point row(s) not effective, 0 effective-only row(s)"
+      ],
+      "rows": 600,
+      "trajectory_key": "FOV_15_CH_7",
+      "division_points": 57,
+      "excluded_points": 5,
+      "duration_h": 30.108,
+      "spine_length_range": [
+        2.55,
+        13.663
+      ],
+      "division_not_effective": 1,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_56_CH_20_selected_labeled.csv",
+      "failures": [],
+      "warnings": [],
+      "rows": 432,
+      "trajectory_key": "FOV_56_CH_20",
+      "division_points": 40,
+      "excluded_points": 1,
+      "duration_h": 21.628,
+      "spine_length_range": [
+        2.35,
+        9.779
+      ],
+      "division_not_effective": 0,
+      "effective_not_division": 0
+    },
+    {
+      "file": "FOV_58_CH_6_selected_labeled.csv",
+      "failures": [],
+      "warnings": [],
+      "rows": 432,
+      "trajectory_key": "FOV_58_CH_6",
+      "division_points": 44,
+      "excluded_points": 1,
+      "duration_h": 21.628,
+      "spine_length_range": [
+        2.104,
+        10.721
+      ],
+      "division_not_effective": 0,
+      "effective_not_division": 0
+    }
+  ]
+}

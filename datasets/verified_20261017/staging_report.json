@@ -1,0 +1,300 @@
+{
+  "totals": {
+    "files": 16,
+    "division_mode": "effective",
+    "renamed_keys": {
+      "FOV_0_CH_16": "20261017_FOV_0_CH_16",
+      "FOV_0_CH_8": "20261017_FOV_0_CH_8",
+      "FOV_102_CH_14": "20261017_FOV_102_CH_14",
+      "FOV_10_CH_17": "20261017_FOV_10_CH_17",
+      "FOV_13_CH_18": "20261017_FOV_13_CH_18",
+      "FOV_13_CH_19": "20261017_FOV_13_CH_19",
+      "FOV_14_CH_3": "20261017_FOV_14_CH_3",
+      "FOV_56_CH_20": "20261017_FOV_56_CH_20",
+      "FOV_58_CH_6": "20261017_FOV_58_CH_6"
+    },
+    "rows": 8757,
+    "division_points_final": 529,
+    "division_labels_removed": 25,
+    "division_labels_added": 1,
+    "excluded_points": 138,
+    "status_counts": {
+      "unchanged": 528,
+      "coalesced_previous": 3,
+      "shifted_previous": 1,
+      "needs_review": 21
+    },
+    "r004_filter_would_drop": [
+      "FOV_14_CH_14_selected_labeled.csv"
+    ]
+  },
+  "files": [
+    {
+      "file": "FOV_0_CH_16_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_0_CH_16_selected_labeled.csv",
+      "rows": 432,
+      "original_trajectory_key": "FOV_0_CH_16",
+      "renamed_to": "20261017_FOV_0_CH_16",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 41,
+        "coalesced_previous": 1
+      },
+      "division_labels_removed": 1,
+      "division_labels_added": 0,
+      "division_points_final": 41,
+      "excluded_points": 1,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_0_CH_8_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_0_CH_8_selected_labeled.csv",
+      "rows": 432,
+      "original_trajectory_key": "FOV_0_CH_8",
+      "renamed_to": "20261017_FOV_0_CH_8",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 40,
+        "shifted_previous": 1
+      },
+      "division_labels_removed": 1,
+      "division_labels_added": 1,
+      "division_points_final": 41,
+      "excluded_points": 2,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_102_CH_14_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_102_CH_14_selected_labeled.csv",
+      "rows": 432,
+      "original_trajectory_key": "FOV_102_CH_14",
+      "renamed_to": "20261017_FOV_102_CH_14",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 43,
+        "coalesced_previous": 1
+      },
+      "division_labels_removed": 1,
+      "division_labels_added": 0,
+      "division_points_final": 43,
+      "excluded_points": 1,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_10_CH_17_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_10_CH_17_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_10_CH_17",
+      "renamed_to": "20261017_FOV_10_CH_17",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 58,
+        "needs_review": 2
+      },
+      "division_labels_removed": 2,
+      "division_labels_added": 0,
+      "division_points_final": 58,
+      "excluded_points": 3,
+      "longest_exclusion_run_frames": 2
+    },
+    {
+      "file": "FOV_12_CH_17_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_12_CH_17_selected_labeled.csv",
+      "rows": 599,
+      "original_trajectory_key": "FOV_12_CH_17",
+      "renamed_to": null,
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 60,
+        "coalesced_previous": 1,
+        "needs_review": 1
+      },
+      "division_labels_removed": 2,
+      "division_labels_added": 0,
+      "division_points_final": 60,
+      "excluded_points": 4,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_13_CH_18_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_13_CH_18_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_13_CH_18",
+      "renamed_to": "20261017_FOV_13_CH_18",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 57,
+        "needs_review": 1
+      },
+      "division_labels_removed": 1,
+      "division_labels_added": 0,
+      "division_points_final": 57,
+      "excluded_points": 2,
+      "longest_exclusion_run_frames": 2
+    },
+    {
+      "file": "FOV_13_CH_19_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_13_CH_19_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_13_CH_19",
+      "renamed_to": "20261017_FOV_13_CH_19",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 23,
+        "needs_review": 13
+      },
+      "division_labels_removed": 13,
+      "division_labels_added": 0,
+      "division_points_final": 23,
+      "excluded_points": 26,
+      "longest_exclusion_run_frames": 4
+    },
+    {
+      "file": "FOV_14_CH_14_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_14_CH_14_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_14_CH_14",
+      "renamed_to": null,
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 17
+      },
+      "division_labels_removed": 0,
+      "division_labels_added": 0,
+      "division_points_final": 17,
+      "excluded_points": 74,
+      "longest_exclusion_run_frames": 16
+    },
+    {
+      "file": "FOV_14_CH_1_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_14_CH_1_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_14_CH_1",
+      "renamed_to": null,
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "needs_review": 2,
+        "unchanged": 1
+      },
+      "division_labels_removed": 2,
+      "division_labels_added": 0,
+      "division_points_final": 1,
+      "excluded_points": 8,
+      "longest_exclusion_run_frames": 2
+    },
+    {
+      "file": "FOV_14_CH_3_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_14_CH_3_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_14_CH_3",
+      "renamed_to": "20261017_FOV_14_CH_3",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 2,
+        "needs_review": 1
+      },
+      "division_labels_removed": 1,
+      "division_labels_added": 0,
+      "division_points_final": 2,
+      "excluded_points": 6,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_15_CH_15_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_15_CH_15_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_15_CH_15",
+      "renamed_to": null,
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 42
+      },
+      "division_labels_removed": 0,
+      "division_labels_added": 0,
+      "division_points_final": 42,
+      "excluded_points": 2,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_15_CH_23_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_15_CH_23_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_15_CH_23",
+      "renamed_to": null,
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 2
+      },
+      "division_labels_removed": 0,
+      "division_labels_added": 0,
+      "division_points_final": 2,
+      "excluded_points": 2,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_15_CH_2_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_15_CH_2_selected_labeled.csv",
+      "rows": 598,
+      "original_trajectory_key": "FOV_15_CH_2",
+      "renamed_to": null,
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 2
+      },
+      "division_labels_removed": 0,
+      "division_labels_added": 0,
+      "division_points_final": 2,
+      "excluded_points": 0,
+      "longest_exclusion_run_frames": 0
+    },
+    {
+      "file": "FOV_15_CH_7_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_15_CH_7_selected_labeled.csv",
+      "rows": 600,
+      "original_trajectory_key": "FOV_15_CH_7",
+      "renamed_to": null,
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 56,
+        "needs_review": 1
+      },
+      "division_labels_removed": 1,
+      "division_labels_added": 0,
+      "division_points_final": 56,
+      "excluded_points": 5,
+      "longest_exclusion_run_frames": 2
+    },
+    {
+      "file": "FOV_56_CH_20_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_56_CH_20_selected_labeled.csv",
+      "rows": 432,
+      "original_trajectory_key": "FOV_56_CH_20",
+      "renamed_to": "20261017_FOV_56_CH_20",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 40
+      },
+      "division_labels_removed": 0,
+      "division_labels_added": 0,
+      "division_points_final": 40,
+      "excluded_points": 1,
+      "longest_exclusion_run_frames": 1
+    },
+    {
+      "file": "FOV_58_CH_6_selected_labeled.csv",
+      "staged": "datasets\\verified_20261017\\staged\\FOV_58_CH_6_selected_labeled.csv",
+      "rows": 432,
+      "original_trajectory_key": "FOV_58_CH_6",
+      "renamed_to": "20261017_FOV_58_CH_6",
+      "division_mode": "effective",
+      "resolution_status_counts": {
+        "unchanged": 44
+      },
+      "division_labels_removed": 0,
+      "division_labels_added": 0,
+      "division_points_final": 44,
+      "excluded_points": 1,
+      "longest_exclusion_run_frames": 1
+    }
+  ]
+}

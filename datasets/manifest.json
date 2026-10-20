@@ -1,0 +1,238 @@
+{
+  "schema_version": "1.0",
+  "description": "Training datasets for the moma_lineage_analysis trajectory-cleaning models. Corpora are frozen, human-verified cleaned trainsets; hashes are the integrity contract.",
+  "datasets": [
+    {
+      "id": "verified_20260916_no_longruns",
+      "path": "verified_20260916/verified_training_data_no_longruns.csv",
+      "role": "production training corpus (round R004)",
+      "sha256": "a2b3793d2138d806f5d5a85c3f51e15b9629953b4c0ef54b9490b74f99bc0092",
+      "rows": 312317,
+      "trajectories": 1053,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "user_attested_2026-09-16",
+      "construction": "verified_20260916 corpus (1,070 trajectories) minus 17 trajectories whose longest contiguous exclusion run is >= 5 frames (R004 filter; flagged keys in verified_20260916/longrun_excluded_trajectories.json)",
+      "provenance_files": [
+        "verified_20260916/dataset_manifest.json",
+        "verified_20260916/longrun_excluded_trajectories.json",
+        "verified_20260916/splits_no_longruns.json"
+      ],
+      "trained_models": [
+        "src/moma_lineage_analysis/models/trajectory_cleaning_run/best_model.pt (promoted R004 CNN 2026-09-17; superseded by the R008 and R010 CNNs)"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R004, method version 0.3.0)",
+      "retired": true,
+      "retired_in_round": "R013",
+      "retired_at": "2026-10-17",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20260916_no_longruns --version 1 --output datasets/verified_20260916/verified_training_data_no_longruns.csv"
+    },
+    {
+      "id": "verified_20261013",
+      "path": "verified_20261013/verified_training_data.csv",
+      "role": "curated batch 2026-10-13 (35 single-trajectory app exports; merged into the R010 retraining corpus, production corpus unchanged)",
+      "sha256": "15721ab757e956fc5c8a79855f67ce5713cc5a619a1b88ed2a80404b4c2870b3",
+      "rows": 22890,
+      "trajectories": 35,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "user_attested_2026-10-13",
+      "label_semantics": "division_point = effective_division_point (the final revised last point of a cell cycle, recomputed via the packaged resolver); division/exclusion overlap is therefore 0 by construction",
+      "construction": "35 per-trajectory exports (datasets/raw_train_data/) passed technical QC (scripts/qc_raw_train_data.py: schema, boolean labels, missing values, finite positive features, duplicate keys, cross-file collisions); 11 keys duplicating R004-corpus trajectories were renamed with a 20261013_ prefix (datasets/verified_20261013/rename_map.json); labels staged with --division-mode effective (scripts/stage_verified_labels.py: 22 raw division labels superseded by effective boundaries, 6 effective-only boundaries added); combined under dataset_id curated_20261013 and attested by prepare_verified_training_data.py",
+      "provenance_files": [
+        "verified_20261013/dataset_manifest.json",
+        "verified_20261013/staging_report.json",
+        "verified_20261013/rename_map.json",
+        "verified_20261013/qc_report.json"
+      ],
+      "caveats": [
+        "11 trajectories are date-prefixed re-curations of channels also present in the R004 production corpus under their original keys (see rename_map.json); treated as distinct trajectories per user decision",
+        "curated_20261013::FOV_121_CH_7 has a 5-frame contiguous exclusion run and would be dropped by the R004 production filter (>= 5 frames)",
+        "superseded first build (sha256 b0476ffc..., R002-policy labels, unrenamed keys) replaced by this effective-labels build"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R006, method version 0.3.2)",
+      "retired": true,
+      "retired_in_round": "R013",
+      "retired_at": "2026-10-17",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261013 --version 1 --output datasets/verified_20261013/verified_training_data.csv"
+    },
+    {
+      "id": "verified_20261016",
+      "path": "verified_20261016/verified_training_data.csv",
+      "role": "curated batch 2026-10-16 (48 single-trajectory app exports; merged into the R010 retraining corpus, production corpus unchanged)",
+      "sha256": "e4fced1a3958840954e334ac49acfdeeb0d6f4b2602a35760154e5f2ea13cf76",
+      "rows": 31384,
+      "trajectories": 48,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "user_attested_2026-10-16",
+      "label_semantics": "division_point = effective_division_point (the final revised last point of a cell cycle, recomputed via the packaged resolver); division/exclusion overlap is therefore 0 by construction",
+      "construction": "48 per-trajectory exports (datasets/raw_train_data/, rotated contents) passed technical QC (scripts/qc_raw_train_data.py); 18 keys duplicating R004-corpus trajectories renamed with a 20261016_ prefix (datasets/verified_20261016/rename_map.json); labels staged with --division-mode effective (scripts/stage_verified_labels.py: 37 raw division labels superseded by effective boundaries, 7 effective-only boundaries added); combined under dataset_id curated_20261016 and attested by prepare_verified_training_data.py",
+      "provenance_files": [
+        "verified_20261016/dataset_manifest.json",
+        "verified_20261016/staging_report.json",
+        "verified_20261016/rename_map.json"
+      ],
+      "caveats": [
+        "18 trajectories are date-prefixed re-curations of channels also present in the R004 production corpus under their original keys (see rename_map.json); treated as distinct trajectories per user decision",
+        "curated_20261016::FOV_53_CH_11 has a 5+-frame contiguous exclusion run and would be dropped by the R004 production filter (>= 5 frames)",
+        "the raw exports of the previous batch (20261013) were rotated out of raw_train_data/ by the user; its QC report is archived at verified_20261013/qc_report.json",
+        "the transient raw-inbox QC report for this batch was rotated away and no durable copy remains"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R007, method version 0.3.3)",
+      "retired": true,
+      "retired_in_round": "R013",
+      "retired_at": "2026-10-17",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261016 --version 1 --output datasets/verified_20261016/verified_training_data.csv"
+    },
+    {
+      "id": "verified_merged_20261016",
+      "path": "verified_merged_20261016/verified_training_data.csv",
+      "role": "merged retraining corpus (round R008): R004 production corpus + batches 20261013 and 20261016",
+      "sha256": "4e198bfb85ab35da2694a888c7fa2ce67c5b5ac338a0596d91796162ea407613",
+      "rows": 365283,
+      "trajectories": 1134,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "constituent_corpora_attested",
+      "construction": "concatenation of the three verified corpora (scripts/merge_corpora.py); R004 long-exclusion-run filter applied to the two new batches, dropping curated_20261013::FOV_121_CH_7 and curated_20261016::FOV_53_CH_11; per-source stratified seed-42 split 793/170/171 with every source in every partition",
+      "label_policy_note": "R004-corpus rows carry the historical R002 staging policy (295 division/exclusion overlap rows); batch rows use effective-label semantics (overlap 0). Difference documented in the methods contract.",
+      "provenance_files": [
+        "verified_merged_20261016/merge_manifest.json"
+      ],
+      "trained_models": [
+        "runs/merged_20261016/cnn/",
+        "runs/merged_20261016/resnet/",
+        "runs/merged_20261016/lstm/",
+        "runs/merged_20261016/r008_model_comparison.json"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R008, method version 0.4.0)",
+      "retired": true,
+      "retired_in_round": "R013",
+      "retired_at": "2026-10-17",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261016 --version 1 --output datasets/verified_merged_20261016/verified_training_data.csv"
+    },
+    {
+      "id": "verified_20261017",
+      "path": "verified_20261017/verified_training_data.csv",
+      "role": "curated batch 2026-10-17 (round R009; 16 single-trajectory app exports; merged into the R010 retraining corpus, production corpus unchanged)",
+      "sha256": "247da098e97d060c4c24696ef4ed78862a0ef3932b717492d21f1c8219d8ad67",
+      "rows": 8757,
+      "trajectories": 16,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "user_attested_2026-10-17",
+      "label_semantics": "division_point = effective_division_point (the final revised last point of a cell cycle, recomputed via the packaged resolver); division/exclusion overlap is therefore 0 by construction",
+      "construction": "16 per-trajectory exports (datasets/raw_train_data/) passed technical QC (scripts/qc_raw_train_data.py: 0 hard-gate failures; 553 raw division labels, 138 excluded labels); 9 keys duplicating R004-corpus trajectories renamed with a 20261017_ prefix (datasets/verified_20261017/rename_map.json); labels staged with --division-mode effective (scripts/stage_verified_labels.py: 25 raw division labels superseded, 1 effective-only boundary added; division/exclusion overlap 0); combined under dataset_id curated_20261017 and attested by prepare_verified_training_data.py; independently re-verified (sha256, schema, namespace, staging, duplication, R004 filter, split feasibility, 1-epoch CPU training smoke)",
+      "provenance_files": [
+        "verified_20261017/dataset_manifest.json",
+        "verified_20261017/staging_report.json",
+        "verified_20261017/rename_map.json",
+        "verified_20261017/qc_report.json"
+      ],
+      "caveats": [
+        "9 trajectories are date-prefixed re-curations of channels also present in the R004 production corpus under their original keys (see rename_map.json); treated as distinct trajectories per user decision",
+        "curated_20261017::FOV_14_CH_14 carries a 16-frame contiguous exclusion run (rows 569-584, 28.60-29.35 h) plus additional 6/5/5-frame runs and would be dropped by the R004 production filter (>= 5 frames) at merge time",
+        "curated_20261017::20261017_FOV_13_CH_19 had 13 raw division labels on rows also labeled excluded; the effective-label policy supersedes them (23 divisions retained, longest exclusion run 4 frames), so its effective division labels stop at 12.72 h",
+        "curated_20261017::FOV_14_CH_1 retains 1 division after 2 needs_review raw labels were superseded; FOV_14_CH_3, FOV_15_CH_23 and FOV_15_CH_2 retain 2 divisions each; an independent spine-drop analysis confirmed these are genuinely non-dividing/arrested tracks, not under-labeled (the pre-batch corpus has only 1 of 1,134 trajectories with <= 2 divisions)",
+        "FOV_12_CH_17 has 599 of 600 frames (one missing frame around 7.09 h) and FOV_15_CH_2 has 598 (missing frames around 3.06 h and 11.81 h); both are complete-duration exports with internal missing frames, not truncated files, and all other files are complete 432/600-frame grids",
+        "the 600-frame / 30.1 h grid (9 complete files plus the 599- and 598-row siblings) is a new movie length with no precedent in the pre-batch corpus (longest existing trajectory 28.3 h); the five 432-frame / 21.6 h files match the RDM-Gluc profile, and three 432-grid files carry the usual cyclic timestamp jitter",
+        "16 trajectories support a 12/2/2 trajectory split only; the batch is intended for merging into the production corpus, not standalone training"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R009, method version 0.4.1)",
+      "retired": true,
+      "retired_in_round": "R013",
+      "retired_at": "2026-10-17",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261017 --version 1 --output datasets/verified_20261017/verified_training_data.csv"
+    },
+    {
+      "id": "verified_merged_20261017",
+      "path": "verified_merged_20261017/verified_training_data.csv",
+      "role": "merged retraining corpus (round R010): R004 production corpus + batches 20261013, 20261016 and 20261017",
+      "sha256": "7ecc9753cf02c0dfc020fd70f6b077f997799d46d4f3af3fd89d12a16eaee2bc",
+      "rows": 373440,
+      "trajectories": 1149,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "constituent_corpora_attested",
+      "construction": "concatenation of the four verified corpora (scripts/merge_corpora.py): the pre-filtered R004 corpus verified_20260916/verified_training_data_no_longruns.csv (--corpus) plus verified_20261013, verified_20261016 and verified_20261017 verified_training_data.csv (--filtered-corpus, R004 long-exclusion-run filter applied to each); the filter dropped exactly curated_20261013::FOV_121_CH_7, curated_20261016::FOV_53_CH_11 and curated_20261017::FOV_14_CH_14 (retained batch rows 22,236 / 30,730 / 8,157; longest exclusion run over all 1,149 trajectories = 4 frames); per-source stratified seed-42 split 804/172/173 with every source in every partition",
+      "label_policy_note": "295 division/exclusion overlap rows remain, all legacy R002-policy residue inside the frozen R004 corpus (baseline_0_10h 161, baseline_0_8h 8, rdm_gluc_toggle_20260905 126, starvation_20251111 0); the three curated batches have overlap 0. Difference documented in the methods contract.",
+      "provenance_files": [
+        "verified_merged_20261017/merge_manifest.json"
+      ],
+      "trained_models": [
+        "runs/merged_20261017/cnn/",
+        "runs/merged_20261017/resnet/",
+        "runs/merged_20261017/lstm/",
+        "runs/merged_20261017/r010_model_comparison.json",
+        "runs/merged_20261017/figures/",
+        "src/moma_lineage_analysis/models/trajectory_cleaning_run/best_model.pt (promoted R010 CNN 2026-10-17)"
+      ],
+      "caveats": [
+        "validation-only selection chose the cnn (mean validation F1 0.8987 vs resnet 0.8929 / lstm 0.8642); the user promoted it on 2026-10-17 (round R011), so the production checkpoint is now the R010 CNN (sha256 6e7c5a5896c90bd0de2b068af087f2d9c942b2de94e8deb87e419fd005cb230b), with the previous R008 CNN backed up under src/moma_lineage_analysis/models/trajectory_cleaning_run/promotion_backups/20261017T124420.980675Z",
+        "independent verifier PASS: corpus checks 11/11, training-artifact checks 8/8, splits identical to the canonical recomputation, checkpoints load, source hashes match the merge manifest (runs/merged_20261017/verification_report.json)"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R010, method version 0.5.0)",
+      "retired": true,
+      "retired_in_round": "R013",
+      "retired_at": "2026-10-17",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261017 --version 1 --output datasets/verified_merged_20261017/verified_training_data.csv"
+    }
+  ],
+  "dataset_store": {
+    "path": "store/lineage.sqlite3",
+    "schema_version": 2,
+    "verification": "scripts/dataset_store.py verify -> PASS (counts, canonical hashes, legacy CSV sha256, byte-identical exports, backup restore, rebuild determinism); independent audits 2026-10-17 PASS",
+    "design_doc": "../docs/PLAN_DATASET_STORE.md",
+    "training_lineage": "verified_merged_20261017@v1",
+    "note": "Frozen corpora are stored once here (375,348 observations / 1,152 trajectories); each dataset version's export is byte-identical to its pinned CSV. The six legacy corpus CSVs were retired on 2026-10-17 (R013) and are restorable with each entry's restore_command; verification reports legacy_csv_state=retired and still checks the pinned export sha256.",
+    "phase": 3,
+    "retirement_manifest": "store/retired_csv_manifest_20261017.json"
+  },
+  "notes": [
+    "The R004 corpus is a frozen trainset: the upstream R002 corpus and raw curated exports that would be needed to REBUILD it from scratch are not part of this package (see the methods contract for the full provenance chain).",
+    "Train new models from the dataset store with: moma-trajectory-cleaning train --dataset-lineage verified_merged_20261017@v1 --store datasets/store/lineage.sqlite3 --require-human-verified --source-column source_dataset --output-dir <run_dir>. The legacy --input path requires the retired CSV to be restored first (see retired_csv_manifest_20261017.json)."
+  ]
+}

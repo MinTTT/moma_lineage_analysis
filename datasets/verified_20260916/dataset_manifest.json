@@ -1,0 +1,2540 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-09-16T14:45:07.509572Z",
+  "human_verified": true,
+  "verification_basis": "user_attested_2026-09-16",
+  "canonical_target_columns": [
+    "division_point",
+    "excluded_point"
+  ],
+  "feature_columns": [
+    "time_h",
+    "spine_length"
+  ],
+  "output_columns": [
+    "trajectory_key",
+    "fov_cell_index",
+    "time_h",
+    "spine_length",
+    "division_point",
+    "excluded_point",
+    "source_dataset",
+    "source_file",
+    "source_file_sha256",
+    "source_trajectory_key",
+    "source_fov_cell_index"
+  ],
+  "label_policy": "Only canonical final division_point and excluded_point values are targets; AI predictions, effective labels, and audit fields are ignored.",
+  "namespace": {
+    "delimiter": "::",
+    "format": "<source_dataset>::<source_trajectory_key>",
+    "raw_keys_present_in_multiple_sources": 93,
+    "colliding_raw_keys": [
+      "FOV_0_CH_10",
+      "FOV_0_CH_12",
+      "FOV_0_CH_13",
+      "FOV_0_CH_3",
+      "FOV_0_CH_4",
+      "FOV_0_CH_5",
+      "FOV_0_CH_6",
+      "FOV_0_CH_8",
+      "FOV_10_CH_12",
+      "FOV_10_CH_14",
+      "FOV_10_CH_9",
+      "FOV_12_CH_13",
+      "FOV_12_CH_14",
+      "FOV_12_CH_16",
+      "FOV_12_CH_18",
+      "FOV_13_CH_16",
+      "FOV_13_CH_19",
+      "FOV_13_CH_3",
+      "FOV_13_CH_5",
+      "FOV_13_CH_6",
+      "FOV_13_CH_7",
+      "FOV_13_CH_8",
+      "FOV_16_CH_3",
+      "FOV_16_CH_8",
+      "FOV_18_CH_11",
+      "FOV_18_CH_13",
+      "FOV_18_CH_18",
+      "FOV_20_CH_18",
+      "FOV_21_CH_16",
+      "FOV_21_CH_20",
+      "FOV_21_CH_24",
+      "FOV_21_CH_5",
+      "FOV_22_CH_16",
+      "FOV_22_CH_22",
+      "FOV_23_CH_22",
+      "FOV_23_CH_5",
+      "FOV_23_CH_8",
+      "FOV_25_CH_12",
+      "FOV_26_CH_10",
+      "FOV_26_CH_12",
+      "FOV_26_CH_17",
+      "FOV_27_CH_13",
+      "FOV_27_CH_21",
+      "FOV_27_CH_23",
+      "FOV_27_CH_25",
+      "FOV_28_CH_26",
+      "FOV_29_CH_20",
+      "FOV_29_CH_23",
+      "FOV_29_CH_24",
+      "FOV_29_CH_8",
+      "FOV_2_CH_13",
+      "FOV_2_CH_9",
+      "FOV_30_CH_4",
+      "FOV_30_CH_8",
+      "FOV_34_CH_13",
+      "FOV_35_CH_14",
+      "FOV_36_CH_1",
+      "FOV_36_CH_16",
+      "FOV_36_CH_2",
+      "FOV_37_CH_13",
+      "FOV_37_CH_14",
+      "FOV_38_CH_12",
+      "FOV_38_CH_16",
+      "FOV_38_CH_21",
+      "FOV_39_CH_17",
+      "FOV_39_CH_23",
+      "FOV_3_CH_17",
+      "FOV_3_CH_9",
+      "FOV_40_CH_1",
+      "FOV_40_CH_23",
+      "FOV_41_CH_14",
+      "FOV_41_CH_15",
+      "FOV_41_CH_16",
+      "FOV_41_CH_17",
+      "FOV_41_CH_22",
+      "FOV_41_CH_23",
+      "FOV_41_CH_26",
+      "FOV_41_CH_5",
+      "FOV_42_CH_2",
+      "FOV_42_CH_9",
+      "FOV_43_CH_16",
+      "FOV_43_CH_21",
+      "FOV_44_CH_13",
+      "FOV_44_CH_22",
+      "FOV_45_CH_1",
+      "FOV_45_CH_16",
+      "FOV_45_CH_3",
+      "FOV_45_CH_6",
+      "FOV_45_CH_9",
+      "FOV_5_CH_13",
+      "FOV_5_CH_9",
+      "FOV_6_CH_17",
+      "FOV_6_CH_6"
+    ],
+    "collision_handling": "After explicit supersession, remaining raw-key collisions are resolved by prefixing every raw key with its unique dataset ID."
+  },
+  "supersession": {
+    "policy": "For each explicit older=preferred rule, an older trajectory is omitted in full when its raw key exists in the preferred source.",
+    "rules": [
+      {
+        "superseded_dataset": "baseline_0_8h",
+        "preferred_dataset": "baseline_0_10h",
+        "omitted_rows": 9935,
+        "omitted_trajectories": 83,
+        "trajectory_keys": [
+          "FOV_0_CH_10",
+          "FOV_0_CH_13",
+          "FOV_0_CH_17",
+          "FOV_0_CH_19",
+          "FOV_0_CH_21",
+          "FOV_10_CH_10",
+          "FOV_10_CH_12",
+          "FOV_10_CH_14",
+          "FOV_10_CH_16",
+          "FOV_10_CH_18",
+          "FOV_10_CH_19",
+          "FOV_10_CH_20",
+          "FOV_10_CH_22",
+          "FOV_10_CH_3",
+          "FOV_10_CH_4",
+          "FOV_10_CH_9",
+          "FOV_12_CH_10",
+          "FOV_12_CH_11",
+          "FOV_12_CH_13",
+          "FOV_12_CH_14",
+          "FOV_12_CH_15",
+          "FOV_12_CH_16",
+          "FOV_12_CH_18",
+          "FOV_12_CH_2",
+          "FOV_12_CH_22",
+          "FOV_12_CH_5",
+          "FOV_12_CH_6",
+          "FOV_12_CH_7",
+          "FOV_12_CH_8",
+          "FOV_12_CH_9",
+          "FOV_13_CH_11",
+          "FOV_13_CH_13",
+          "FOV_13_CH_14",
+          "FOV_13_CH_16",
+          "FOV_13_CH_17",
+          "FOV_13_CH_18",
+          "FOV_13_CH_19",
+          "FOV_13_CH_24",
+          "FOV_13_CH_26",
+          "FOV_13_CH_3",
+          "FOV_13_CH_4",
+          "FOV_13_CH_5",
+          "FOV_13_CH_6",
+          "FOV_13_CH_7",
+          "FOV_13_CH_8",
+          "FOV_13_CH_9",
+          "FOV_2_CH_1",
+          "FOV_2_CH_10",
+          "FOV_2_CH_11",
+          "FOV_2_CH_14",
+          "FOV_2_CH_17",
+          "FOV_2_CH_19",
+          "FOV_2_CH_2",
+          "FOV_2_CH_26",
+          "FOV_2_CH_27",
+          "FOV_2_CH_7",
+          "FOV_3_CH_1",
+          "FOV_3_CH_12",
+          "FOV_3_CH_14",
+          "FOV_3_CH_17",
+          "FOV_3_CH_19",
+          "FOV_3_CH_20",
+          "FOV_3_CH_21",
+          "FOV_3_CH_22",
+          "FOV_3_CH_26",
+          "FOV_3_CH_27",
+          "FOV_3_CH_3",
+          "FOV_3_CH_5",
+          "FOV_3_CH_7",
+          "FOV_3_CH_8",
+          "FOV_3_CH_9",
+          "FOV_5_CH_12",
+          "FOV_5_CH_13",
+          "FOV_5_CH_16",
+          "FOV_5_CH_17",
+          "FOV_5_CH_7",
+          "FOV_6_CH_11",
+          "FOV_6_CH_12",
+          "FOV_6_CH_17",
+          "FOV_6_CH_19",
+          "FOV_6_CH_21",
+          "FOV_6_CH_8",
+          "FOV_6_CH_9"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "dataset_id": "baseline_0_8h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-8h_selected_labeled.csv",
+      "source_file_sha256": "eb8b675b20855cb0b98f6300126da48fddb99f37a90afaf520631fc2da5b3e8d",
+      "raw_rows": 12332,
+      "eligible_rows_after_supersession": 2397,
+      "retained_rows": 2396,
+      "omitted_superseded_rows": 9935,
+      "omitted_superseded_trajectories": 83,
+      "omitted_invalid_feature_rows": 1,
+      "raw_trajectories": 103,
+      "eligible_trajectories_after_supersession": 20,
+      "retained_trajectories": 20,
+      "raw_label_counts": {
+        "division_point": 668,
+        "excluded_point": 90,
+        "division_and_excluded_overlap": 36
+      },
+      "eligible_label_counts_after_supersession": {
+        "division_point": 130,
+        "excluded_point": 31,
+        "division_and_excluded_overlap": 10
+      },
+      "retained_label_counts": {
+        "division_point": 130,
+        "excluded_point": 31,
+        "division_and_excluded_overlap": 10
+      },
+      "superseded_by": "baseline_0_10h",
+      "superseded_trajectory_keys": [
+        "FOV_0_CH_10",
+        "FOV_0_CH_13",
+        "FOV_0_CH_17",
+        "FOV_0_CH_19",
+        "FOV_0_CH_21",
+        "FOV_10_CH_10",
+        "FOV_10_CH_12",
+        "FOV_10_CH_14",
+        "FOV_10_CH_16",
+        "FOV_10_CH_18",
+        "FOV_10_CH_19",
+        "FOV_10_CH_20",
+        "FOV_10_CH_22",
+        "FOV_10_CH_3",
+        "FOV_10_CH_4",
+        "FOV_10_CH_9",
+        "FOV_12_CH_10",
+        "FOV_12_CH_11",
+        "FOV_12_CH_13",
+        "FOV_12_CH_14",
+        "FOV_12_CH_15",
+        "FOV_12_CH_16",
+        "FOV_12_CH_18",
+        "FOV_12_CH_2",
+        "FOV_12_CH_22",
+        "FOV_12_CH_5",
+        "FOV_12_CH_6",
+        "FOV_12_CH_7",
+        "FOV_12_CH_8",
+        "FOV_12_CH_9",
+        "FOV_13_CH_11",
+        "FOV_13_CH_13",
+        "FOV_13_CH_14",
+        "FOV_13_CH_16",
+        "FOV_13_CH_17",
+        "FOV_13_CH_18",
+        "FOV_13_CH_19",
+        "FOV_13_CH_24",
+        "FOV_13_CH_26",
+        "FOV_13_CH_3",
+        "FOV_13_CH_4",
+        "FOV_13_CH_5",
+        "FOV_13_CH_6",
+        "FOV_13_CH_7",
+        "FOV_13_CH_8",
+        "FOV_13_CH_9",
+        "FOV_2_CH_1",
+        "FOV_2_CH_10",
+        "FOV_2_CH_11",
+        "FOV_2_CH_14",
+        "FOV_2_CH_17",
+        "FOV_2_CH_19",
+        "FOV_2_CH_2",
+        "FOV_2_CH_26",
+        "FOV_2_CH_27",
+        "FOV_2_CH_7",
+        "FOV_3_CH_1",
+        "FOV_3_CH_12",
+        "FOV_3_CH_14",
+        "FOV_3_CH_17",
+        "FOV_3_CH_19",
+        "FOV_3_CH_20",
+        "FOV_3_CH_21",
+        "FOV_3_CH_22",
+        "FOV_3_CH_26",
+        "FOV_3_CH_27",
+        "FOV_3_CH_3",
+        "FOV_3_CH_5",
+        "FOV_3_CH_7",
+        "FOV_3_CH_8",
+        "FOV_3_CH_9",
+        "FOV_5_CH_12",
+        "FOV_5_CH_13",
+        "FOV_5_CH_16",
+        "FOV_5_CH_17",
+        "FOV_5_CH_7",
+        "FOV_6_CH_11",
+        "FOV_6_CH_12",
+        "FOV_6_CH_17",
+        "FOV_6_CH_19",
+        "FOV_6_CH_21",
+        "FOV_6_CH_8",
+        "FOV_6_CH_9"
+      ],
+      "ignored_label_or_audit_columns": [],
+      "invalid_feature_rows": [
+        {
+          "source_dataset": "baseline_0_8h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-8h_selected_labeled.csv",
+          "source_row_index": 10661,
+          "csv_line_number": 10663,
+          "source_trajectory_key": "FOV_5_CH_18",
+          "source_fov_cell_index": 19762,
+          "raw_time_h": 7.956343089342117,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        }
+      ]
+    },
+    {
+      "dataset_id": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_file_sha256": "afb5f6f6bcc5060d475c875fdc40e110a33b97c8c8e01bf7d433147c98b03060",
+      "raw_rows": 71586,
+      "eligible_rows_after_supersession": 71586,
+      "retained_rows": 71550,
+      "omitted_superseded_rows": 0,
+      "omitted_superseded_trajectories": 0,
+      "omitted_invalid_feature_rows": 36,
+      "raw_trajectories": 479,
+      "eligible_trajectories_after_supersession": 479,
+      "retained_trajectories": 479,
+      "raw_label_counts": {
+        "division_point": 4012,
+        "excluded_point": 657,
+        "division_and_excluded_overlap": 168
+      },
+      "eligible_label_counts_after_supersession": {
+        "division_point": 4012,
+        "excluded_point": 657,
+        "division_and_excluded_overlap": 168
+      },
+      "retained_label_counts": {
+        "division_point": 4012,
+        "excluded_point": 621,
+        "division_and_excluded_overlap": 168
+      },
+      "superseded_by": null,
+      "superseded_trajectory_keys": [],
+      "ignored_label_or_audit_columns": [
+        "ai_checkpoint_mtime_ns",
+        "ai_checkpoint_sha256",
+        "ai_checkpoint_size_bytes",
+        "ai_division_threshold",
+        "ai_excluded_threshold",
+        "ai_inference_device",
+        "ai_input_invalid_reason",
+        "ai_input_valid",
+        "ai_model_checkpoint",
+        "ai_model_type",
+        "ai_prediction_source",
+        "division_effective_target_index",
+        "division_length_ratio",
+        "division_next_valid_index",
+        "division_previous_valid_index",
+        "division_resolution",
+        "effective_division_point",
+        "pred_division_point",
+        "pred_division_probability",
+        "pred_excluded_point",
+        "pred_excluded_probability"
+      ],
+      "invalid_feature_rows": [
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 1444,
+          "csv_line_number": 1446,
+          "source_trajectory_key": "FOV_31_CH_9",
+          "source_fov_cell_index": 5660,
+          "raw_time_h": 7.221376560661528,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 3807,
+          "csv_line_number": 3809,
+          "source_trajectory_key": "FOV_45_CH_24",
+          "source_fov_cell_index": 24893,
+          "raw_time_h": 5.951395830048456,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 5760,
+          "csv_line_number": 5762,
+          "source_trajectory_key": "FOV_21_CH_16",
+          "source_fov_cell_index": 17678,
+          "raw_time_h": 6.686009587181939,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 7527,
+          "csv_line_number": 7529,
+          "source_trajectory_key": "FOV_6_CH_18",
+          "source_fov_cell_index": 15539,
+          "raw_time_h": 4.815120073888037,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 11751,
+          "csv_line_number": 11753,
+          "source_trajectory_key": "FOV_18_CH_7",
+          "source_fov_cell_index": 7886,
+          "raw_time_h": 6.485294674370024,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 12444,
+          "csv_line_number": 12446,
+          "source_trajectory_key": "FOV_30_CH_4",
+          "source_fov_cell_index": 2160,
+          "raw_time_h": 2.67533860915237,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 12667,
+          "csv_line_number": 12669,
+          "source_trajectory_key": "FOV_34_CH_6",
+          "source_fov_cell_index": 4725,
+          "raw_time_h": 7.68874737057421,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 12852,
+          "csv_line_number": 12854,
+          "source_trajectory_key": "FOV_42_CH_25",
+          "source_fov_cell_index": 25942,
+          "raw_time_h": 0.0672583587964375,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 15132,
+          "csv_line_number": 15134,
+          "source_trajectory_key": "FOV_30_CH_12",
+          "source_fov_cell_index": 8864,
+          "raw_time_h": 2.140324923992157,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 16097,
+          "csv_line_number": 16099,
+          "source_trajectory_key": "FOV_5_CH_2",
+          "source_fov_cell_index": 1604,
+          "raw_time_h": 6.8201698568132185,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 20153,
+          "csv_line_number": 20155,
+          "source_trajectory_key": "FOV_26_CH_7",
+          "source_fov_cell_index": 8401,
+          "raw_time_h": 7.688666277329127,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 21188,
+          "csv_line_number": 21190,
+          "source_trajectory_key": "FOV_25_CH_21",
+          "source_fov_cell_index": 24498,
+          "raw_time_h": 6.68604750752449,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 25412,
+          "csv_line_number": 25414,
+          "source_trajectory_key": "FOV_2_CH_27",
+          "source_fov_cell_index": 30969,
+          "raw_time_h": 9.896499437822236,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 25990,
+          "csv_line_number": 25992,
+          "source_trajectory_key": "FOV_40_CH_8",
+          "source_fov_cell_index": 7112,
+          "raw_time_h": 8.424697395430671,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 26013,
+          "csv_line_number": 26015,
+          "source_trajectory_key": "FOV_40_CH_8",
+          "source_fov_cell_index": 7199,
+          "raw_time_h": 9.963290572762489,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 28937,
+          "csv_line_number": 28939,
+          "source_trajectory_key": "FOV_20_CH_13",
+          "source_fov_cell_index": 12710,
+          "raw_time_h": 5.014825606544813,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 30178,
+          "csv_line_number": 30180,
+          "source_trajectory_key": "FOV_21_CH_1",
+          "source_fov_cell_index": 448,
+          "raw_time_h": 7.888930929568079,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 33604,
+          "csv_line_number": 33606,
+          "source_trajectory_key": "FOV_5_CH_1",
+          "source_fov_cell_index": 508,
+          "raw_time_h": 9.160749357673858,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 35285,
+          "csv_line_number": 35287,
+          "source_trajectory_key": "FOV_37_CH_13",
+          "source_fov_cell_index": 10103,
+          "raw_time_h": 1.2037285351753235,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 35330,
+          "csv_line_number": 35332,
+          "source_trajectory_key": "FOV_37_CH_13",
+          "source_fov_cell_index": 10242,
+          "raw_time_h": 4.279715273976326,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 35562,
+          "csv_line_number": 35564,
+          "source_trajectory_key": "FOV_20_CH_7",
+          "source_fov_cell_index": 6192,
+          "raw_time_h": 9.762584759990377,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 36085,
+          "csv_line_number": 36087,
+          "source_trajectory_key": "FOV_40_CH_5",
+          "source_fov_cell_index": 3447,
+          "raw_time_h": 4.6143746756182775,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 36456,
+          "csv_line_number": 36458,
+          "source_trajectory_key": "FOV_21_CH_2",
+          "source_fov_cell_index": 1417,
+          "raw_time_h": 9.428141224649217,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 38743,
+          "csv_line_number": 38745,
+          "source_trajectory_key": "FOV_2_CH_21",
+          "source_fov_cell_index": 23423,
+          "raw_time_h": 2.7424312114053304,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 40081,
+          "csv_line_number": 40083,
+          "source_trajectory_key": "FOV_27_CH_11",
+          "source_fov_cell_index": 12600,
+          "raw_time_h": 2.809232445557912,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 47589,
+          "csv_line_number": 47591,
+          "source_trajectory_key": "FOV_5_CH_5",
+          "source_fov_cell_index": 4866,
+          "raw_time_h": 5.148827867441708,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 49930,
+          "csv_line_number": 49932,
+          "source_trajectory_key": "FOV_23_CH_21",
+          "source_fov_cell_index": 22058,
+          "raw_time_h": 1.4714173169930775,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 51995,
+          "csv_line_number": 51997,
+          "source_trajectory_key": "FOV_6_CH_2",
+          "source_fov_cell_index": 1662,
+          "raw_time_h": 9.495121263662972,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 52096,
+          "csv_line_number": 52098,
+          "source_trajectory_key": "FOV_18_CH_14",
+          "source_fov_cell_index": 16757,
+          "raw_time_h": 6.217887665099568,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 52895,
+          "csv_line_number": 52897,
+          "source_trajectory_key": "FOV_44_CH_15",
+          "source_fov_cell_index": 16450,
+          "raw_time_h": 9.494933531416788,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 53124,
+          "csv_line_number": 53126,
+          "source_trajectory_key": "FOV_6_CH_6",
+          "source_fov_cell_index": 5471,
+          "raw_time_h": 4.74817483180099,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 53320,
+          "csv_line_number": 53322,
+          "source_trajectory_key": "FOV_21_CH_12",
+          "source_fov_cell_index": 12762,
+          "raw_time_h": 7.822788323296441,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 56374,
+          "csv_line_number": 56376,
+          "source_trajectory_key": "FOV_40_CH_4",
+          "source_fov_cell_index": 2139,
+          "raw_time_h": 1.8725977019468945,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 65720,
+          "csv_line_number": 65722,
+          "source_trajectory_key": "FOV_27_CH_24",
+          "source_fov_cell_index": 30350,
+          "raw_time_h": 8.291232738428645,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 67209,
+          "csv_line_number": 67211,
+          "source_trajectory_key": "FOV_25_CH_10",
+          "source_fov_cell_index": 12495,
+          "raw_time_h": 7.822893060048421,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "baseline_0_10h",
+          "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+          "source_row_index": 68183,
+          "csv_line_number": 68185,
+          "source_trajectory_key": "FOV_18_CH_2",
+          "source_fov_cell_index": 1356,
+          "raw_time_h": 2.8760023158126407,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        }
+      ]
+    },
+    {
+      "dataset_id": "starvation_20251111",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\20251111.NCM1yeaG-.starvation.micro_selected_labeled.csv",
+      "source_file_sha256": "2ca7cc8cf2f408b02ad9e7ac2f3e6e5fba07092510c215abbe56dc446308a5f4",
+      "raw_rows": 3300,
+      "eligible_rows_after_supersession": 3300,
+      "retained_rows": 3300,
+      "omitted_superseded_rows": 0,
+      "omitted_superseded_trajectories": 0,
+      "omitted_invalid_feature_rows": 0,
+      "raw_trajectories": 11,
+      "eligible_trajectories_after_supersession": 11,
+      "retained_trajectories": 11,
+      "raw_label_counts": {
+        "division_point": 58,
+        "excluded_point": 69,
+        "division_and_excluded_overlap": 0
+      },
+      "eligible_label_counts_after_supersession": {
+        "division_point": 58,
+        "excluded_point": 69,
+        "division_and_excluded_overlap": 0
+      },
+      "retained_label_counts": {
+        "division_point": 58,
+        "excluded_point": 69,
+        "division_and_excluded_overlap": 0
+      },
+      "superseded_by": null,
+      "superseded_trajectory_keys": [],
+      "ignored_label_or_audit_columns": [
+        "ai_checkpoint_mtime_ns",
+        "ai_checkpoint_sha256",
+        "ai_checkpoint_size_bytes",
+        "ai_division_threshold",
+        "ai_excluded_threshold",
+        "ai_inference_device",
+        "ai_input_invalid_reason",
+        "ai_input_valid",
+        "ai_model_checkpoint",
+        "ai_model_type",
+        "ai_prediction_source",
+        "division_effective_target_index",
+        "division_length_ratio",
+        "division_next_valid_index",
+        "division_previous_valid_index",
+        "division_resolution",
+        "effective_division_point",
+        "pred_division_point",
+        "pred_division_probability",
+        "pred_excluded_point",
+        "pred_excluded_probability"
+      ],
+      "invalid_feature_rows": []
+    },
+    {
+      "dataset_id": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_file_sha256": "0dc110fd58668cd72c443b31d5cce697ea248815e4d53cfce9389f09bfc53acc",
+      "raw_rows": 241540,
+      "eligible_rows_after_supersession": 241540,
+      "retained_rows": 241499,
+      "omitted_superseded_rows": 0,
+      "omitted_superseded_trajectories": 0,
+      "omitted_invalid_feature_rows": 41,
+      "raw_trajectories": 560,
+      "eligible_trajectories_after_supersession": 560,
+      "retained_trajectories": 560,
+      "raw_label_counts": {
+        "division_point": 23835,
+        "excluded_point": 1196,
+        "division_and_excluded_overlap": 171
+      },
+      "eligible_label_counts_after_supersession": {
+        "division_point": 23835,
+        "excluded_point": 1196,
+        "division_and_excluded_overlap": 171
+      },
+      "retained_label_counts": {
+        "division_point": 23835,
+        "excluded_point": 1155,
+        "division_and_excluded_overlap": 171
+      },
+      "superseded_by": null,
+      "superseded_trajectory_keys": [],
+      "ignored_label_or_audit_columns": [],
+      "invalid_feature_rows": [
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 11130,
+          "csv_line_number": 11132,
+          "source_trajectory_key": "FOV_72_CH_17",
+          "source_fov_cell_index": 6447,
+          "raw_time_h": 16.552056039240625,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 28049,
+          "csv_line_number": 28051,
+          "source_trajectory_key": "FOV_77_CH_5",
+          "source_fov_cell_index": 3918,
+          "raw_time_h": 6.3685958725214,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 40444,
+          "csv_line_number": 40446,
+          "source_trajectory_key": "FOV_5_CH_9",
+          "source_fov_cell_index": 2521,
+          "raw_time_h": 10.78384260998832,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 57371,
+          "csv_line_number": 57373,
+          "source_trajectory_key": "FOV_76_CH_6",
+          "source_fov_cell_index": 1176,
+          "raw_time_h": 14.74647049367428,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 62984,
+          "csv_line_number": 62986,
+          "source_trajectory_key": "FOV_103_CH_10",
+          "source_fov_cell_index": 7920,
+          "raw_time_h": 14.595958397918276,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 75188,
+          "csv_line_number": 75190,
+          "source_trajectory_key": "FOV_81_CH_22",
+          "source_fov_cell_index": 11950,
+          "raw_time_h": 20.0118568103181,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 85628,
+          "csv_line_number": 85630,
+          "source_trajectory_key": "FOV_13_CH_5",
+          "source_fov_cell_index": 1860,
+          "raw_time_h": 1.955975847111808,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 112609,
+          "csv_line_number": 112611,
+          "source_trajectory_key": "FOV_54_CH_17",
+          "source_fov_cell_index": 7741,
+          "raw_time_h": 11.84699080804984,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 112614,
+          "csv_line_number": 112616,
+          "source_trajectory_key": "FOV_54_CH_17",
+          "source_fov_cell_index": 7761,
+          "raw_time_h": 12.086965072552363,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 117550,
+          "csv_line_number": 117552,
+          "source_trajectory_key": "FOV_43_CH_24",
+          "source_fov_cell_index": 6884,
+          "raw_time_h": 21.32440128266812,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118340,
+          "csv_line_number": 118342,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 9968,
+          "raw_time_h": 17.605817486842472,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118346,
+          "csv_line_number": 118348,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 9991,
+          "raw_time_h": 17.90615468766954,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118356,
+          "csv_line_number": 118358,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 10029,
+          "raw_time_h": 18.40782627297772,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118357,
+          "csv_line_number": 118359,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 10033,
+          "raw_time_h": 18.46131124330892,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118359,
+          "csv_line_number": 118361,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 10041,
+          "raw_time_h": 18.558514479928547,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118360,
+          "csv_line_number": 118362,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 10045,
+          "raw_time_h": 18.611813388135698,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118361,
+          "csv_line_number": 118363,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 10048,
+          "raw_time_h": 18.65857664730813,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 118385,
+          "csv_line_number": 118387,
+          "source_trajectory_key": "FOV_18_CH_20",
+          "source_fov_cell_index": 10138,
+          "raw_time_h": 19.862738140357862,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 145934,
+          "csv_line_number": 145936,
+          "source_trajectory_key": "FOV_64_CH_21",
+          "source_fov_cell_index": 10477,
+          "raw_time_h": 14.896773059500587,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 149738,
+          "csv_line_number": 149740,
+          "source_trajectory_key": "FOV_65_CH_16",
+          "source_fov_cell_index": 9387,
+          "raw_time_h": 10.682457093530232,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 155462,
+          "csv_line_number": 155464,
+          "source_trajectory_key": "FOV_18_CH_4",
+          "source_fov_cell_index": 1244,
+          "raw_time_h": 16.101297815839448,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 155483,
+          "csv_line_number": 155485,
+          "source_trajectory_key": "FOV_18_CH_4",
+          "source_fov_cell_index": 1328,
+          "raw_time_h": 17.15387185984188,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 158002,
+          "csv_line_number": 158004,
+          "source_trajectory_key": "FOV_73_CH_10",
+          "source_fov_cell_index": 11438,
+          "raw_time_h": 13.506791526675224,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 158693,
+          "csv_line_number": 158695,
+          "source_trajectory_key": "FOV_78_CH_22",
+          "source_fov_cell_index": 12013,
+          "raw_time_h": 4.814193112386597,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 162464,
+          "csv_line_number": 162466,
+          "source_trajectory_key": "FOV_3_CH_9",
+          "source_fov_cell_index": 5084,
+          "raw_time_h": 20.66497816734844,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 162470,
+          "csv_line_number": 162472,
+          "source_trajectory_key": "FOV_3_CH_9",
+          "source_fov_cell_index": 5108,
+          "raw_time_h": 20.96581972022852,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 162472,
+          "csv_line_number": 162474,
+          "source_trajectory_key": "FOV_3_CH_9",
+          "source_fov_cell_index": 5116,
+          "raw_time_h": 21.06620320551925,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 162474,
+          "csv_line_number": 162476,
+          "source_trajectory_key": "FOV_3_CH_9",
+          "source_fov_cell_index": 5124,
+          "raw_time_h": 21.16663511527909,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 162475,
+          "csv_line_number": 162477,
+          "source_trajectory_key": "FOV_3_CH_9",
+          "source_fov_cell_index": 5128,
+          "raw_time_h": 21.216321854127777,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 162480,
+          "csv_line_number": 162482,
+          "source_trajectory_key": "FOV_3_CH_9",
+          "source_fov_cell_index": 5148,
+          "raw_time_h": 21.46773731748263,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 162482,
+          "csv_line_number": 162484,
+          "source_trajectory_key": "FOV_3_CH_9",
+          "source_fov_cell_index": 5156,
+          "raw_time_h": 21.56758292860455,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 177053,
+          "csv_line_number": 177055,
+          "source_trajectory_key": "FOV_102_CH_25",
+          "source_fov_cell_index": 16803,
+          "raw_time_h": 15.699275551040968,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 187464,
+          "csv_line_number": 187466,
+          "source_trajectory_key": "FOV_80_CH_1",
+          "source_fov_cell_index": 1424,
+          "raw_time_h": 17.870240138371784,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 191599,
+          "csv_line_number": 191601,
+          "source_trajectory_key": "FOV_32_CH_5",
+          "source_fov_cell_index": 2412,
+          "raw_time_h": 8.576306840181351,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 197739,
+          "csv_line_number": 197741,
+          "source_trajectory_key": "FOV_84_CH_9",
+          "source_fov_cell_index": 11291,
+          "raw_time_h": 13.206899238957298,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 211528,
+          "csv_line_number": 211530,
+          "source_trajectory_key": "FOV_62_CH_4",
+          "source_fov_cell_index": 2606,
+          "raw_time_h": 11.435294143623777,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 212751,
+          "csv_line_number": 212753,
+          "source_trajectory_key": "FOV_101_CH_13",
+          "source_fov_cell_index": 7521,
+          "raw_time_h": 7.794330656263563,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 214325,
+          "csv_line_number": 214327,
+          "source_trajectory_key": "FOV_41_CH_17",
+          "source_fov_cell_index": 10274,
+          "raw_time_h": 0.0497047396500905,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 220793,
+          "csv_line_number": 220795,
+          "source_trajectory_key": "FOV_18_CH_11",
+          "source_fov_cell_index": 5083,
+          "raw_time_h": 21.116144576337604,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 232293,
+          "csv_line_number": 232295,
+          "source_trajectory_key": "FOV_2_CH_13",
+          "source_fov_cell_index": 4404,
+          "raw_time_h": 12.890817044907148,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        },
+        {
+          "source_dataset": "rdm_gluc_toggle_20260905",
+          "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+          "source_row_index": 235395,
+          "csv_line_number": 235397,
+          "source_trajectory_key": "FOV_6_CH_16",
+          "source_fov_cell_index": 4728,
+          "raw_time_h": 16.804125764899783,
+          "raw_spine_length": 0.0,
+          "reasons": [
+            "spine_length_not_positive"
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "source_files": 4,
+    "raw_rows": 328758,
+    "retained_rows": 318745,
+    "omitted_superseded_rows": 9935,
+    "omitted_superseded_trajectories": 83,
+    "omitted_invalid_feature_rows": 78,
+    "retained_trajectories": 1070,
+    "retained_label_counts": {
+      "division_point": 28035,
+      "excluded_point": 1876,
+      "division_and_excluded_overlap": 349
+    },
+    "trajectories_with_fewer_than_two_retained_points": []
+  },
+  "invalid_feature_rows": [
+    {
+      "source_dataset": "baseline_0_8h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-8h_selected_labeled.csv",
+      "source_row_index": 10661,
+      "csv_line_number": 10663,
+      "source_trajectory_key": "FOV_5_CH_18",
+      "source_fov_cell_index": 19762,
+      "raw_time_h": 7.956343089342117,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 1444,
+      "csv_line_number": 1446,
+      "source_trajectory_key": "FOV_31_CH_9",
+      "source_fov_cell_index": 5660,
+      "raw_time_h": 7.221376560661528,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 3807,
+      "csv_line_number": 3809,
+      "source_trajectory_key": "FOV_45_CH_24",
+      "source_fov_cell_index": 24893,
+      "raw_time_h": 5.951395830048456,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 5760,
+      "csv_line_number": 5762,
+      "source_trajectory_key": "FOV_21_CH_16",
+      "source_fov_cell_index": 17678,
+      "raw_time_h": 6.686009587181939,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 7527,
+      "csv_line_number": 7529,
+      "source_trajectory_key": "FOV_6_CH_18",
+      "source_fov_cell_index": 15539,
+      "raw_time_h": 4.815120073888037,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 11751,
+      "csv_line_number": 11753,
+      "source_trajectory_key": "FOV_18_CH_7",
+      "source_fov_cell_index": 7886,
+      "raw_time_h": 6.485294674370024,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 12444,
+      "csv_line_number": 12446,
+      "source_trajectory_key": "FOV_30_CH_4",
+      "source_fov_cell_index": 2160,
+      "raw_time_h": 2.67533860915237,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 12667,
+      "csv_line_number": 12669,
+      "source_trajectory_key": "FOV_34_CH_6",
+      "source_fov_cell_index": 4725,
+      "raw_time_h": 7.68874737057421,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 12852,
+      "csv_line_number": 12854,
+      "source_trajectory_key": "FOV_42_CH_25",
+      "source_fov_cell_index": 25942,
+      "raw_time_h": 0.0672583587964375,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 15132,
+      "csv_line_number": 15134,
+      "source_trajectory_key": "FOV_30_CH_12",
+      "source_fov_cell_index": 8864,
+      "raw_time_h": 2.140324923992157,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 16097,
+      "csv_line_number": 16099,
+      "source_trajectory_key": "FOV_5_CH_2",
+      "source_fov_cell_index": 1604,
+      "raw_time_h": 6.8201698568132185,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 20153,
+      "csv_line_number": 20155,
+      "source_trajectory_key": "FOV_26_CH_7",
+      "source_fov_cell_index": 8401,
+      "raw_time_h": 7.688666277329127,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 21188,
+      "csv_line_number": 21190,
+      "source_trajectory_key": "FOV_25_CH_21",
+      "source_fov_cell_index": 24498,
+      "raw_time_h": 6.68604750752449,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 25412,
+      "csv_line_number": 25414,
+      "source_trajectory_key": "FOV_2_CH_27",
+      "source_fov_cell_index": 30969,
+      "raw_time_h": 9.896499437822236,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 25990,
+      "csv_line_number": 25992,
+      "source_trajectory_key": "FOV_40_CH_8",
+      "source_fov_cell_index": 7112,
+      "raw_time_h": 8.424697395430671,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 26013,
+      "csv_line_number": 26015,
+      "source_trajectory_key": "FOV_40_CH_8",
+      "source_fov_cell_index": 7199,
+      "raw_time_h": 9.963290572762489,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 28937,
+      "csv_line_number": 28939,
+      "source_trajectory_key": "FOV_20_CH_13",
+      "source_fov_cell_index": 12710,
+      "raw_time_h": 5.014825606544813,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 30178,
+      "csv_line_number": 30180,
+      "source_trajectory_key": "FOV_21_CH_1",
+      "source_fov_cell_index": 448,
+      "raw_time_h": 7.888930929568079,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 33604,
+      "csv_line_number": 33606,
+      "source_trajectory_key": "FOV_5_CH_1",
+      "source_fov_cell_index": 508,
+      "raw_time_h": 9.160749357673858,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 35285,
+      "csv_line_number": 35287,
+      "source_trajectory_key": "FOV_37_CH_13",
+      "source_fov_cell_index": 10103,
+      "raw_time_h": 1.2037285351753235,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 35330,
+      "csv_line_number": 35332,
+      "source_trajectory_key": "FOV_37_CH_13",
+      "source_fov_cell_index": 10242,
+      "raw_time_h": 4.279715273976326,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 35562,
+      "csv_line_number": 35564,
+      "source_trajectory_key": "FOV_20_CH_7",
+      "source_fov_cell_index": 6192,
+      "raw_time_h": 9.762584759990377,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 36085,
+      "csv_line_number": 36087,
+      "source_trajectory_key": "FOV_40_CH_5",
+      "source_fov_cell_index": 3447,
+      "raw_time_h": 4.6143746756182775,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 36456,
+      "csv_line_number": 36458,
+      "source_trajectory_key": "FOV_21_CH_2",
+      "source_fov_cell_index": 1417,
+      "raw_time_h": 9.428141224649217,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 38743,
+      "csv_line_number": 38745,
+      "source_trajectory_key": "FOV_2_CH_21",
+      "source_fov_cell_index": 23423,
+      "raw_time_h": 2.7424312114053304,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 40081,
+      "csv_line_number": 40083,
+      "source_trajectory_key": "FOV_27_CH_11",
+      "source_fov_cell_index": 12600,
+      "raw_time_h": 2.809232445557912,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 47589,
+      "csv_line_number": 47591,
+      "source_trajectory_key": "FOV_5_CH_5",
+      "source_fov_cell_index": 4866,
+      "raw_time_h": 5.148827867441708,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 49930,
+      "csv_line_number": 49932,
+      "source_trajectory_key": "FOV_23_CH_21",
+      "source_fov_cell_index": 22058,
+      "raw_time_h": 1.4714173169930775,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 51995,
+      "csv_line_number": 51997,
+      "source_trajectory_key": "FOV_6_CH_2",
+      "source_fov_cell_index": 1662,
+      "raw_time_h": 9.495121263662972,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 52096,
+      "csv_line_number": 52098,
+      "source_trajectory_key": "FOV_18_CH_14",
+      "source_fov_cell_index": 16757,
+      "raw_time_h": 6.217887665099568,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 52895,
+      "csv_line_number": 52897,
+      "source_trajectory_key": "FOV_44_CH_15",
+      "source_fov_cell_index": 16450,
+      "raw_time_h": 9.494933531416788,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 53124,
+      "csv_line_number": 53126,
+      "source_trajectory_key": "FOV_6_CH_6",
+      "source_fov_cell_index": 5471,
+      "raw_time_h": 4.74817483180099,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 53320,
+      "csv_line_number": 53322,
+      "source_trajectory_key": "FOV_21_CH_12",
+      "source_fov_cell_index": 12762,
+      "raw_time_h": 7.822788323296441,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 56374,
+      "csv_line_number": 56376,
+      "source_trajectory_key": "FOV_40_CH_4",
+      "source_fov_cell_index": 2139,
+      "raw_time_h": 1.8725977019468945,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 65720,
+      "csv_line_number": 65722,
+      "source_trajectory_key": "FOV_27_CH_24",
+      "source_fov_cell_index": 30350,
+      "raw_time_h": 8.291232738428645,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 67209,
+      "csv_line_number": 67211,
+      "source_trajectory_key": "FOV_25_CH_10",
+      "source_fov_cell_index": 12495,
+      "raw_time_h": 7.822893060048421,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "baseline_0_10h",
+      "source_file": "G:\\python_code\\Moma_cellPose\\LineageAnalysis\\trajectories_data\\0-10h_selected_labeled.csv",
+      "source_row_index": 68183,
+      "csv_line_number": 68185,
+      "source_trajectory_key": "FOV_18_CH_2",
+      "source_fov_cell_index": 1356,
+      "raw_time_h": 2.8760023158126407,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 11130,
+      "csv_line_number": 11132,
+      "source_trajectory_key": "FOV_72_CH_17",
+      "source_fov_cell_index": 6447,
+      "raw_time_h": 16.552056039240625,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 28049,
+      "csv_line_number": 28051,
+      "source_trajectory_key": "FOV_77_CH_5",
+      "source_fov_cell_index": 3918,
+      "raw_time_h": 6.3685958725214,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 40444,
+      "csv_line_number": 40446,
+      "source_trajectory_key": "FOV_5_CH_9",
+      "source_fov_cell_index": 2521,
+      "raw_time_h": 10.78384260998832,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 57371,
+      "csv_line_number": 57373,
+      "source_trajectory_key": "FOV_76_CH_6",
+      "source_fov_cell_index": 1176,
+      "raw_time_h": 14.74647049367428,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 62984,
+      "csv_line_number": 62986,
+      "source_trajectory_key": "FOV_103_CH_10",
+      "source_fov_cell_index": 7920,
+      "raw_time_h": 14.595958397918276,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 75188,
+      "csv_line_number": 75190,
+      "source_trajectory_key": "FOV_81_CH_22",
+      "source_fov_cell_index": 11950,
+      "raw_time_h": 20.0118568103181,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 85628,
+      "csv_line_number": 85630,
+      "source_trajectory_key": "FOV_13_CH_5",
+      "source_fov_cell_index": 1860,
+      "raw_time_h": 1.955975847111808,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 112609,
+      "csv_line_number": 112611,
+      "source_trajectory_key": "FOV_54_CH_17",
+      "source_fov_cell_index": 7741,
+      "raw_time_h": 11.84699080804984,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 112614,
+      "csv_line_number": 112616,
+      "source_trajectory_key": "FOV_54_CH_17",
+      "source_fov_cell_index": 7761,
+      "raw_time_h": 12.086965072552363,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 117550,
+      "csv_line_number": 117552,
+      "source_trajectory_key": "FOV_43_CH_24",
+      "source_fov_cell_index": 6884,
+      "raw_time_h": 21.32440128266812,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118340,
+      "csv_line_number": 118342,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 9968,
+      "raw_time_h": 17.605817486842472,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118346,
+      "csv_line_number": 118348,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 9991,
+      "raw_time_h": 17.90615468766954,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118356,
+      "csv_line_number": 118358,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 10029,
+      "raw_time_h": 18.40782627297772,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118357,
+      "csv_line_number": 118359,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 10033,
+      "raw_time_h": 18.46131124330892,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118359,
+      "csv_line_number": 118361,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 10041,
+      "raw_time_h": 18.558514479928547,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118360,
+      "csv_line_number": 118362,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 10045,
+      "raw_time_h": 18.611813388135698,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118361,
+      "csv_line_number": 118363,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 10048,
+      "raw_time_h": 18.65857664730813,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 118385,
+      "csv_line_number": 118387,
+      "source_trajectory_key": "FOV_18_CH_20",
+      "source_fov_cell_index": 10138,
+      "raw_time_h": 19.862738140357862,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 145934,
+      "csv_line_number": 145936,
+      "source_trajectory_key": "FOV_64_CH_21",
+      "source_fov_cell_index": 10477,
+      "raw_time_h": 14.896773059500587,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 149738,
+      "csv_line_number": 149740,
+      "source_trajectory_key": "FOV_65_CH_16",
+      "source_fov_cell_index": 9387,
+      "raw_time_h": 10.682457093530232,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 155462,
+      "csv_line_number": 155464,
+      "source_trajectory_key": "FOV_18_CH_4",
+      "source_fov_cell_index": 1244,
+      "raw_time_h": 16.101297815839448,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 155483,
+      "csv_line_number": 155485,
+      "source_trajectory_key": "FOV_18_CH_4",
+      "source_fov_cell_index": 1328,
+      "raw_time_h": 17.15387185984188,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 158002,
+      "csv_line_number": 158004,
+      "source_trajectory_key": "FOV_73_CH_10",
+      "source_fov_cell_index": 11438,
+      "raw_time_h": 13.506791526675224,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 158693,
+      "csv_line_number": 158695,
+      "source_trajectory_key": "FOV_78_CH_22",
+      "source_fov_cell_index": 12013,
+      "raw_time_h": 4.814193112386597,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 162464,
+      "csv_line_number": 162466,
+      "source_trajectory_key": "FOV_3_CH_9",
+      "source_fov_cell_index": 5084,
+      "raw_time_h": 20.66497816734844,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 162470,
+      "csv_line_number": 162472,
+      "source_trajectory_key": "FOV_3_CH_9",
+      "source_fov_cell_index": 5108,
+      "raw_time_h": 20.96581972022852,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 162472,
+      "csv_line_number": 162474,
+      "source_trajectory_key": "FOV_3_CH_9",
+      "source_fov_cell_index": 5116,
+      "raw_time_h": 21.06620320551925,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 162474,
+      "csv_line_number": 162476,
+      "source_trajectory_key": "FOV_3_CH_9",
+      "source_fov_cell_index": 5124,
+      "raw_time_h": 21.16663511527909,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 162475,
+      "csv_line_number": 162477,
+      "source_trajectory_key": "FOV_3_CH_9",
+      "source_fov_cell_index": 5128,
+      "raw_time_h": 21.216321854127777,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 162480,
+      "csv_line_number": 162482,
+      "source_trajectory_key": "FOV_3_CH_9",
+      "source_fov_cell_index": 5148,
+      "raw_time_h": 21.46773731748263,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 162482,
+      "csv_line_number": 162484,
+      "source_trajectory_key": "FOV_3_CH_9",
+      "source_fov_cell_index": 5156,
+      "raw_time_h": 21.56758292860455,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 177053,
+      "csv_line_number": 177055,
+      "source_trajectory_key": "FOV_102_CH_25",
+      "source_fov_cell_index": 16803,
+      "raw_time_h": 15.699275551040968,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 187464,
+      "csv_line_number": 187466,
+      "source_trajectory_key": "FOV_80_CH_1",
+      "source_fov_cell_index": 1424,
+      "raw_time_h": 17.870240138371784,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 191599,
+      "csv_line_number": 191601,
+      "source_trajectory_key": "FOV_32_CH_5",
+      "source_fov_cell_index": 2412,
+      "raw_time_h": 8.576306840181351,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 197739,
+      "csv_line_number": 197741,
+      "source_trajectory_key": "FOV_84_CH_9",
+      "source_fov_cell_index": 11291,
+      "raw_time_h": 13.206899238957298,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 211528,
+      "csv_line_number": 211530,
+      "source_trajectory_key": "FOV_62_CH_4",
+      "source_fov_cell_index": 2606,
+      "raw_time_h": 11.435294143623777,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 212751,
+      "csv_line_number": 212753,
+      "source_trajectory_key": "FOV_101_CH_13",
+      "source_fov_cell_index": 7521,
+      "raw_time_h": 7.794330656263563,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 214325,
+      "csv_line_number": 214327,
+      "source_trajectory_key": "FOV_41_CH_17",
+      "source_fov_cell_index": 10274,
+      "raw_time_h": 0.0497047396500905,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 220793,
+      "csv_line_number": 220795,
+      "source_trajectory_key": "FOV_18_CH_11",
+      "source_fov_cell_index": 5083,
+      "raw_time_h": 21.116144576337604,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 232293,
+      "csv_line_number": 232295,
+      "source_trajectory_key": "FOV_2_CH_13",
+      "source_fov_cell_index": 4404,
+      "raw_time_h": 12.890817044907148,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    },
+    {
+      "source_dataset": "rdm_gluc_toggle_20260905",
+      "source_file": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "source_row_index": 235395,
+      "csv_line_number": 235397,
+      "source_trajectory_key": "FOV_6_CH_16",
+      "source_fov_cell_index": 4728,
+      "raw_time_h": 16.804125764899783,
+      "raw_spine_length": 0.0,
+      "reasons": [
+        "spine_length_not_positive"
+      ]
+    }
+  ],
+  "output": {
+    "training_csv": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\verified_training_data.csv",
+    "training_csv_sha256": "deff25a96a7f572b86b0ce7a033b3c4744098d0e73462d44d3db896810c23cba",
+    "manifest": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\dataset_manifest.json"
+  }
+}

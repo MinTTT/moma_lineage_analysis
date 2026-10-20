@@ -1,0 +1,174 @@
+{
+  "thresholds": {
+    "division_point": 0.8100000023841858,
+    "excluded_point": 0.8899999856948853
+  },
+  "validation": {
+    "point": {
+      "division_point": {
+        "threshold": 0.8100000023841858,
+        "support": 4140,
+        "precision": 0.9978160640621209,
+        "recall": 0.9932367149758454,
+        "f1": 0.995521123350684,
+        "average_precision": 0.9998975289659207
+      },
+      "excluded_point": {
+        "threshold": 0.8899999856948853,
+        "support": 185,
+        "precision": 0.8975903614457831,
+        "recall": 0.8054054054054054,
+        "f1": 0.8490028490028491,
+        "average_precision": 0.9157800906037391
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 4103,
+      "false_positive": 8,
+      "false_negative": 18,
+      "precision": 0.9980540014594989,
+      "recall": 0.9956321281242417,
+      "f1": 0.9968415937803694,
+      "mean_absolute_error_frames": 0.0021935169388252497
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 864,
+        "recall": 0.9907407407407407
+      },
+      "division_recall_tail_quintile": {
+        "support": 838,
+        "recall": 0.9904534606205251
+      },
+      "last_division_event": {
+        "trajectories_with_division": 158,
+        "last_event_missed": 4,
+        "miss_rate": 0.02531645569620253
+      }
+    }
+  },
+  "test_filtered": {
+    "point": {
+      "division_point": {
+        "threshold": 0.8100000023841858,
+        "support": 4084,
+        "precision": 0.9965576592082617,
+        "recall": 0.992409402546523,
+        "f1": 0.9944792050055208,
+        "average_precision": 0.9996970837654297
+      },
+      "excluded_point": {
+        "threshold": 0.8899999856948853,
+        "support": 206,
+        "precision": 0.8648648648648649,
+        "recall": 0.7766990291262136,
+        "f1": 0.8184143222506394,
+        "average_precision": 0.9000257797472636
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 4038,
+      "false_positive": 9,
+      "false_negative": 19,
+      "precision": 0.9977761304670126,
+      "recall": 0.9953167365048065,
+      "f1": 0.9965449160908194,
+      "mean_absolute_error_frames": 0.0012382367508667657
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 833,
+        "recall": 0.9963985594237695
+      },
+      "division_recall_tail_quintile": {
+        "support": 830,
+        "recall": 0.9867469879518073
+      },
+      "last_division_event": {
+        "trajectories_with_division": 158,
+        "last_event_missed": 1,
+        "miss_rate": 0.006329113924050633
+      }
+    }
+  },
+  "test_original_v2": {
+    "point": {
+      "division_point": {
+        "threshold": 0.8100000023841858,
+        "support": 4209,
+        "precision": 0.99618138424821,
+        "recall": 0.9916844856260394,
+        "f1": 0.9939278485533992,
+        "average_precision": 0.9996779878718868
+      },
+      "excluded_point": {
+        "threshold": 0.8899999856948853,
+        "support": 281,
+        "precision": 0.875,
+        "recall": 0.6227758007117438,
+        "f1": 0.7276507276507277,
+        "average_precision": 0.7697477632421579
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 4159,
+      "false_positive": 11,
+      "false_negative": 23,
+      "precision": 0.9973621103117506,
+      "recall": 0.9945002391200383,
+      "f1": 0.9959291187739464,
+      "mean_absolute_error_frames": 0.0012022120702091848
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 858,
+        "recall": 0.9965034965034965
+      },
+      "division_recall_tail_quintile": {
+        "support": 854,
+        "recall": 0.9836065573770492
+      },
+      "last_division_event": {
+        "trajectories_with_division": 161,
+        "last_event_missed": 2,
+        "miss_rate": 0.012422360248447204
+      }
+    }
+  },
+  "training_data": {
+    "csv": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\verified_training_data_no_longruns.csv",
+    "rows": 312317,
+    "trajectories": 1053
+  },
+  "split_summary": {
+    "train": 737,
+    "validation": 158,
+    "test": 158
+  },
+  "train_config": {
+    "epochs": 100,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "focal_gamma": 1.5,
+    "maximum_positive_weight": 50.0,
+    "patience": 15,
+    "seed": 42,
+    "device": "auto",
+    "division_tolerance_frames": 1
+  },
+  "model_config": {
+    "model_type": "cnn",
+    "input_size": 5,
+    "output_size": 2,
+    "hidden_size": 64,
+    "num_layers": 4,
+    "kernel_size": 5,
+    "dropout": 0.15,
+    "bidirectional": true
+  },
+  "elapsed_seconds": 29.1
+}

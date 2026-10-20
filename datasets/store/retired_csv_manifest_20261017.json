@@ -1,0 +1,146 @@
+{
+  "phase": 3,
+  "action": "retire legacy corpus CSVs after phase-2 sign-off",
+  "signed_off_by": "user (message: sign-off, 2026-10-17)",
+  "retired_at_utc": "2026-10-17T14:38:00Z",
+  "store": {
+    "path": "datasets/store/lineage.sqlite3",
+    "schema_version": 2,
+    "sha256": "d524deffaf8f921099bec3a46731f7a1e814753aa5112c5610e30efd8661f886",
+    "bytes": 13508608
+  },
+  "verification_before_retirement": {
+    "command": "python scripts/dataset_store.py verify --require-legacy-csv",
+    "status": "PASS",
+    "checks": 14,
+    "failures": [],
+    "note": "strict run passed while all six legacy CSVs were still present"
+  },
+  "verification_after_retirement": {
+    "command": "python scripts/dataset_store.py verify",
+    "status": "PASS",
+    "checks": 14,
+    "failures": [],
+    "versions": [
+      {
+        "version": "verified_20260916_no_longruns@v1",
+        "legacy_csv_state": "retired",
+        "export_sha_matches_pin": true
+      },
+      {
+        "version": "verified_20261013@v1",
+        "legacy_csv_state": "retired",
+        "export_sha_matches_pin": true
+      },
+      {
+        "version": "verified_20261016@v1",
+        "legacy_csv_state": "retired",
+        "export_sha_matches_pin": true
+      },
+      {
+        "version": "verified_merged_20261016@v1",
+        "legacy_csv_state": "retired",
+        "export_sha_matches_pin": true
+      },
+      {
+        "version": "verified_20261017@v1",
+        "legacy_csv_state": "retired",
+        "export_sha_matches_pin": true
+      },
+      {
+        "version": "verified_merged_20261017@v1",
+        "legacy_csv_state": "retired",
+        "export_sha_matches_pin": true
+      }
+    ]
+  },
+  "retired_files": [
+    {
+      "dataset_id": "verified_20260916_no_longruns",
+      "lineage_id": "verified_20260916_no_longruns@v1",
+      "content_ref": "verified_20260916_no_longruns@v1#15e5f8ecd4a6",
+      "kind": "production",
+      "round_name": "R004",
+      "retired_path": "datasets/verified_20260916/verified_training_data_no_longruns.csv",
+      "bytes": 95571705,
+      "sha256": "a2b3793d2138d806f5d5a85c3f51e15b9629953b4c0ef54b9490b74f99bc0092",
+      "rows": 312317,
+      "trajectories": 1053,
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20260916_no_longruns --version 1 --output datasets/verified_20260916/verified_training_data_no_longruns.csv"
+    },
+    {
+      "dataset_id": "verified_20261013",
+      "lineage_id": "verified_20261013@v1",
+      "content_ref": "verified_20261013@v1#551f4259b774",
+      "kind": "batch",
+      "round_name": "R006",
+      "retired_path": "datasets/verified_20261013/verified_training_data.csv",
+      "bytes": 6738683,
+      "sha256": "15721ab757e956fc5c8a79855f67ce5713cc5a619a1b88ed2a80404b4c2870b3",
+      "rows": 22890,
+      "trajectories": 35,
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261013 --version 1 --output datasets/verified_20261013/verified_training_data.csv"
+    },
+    {
+      "dataset_id": "verified_20261016",
+      "lineage_id": "verified_20261016@v1",
+      "content_ref": "verified_20261016@v1#dd66727daab8",
+      "kind": "batch",
+      "round_name": "R007",
+      "retired_path": "datasets/verified_20261016/verified_training_data.csv",
+      "bytes": 9234647,
+      "sha256": "e4fced1a3958840954e334ac49acfdeeb0d6f4b2602a35760154e5f2ea13cf76",
+      "rows": 31384,
+      "trajectories": 48,
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261016 --version 1 --output datasets/verified_20261016/verified_training_data.csv"
+    },
+    {
+      "dataset_id": "verified_merged_20261016",
+      "lineage_id": "verified_merged_20261016@v1",
+      "content_ref": "verified_merged_20261016@v1#5fd02bbdbc3b",
+      "kind": "merged",
+      "round_name": "R008",
+      "retired_path": "datasets/verified_merged_20261016/verified_training_data.csv",
+      "bytes": 111168330,
+      "sha256": "4e198bfb85ab35da2694a888c7fa2ce67c5b5ac338a0596d91796162ea407613",
+      "rows": 365283,
+      "trajectories": 1134,
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261016 --version 1 --output datasets/verified_merged_20261016/verified_training_data.csv"
+    },
+    {
+      "dataset_id": "verified_20261017",
+      "lineage_id": "verified_20261017@v1",
+      "content_ref": "verified_20261017@v1#ad45126b282f",
+      "kind": "batch",
+      "round_name": "R009",
+      "retired_path": "datasets/verified_20261017/verified_training_data.csv",
+      "bytes": 2591414,
+      "sha256": "247da098e97d060c4c24696ef4ed78862a0ef3932b717492d21f1c8219d8ad67",
+      "rows": 8757,
+      "trajectories": 16,
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261017 --version 1 --output datasets/verified_20261017/verified_training_data.csv"
+    },
+    {
+      "dataset_id": "verified_merged_20261017",
+      "lineage_id": "verified_merged_20261017@v1",
+      "content_ref": "verified_merged_20261017@v1#e3af02bd392a",
+      "kind": "merged",
+      "round_name": "R010",
+      "retired_path": "datasets/verified_merged_20261017/verified_training_data.csv",
+      "bytes": 113586673,
+      "sha256": "7ecc9753cf02c0dfc020fd70f6b077f997799d46d4f3af3fd89d12a16eaee2bc",
+      "rows": 373440,
+      "trajectories": 1149,
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261017 --version 1 --output datasets/verified_merged_20261017/verified_training_data.csv"
+    }
+  ],
+  "datasets_tree_bytes_after": "~29.4 MB (approximate; exact byte count omitted because it changes whenever docs or this record are edited)",
+  "notes": [
+    "Export from the store reproduces each retired CSV byte-for-byte; the export sha256 equals the stored legacy SHA-256 (verified before deleting and still checked by every verify run).",
+    "Only the six pinned corpus CSVs were deleted; provenance JSONs, per-corpus manifests, staged provenance, datasets/manifest.json and the store remain.",
+    "Restore any corpus with its restore_command above and re-run scripts/dataset_store.py verify --require-legacy-csv to recreate the pre-retirement state.",
+    "datasets_tree_bytes_after is re-measured when this record is touched; the post-retirement tree was ~29.4 MB (six CSVs removed, provenance JSONs and staged files kept).",
+    "datasets_tree_bytes_after excludes transient SQLite -shm/-wal files and is re-measured whenever this record is refreshed; treat ~29.4 MB as approximate."
+  ],
+  "datasets_tree_bytes_after_approximate": true
+}

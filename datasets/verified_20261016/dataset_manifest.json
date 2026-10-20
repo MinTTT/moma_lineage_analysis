@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-10-16T14:05:33.629428Z",
+  "human_verified": true,
+  "verification_basis": "user_attested_2026-10-16",
+  "canonical_target_columns": [
+    "division_point",
+    "excluded_point"
+  ],
+  "feature_columns": [
+    "time_h",
+    "spine_length"
+  ],
+  "output_columns": [
+    "trajectory_key",
+    "fov_cell_index",
+    "time_h",
+    "spine_length",
+    "division_point",
+    "excluded_point",
+    "source_dataset",
+    "source_file",
+    "source_file_sha256",
+    "source_trajectory_key",
+    "source_fov_cell_index"
+  ],
+  "label_policy": "Only canonical final division_point and excluded_point values are targets; AI predictions, effective labels, and audit fields are ignored.",
+  "namespace": {
+    "delimiter": "::",
+    "format": "<source_dataset>::<source_trajectory_key>",
+    "raw_keys_present_in_multiple_sources": 0,
+    "colliding_raw_keys": [],
+    "collision_handling": "After explicit supersession, remaining raw-key collisions are resolved by prefixing every raw key with its unique dataset ID."
+  },
+  "supersession": {
+    "policy": "For each explicit older=preferred rule, an older trajectory is omitted in full when its raw key exists in the preferred source.",
+    "rules": []
+  },
+  "sources": [
+    {
+      "dataset_id": "curated_20261016",
+      "source_file": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\staged\\combined_curated_20261016.csv",
+      "source_file_sha256": "6b27a9d812a52595b76182faebb8a28f71f3dcc3168f6ac6129412b413c80512",
+      "raw_rows": 31384,
+      "eligible_rows_after_supersession": 31384,
+      "retained_rows": 31384,
+      "omitted_superseded_rows": 0,
+      "omitted_superseded_trajectories": 0,
+      "omitted_invalid_feature_rows": 0,
+      "raw_trajectories": 48,
+      "eligible_trajectories_after_supersession": 48,
+      "retained_trajectories": 48,
+      "raw_label_counts": {
+        "division_point": 2698,
+        "excluded_point": 300,
+        "division_and_excluded_overlap": 0
+      },
+      "eligible_label_counts_after_supersession": {
+        "division_point": 2698,
+        "excluded_point": 300,
+        "division_and_excluded_overlap": 0
+      },
+      "retained_label_counts": {
+        "division_point": 2698,
+        "excluded_point": 300,
+        "division_and_excluded_overlap": 0
+      },
+      "superseded_by": null,
+      "superseded_trajectory_keys": [],
+      "ignored_label_or_audit_columns": [],
+      "invalid_feature_rows": []
+    }
+  ],
+  "summary": {
+    "source_files": 1,
+    "raw_rows": 31384,
+    "retained_rows": 31384,
+    "omitted_superseded_rows": 0,
+    "omitted_superseded_trajectories": 0,
+    "omitted_invalid_feature_rows": 0,
+    "retained_trajectories": 48,
+    "retained_label_counts": {
+      "division_point": 2698,
+      "excluded_point": 300,
+      "division_and_excluded_overlap": 0
+    },
+    "trajectories_with_fewer_than_two_retained_points": []
+  },
+  "invalid_feature_rows": [],
+  "output": {
+    "training_csv": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\verified_training_data.csv",
+    "training_csv_sha256": "e4fced1a3958840954e334ac49acfdeeb0d6f4b2602a35760154e5f2ea13cf76",
+    "manifest": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\dataset_manifest.json"
+  }
+}

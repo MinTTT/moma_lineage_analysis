@@ -1,0 +1,77 @@
+{
+  "analysis_id": "trajectory_cleaning_model",
+  "method_version": "0.2.0",
+  "generated": "2026-09-16",
+  "note": "Actual run manifest for round R002 (model improvement): declared-vs-actual reconciliation evidence.",
+  "entry_points": [
+    "dev_code/trajectory_cleaning_cli.py train",
+    "dev_code/trajectory_cleaning_cli.py predict",
+    "dev_code/r002_train.py (R002 retraining)",
+    "trajectory_cleaning/promote_best_model.py",
+    "trajectory_cleaning/prepare_verified_training_data.py",
+    "trajectory_cleaning/plot_training_results.py",
+    "Moma_lineage_streamlit.py (AI cleaning panel)"
+  ],
+  "inputs": [
+    "trajectory_cleaning_run/verified_20260916/verified_training_data.csv",
+    "trajectory_cleaning_run/verified_20260916/dataset_manifest.json"
+  ],
+  "input_sha256": {
+    "verified_training_data.csv": "deff25a96a7f572b86b0ce7a033b3c4744098d0e73462d44d3db896810c23cba"
+  },
+  "analysis_unit": "observation (one cell at one time point); division event for event-level metrics",
+  "independent_unit": "trajectory (trajectory_key); known limitation: not FOV-held-out",
+  "populations": {
+    "train": "748 trajectories / 223,095 rows (19,608 division, 1,294 excluded positives)",
+    "validation": "161 trajectories / 47,858 rows (4,218 division, 301 excluded positives)",
+    "test": "161 trajectories / 47,792 rows (4,209 division, 281 excluded positives)"
+  },
+  "metrics": {
+    "POINT_F1": "point-level precision/recall/F1 per label at calibrated threshold",
+    "POINT_AP": "average precision per label",
+    "DIVISION_EVENT_F1": "event-level P/R/F1, tolerance +/-1 frame",
+    "DIVISION_EVENT_MAE": "mean absolute frame error over matched events",
+    "DIVISION_RECALL_TAIL": "division recall in last trajectory quintile (rel. pos. >= 0.8)",
+    "DIVISION_RECALL_HEAD": "division recall in first trajectory quintile (rel. pos. <= 0.2)",
+    "LAST_EVENT_MISS_RATE": "fraction of trajectories whose last division event is missed"
+  },
+  "parameters": {
+    "MODEL_CONFIG": "input 5, output 2, hidden 64, layers 4, kernel 5, dropout 0.15 (pre-R002 checkpoints: input 2)",
+    "TRAIN_CONFIG": "epochs 100, batch 16, lr 1e-3, wd 1e-4, gamma 1.5, max_pos_weight 50, patience 15, seed 42",
+    "DIVISION_TOLERANCE": 1,
+    "THRESHOLD_GRID": "np.linspace(0.05, 0.95, 91), validation-only",
+    "SPLIT_FRACTIONS": "validation 0.15, test 0.15, seed 42",
+    "NORMALIZER_SCALE": "clip 12, time_step_scale 100, min_length_scale 0.05, MAD 1.4826, feature_compatibility extended/legacy",
+    "DIVISION_DROP_RATIO": 0.75,
+    "R002_LABEL_POLICY": "coalesced_previous labels dropped; edp-only rows kept; needs_review/shifted_previous kept"
+  },
+  "statistics": {
+    "model_selection": "maximize mean of validation division-event F1 and validation exclusion F1; test never used for selection",
+    "uncertainty": "none reported (limitation)",
+    "seed": 42
+  },
+  "plots": {
+    "LOSS_CURVES": "training_loss_curves.png",
+    "F1_COMPARISON": "model_f1_comparison.png",
+    "LABEL_BALANCE": "dataset_label_balance.png"
+  },
+  "outputs": [
+    "trajectory_cleaning_run/verified_20260916/cnn/",
+    "trajectory_cleaning_run/verified_20260916/resnet/",
+    "trajectory_cleaning_run/verified_20260916/lstm/",
+    "trajectory_cleaning_run/verified_20260916/r002_model_comparison.json",
+    "trajectory_cleaning_run/verified_20260916/r002_heldout_full_newdataset.json",
+    "tests/trajectory_cleaning/R002_ROUND_REPORT.md"
+  ],
+  "checkpoint_sha256": {
+    "cnn": "56ee4e53c7eaca4e4fa991f7b1b22508ff7cf61100795de19db5b9e601ae7750",
+    "resnet": "e6be1ee05264f8e52a177cc58e3ac14619b841ac7a189e431e0cd0104d5df39d",
+    "lstm": "909c302edd75d33b69cc229da0b7727a45793d108e282c63625444ce612d227d"
+  },
+  "validation_gates": [
+    "86-test unittest battery in tests/trajectory_cleaning (run 2026-09-16: OK)",
+    "validate_methods_file.py on this contract: PASS",
+    "R002 retraining on corpus v2: division tail-quintile recall 0.988-0.994, last-event miss rate 0.000-0.012 (test partition)",
+    "R002 backward compatibility: pre-R002 checkpoint loads in legacy mode and reproduces original predictions"
+  ]
+}

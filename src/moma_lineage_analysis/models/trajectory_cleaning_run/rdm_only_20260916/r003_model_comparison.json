@@ -1,0 +1,389 @@
+{
+  "cnn": {
+    "thresholds": {
+      "division_point": 0.7900000214576721,
+      "excluded_point": 0.8700000047683716
+    },
+    "validation": {
+      "point": {
+        "division_point": {
+          "threshold": 0.7900000214576721,
+          "support": 3541,
+          "precision": 0.9971671388101983,
+          "recall": 0.994069471900593,
+          "f1": 0.9956158959128836,
+          "average_precision": 0.9999325688358245
+        },
+        "excluded_point": {
+          "threshold": 0.8700000047683716,
+          "support": 196,
+          "precision": 0.8778625954198473,
+          "recall": 0.5867346938775511,
+          "f1": 0.7033639143730887,
+          "average_precision": 0.7904460704158477
+        }
+      },
+      "division_event": {
+        "tolerance_frames": 1,
+        "true_positive": 3522,
+        "false_positive": 5,
+        "false_negative": 17,
+        "precision": 0.9985823646158208,
+        "recall": 0.9951963831590845,
+        "f1": 0.996886498726295,
+        "mean_absolute_error_frames": 0.0014196479273140261
+      },
+      "position": {
+        "division_recall_head_quintile": {
+          "support": 709,
+          "recall": 0.9929478138222849
+        },
+        "division_recall_tail_quintile": {
+          "support": 704,
+          "recall": 0.9886363636363636
+        },
+        "last_division_event": {
+          "trajectories_with_division": 84,
+          "last_event_missed": 1,
+          "miss_rate": 0.011904761904761904
+        }
+      }
+    },
+    "test": {
+      "point": {
+        "division_point": {
+          "threshold": 0.7900000214576721,
+          "support": 3565,
+          "precision": 0.9971854770616381,
+          "recall": 0.9938288920056101,
+          "f1": 0.9955043551559427,
+          "average_precision": 0.9999157283914014
+        },
+        "excluded_point": {
+          "threshold": 0.8700000047683716,
+          "support": 109,
+          "precision": 0.8151260504201681,
+          "recall": 0.8899082568807339,
+          "f1": 0.8508771929824561,
+          "average_precision": 0.8959940022216352
+        }
+      },
+      "division_event": {
+        "tolerance_frames": 1,
+        "true_positive": 3546,
+        "false_positive": 5,
+        "false_negative": 13,
+        "precision": 0.9985919459307238,
+        "recall": 0.9963472885642034,
+        "f1": 0.9974683544303798,
+        "mean_absolute_error_frames": 0.003102086858432036
+      },
+      "position": {
+        "division_recall_head_quintile": {
+          "support": 721,
+          "recall": 0.9944521497919556
+        },
+        "division_recall_tail_quintile": {
+          "support": 728,
+          "recall": 0.9931318681318682
+        },
+        "last_division_event": {
+          "trajectories_with_division": 84,
+          "last_event_missed": 1,
+          "miss_rate": 0.011904761904761904
+        }
+      }
+    },
+    "training_data": {
+      "csv": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "rows": 241540,
+      "trajectories": 560
+    },
+    "split_summary": {
+      "train": 392,
+      "validation": 84,
+      "test": 84
+    },
+    "train_config": {
+      "epochs": 100,
+      "batch_size": 16,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "focal_gamma": 1.5,
+      "maximum_positive_weight": 50.0,
+      "patience": 15,
+      "seed": 42,
+      "device": "auto",
+      "division_tolerance_frames": 1
+    },
+    "model_config": {
+      "model_type": "cnn",
+      "input_size": 5,
+      "output_size": 2,
+      "hidden_size": 64,
+      "num_layers": 4,
+      "kernel_size": 5,
+      "dropout": 0.15,
+      "bidirectional": true
+    },
+    "elapsed_seconds": 11.3
+  },
+  "resnet": {
+    "thresholds": {
+      "division_point": 0.699999988079071,
+      "excluded_point": 0.800000011920929
+    },
+    "validation": {
+      "point": {
+        "division_point": {
+          "threshold": 0.699999988079071,
+          "support": 3541,
+          "precision": 0.9924029262802476,
+          "recall": 0.9960463146003954,
+          "f1": 0.9942212825933756,
+          "average_precision": 0.9995706365929855
+        },
+        "excluded_point": {
+          "threshold": 0.800000011920929,
+          "support": 196,
+          "precision": 0.46616541353383456,
+          "recall": 0.6326530612244898,
+          "f1": 0.5367965367965368,
+          "average_precision": 0.5432638791731982
+        }
+      },
+      "division_event": {
+        "tolerance_frames": 1,
+        "true_positive": 3528,
+        "false_positive": 19,
+        "false_negative": 11,
+        "precision": 0.994643360586411,
+        "recall": 0.9968917773382311,
+        "f1": 0.995766299745978,
+        "mean_absolute_error_frames": 0.0022675736961451248
+      },
+      "position": {
+        "division_recall_head_quintile": {
+          "support": 709,
+          "recall": 0.995768688293371
+        },
+        "division_recall_tail_quintile": {
+          "support": 704,
+          "recall": 0.9928977272727273
+        },
+        "last_division_event": {
+          "trajectories_with_division": 84,
+          "last_event_missed": 1,
+          "miss_rate": 0.011904761904761904
+        }
+      }
+    },
+    "test": {
+      "point": {
+        "division_point": {
+          "threshold": 0.699999988079071,
+          "support": 3565,
+          "precision": 0.9907949790794979,
+          "recall": 0.9963534361851333,
+          "f1": 0.9935664335664336,
+          "average_precision": 0.9994380672427039
+        },
+        "excluded_point": {
+          "threshold": 0.800000011920929,
+          "support": 109,
+          "precision": 0.4189189189189189,
+          "recall": 0.8532110091743119,
+          "f1": 0.5619335347432024,
+          "average_precision": 0.6269896563461449
+        }
+      },
+      "division_event": {
+        "tolerance_frames": 1,
+        "true_positive": 3555,
+        "false_positive": 26,
+        "false_negative": 4,
+        "precision": 0.9927394582518849,
+        "recall": 0.9988760887889857,
+        "f1": 0.995798319327731,
+        "mean_absolute_error_frames": 0.0030942334739803095
+      },
+      "position": {
+        "division_recall_head_quintile": {
+          "support": 721,
+          "recall": 0.9944521497919556
+        },
+        "division_recall_tail_quintile": {
+          "support": 728,
+          "recall": 0.9972527472527473
+        },
+        "last_division_event": {
+          "trajectories_with_division": 84,
+          "last_event_missed": 0,
+          "miss_rate": 0.0
+        }
+      }
+    },
+    "training_data": {
+      "csv": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "rows": 241540,
+      "trajectories": 560
+    },
+    "split_summary": {
+      "train": 392,
+      "validation": 84,
+      "test": 84
+    },
+    "train_config": {
+      "epochs": 100,
+      "batch_size": 16,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "focal_gamma": 1.5,
+      "maximum_positive_weight": 50.0,
+      "patience": 15,
+      "seed": 42,
+      "device": "auto",
+      "division_tolerance_frames": 1
+    },
+    "model_config": {
+      "model_type": "resnet",
+      "input_size": 5,
+      "output_size": 2,
+      "hidden_size": 64,
+      "num_layers": 4,
+      "kernel_size": 5,
+      "dropout": 0.15,
+      "bidirectional": true
+    },
+    "elapsed_seconds": 7.3
+  },
+  "lstm": {
+    "thresholds": {
+      "division_point": 0.7599999904632568,
+      "excluded_point": 0.8399999737739563
+    },
+    "validation": {
+      "point": {
+        "division_point": {
+          "threshold": 0.7599999904632568,
+          "support": 3541,
+          "precision": 0.9951923076923077,
+          "recall": 0.9937870658006213,
+          "f1": 0.9944891903348877,
+          "average_precision": 0.9998732957245027
+        },
+        "excluded_point": {
+          "threshold": 0.8399999737739563,
+          "support": 196,
+          "precision": 0.8352941176470589,
+          "recall": 0.7244897959183674,
+          "f1": 0.7759562841530054,
+          "average_precision": 0.7622346381807109
+        }
+      },
+      "division_event": {
+        "tolerance_frames": 1,
+        "true_positive": 3520,
+        "false_positive": 16,
+        "false_negative": 19,
+        "precision": 0.995475113122172,
+        "recall": 0.9946312517660356,
+        "f1": 0.9950530035335688,
+        "mean_absolute_error_frames": 0.0008522727272727272
+      },
+      "position": {
+        "division_recall_head_quintile": {
+          "support": 709,
+          "recall": 0.995768688293371
+        },
+        "division_recall_tail_quintile": {
+          "support": 704,
+          "recall": 0.9900568181818182
+        },
+        "last_division_event": {
+          "trajectories_with_division": 84,
+          "last_event_missed": 1,
+          "miss_rate": 0.011904761904761904
+        }
+      }
+    },
+    "test": {
+      "point": {
+        "division_point": {
+          "threshold": 0.7599999904632568,
+          "support": 3565,
+          "precision": 0.9974655026753028,
+          "recall": 0.9935483870967742,
+          "f1": 0.9955030916245081,
+          "average_precision": 0.9998680159499596
+        },
+        "excluded_point": {
+          "threshold": 0.8399999737739563,
+          "support": 109,
+          "precision": 0.6076923076923076,
+          "recall": 0.7247706422018348,
+          "f1": 0.6610878661087866,
+          "average_precision": 0.5390016368627087
+        }
+      },
+      "division_event": {
+        "tolerance_frames": 1,
+        "true_positive": 3545,
+        "false_positive": 6,
+        "false_negative": 14,
+        "precision": 0.9983103351168685,
+        "recall": 0.9960663107614498,
+        "f1": 0.9971870604781997,
+        "mean_absolute_error_frames": 0.002538787023977433
+      },
+      "position": {
+        "division_recall_head_quintile": {
+          "support": 721,
+          "recall": 0.9916782246879334
+        },
+        "division_recall_tail_quintile": {
+          "support": 728,
+          "recall": 0.9945054945054945
+        },
+        "last_division_event": {
+          "trajectories_with_division": 84,
+          "last_event_missed": 1,
+          "miss_rate": 0.011904761904761904
+        }
+      }
+    },
+    "training_data": {
+      "csv": "G:\\python_code\\Moma_cellPose\\trajectory_cleaning_run\\verified_20260916\\rdm_gluc_toggle_20260905_resolved_labels.csv",
+      "rows": 241540,
+      "trajectories": 560
+    },
+    "split_summary": {
+      "train": 392,
+      "validation": 84,
+      "test": 84
+    },
+    "train_config": {
+      "epochs": 100,
+      "batch_size": 16,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "focal_gamma": 1.5,
+      "maximum_positive_weight": 50.0,
+      "patience": 15,
+      "seed": 42,
+      "device": "auto",
+      "division_tolerance_frames": 1
+    },
+    "model_config": {
+      "model_type": "lstm",
+      "input_size": 5,
+      "output_size": 2,
+      "hidden_size": 64,
+      "num_layers": 4,
+      "kernel_size": 5,
+      "dropout": 0.15,
+      "bidirectional": true
+    },
+    "elapsed_seconds": 210.1
+  }
+}

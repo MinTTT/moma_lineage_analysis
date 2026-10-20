@@ -1,0 +1,3 @@
+[console_scripts]
+moma-lineage = moma_lineage_analysis.app.cli:main
+moma-trajectory-cleaning = moma_lineage_analysis.trajectory_cleaning.cli:main

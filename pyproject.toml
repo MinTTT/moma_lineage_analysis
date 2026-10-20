@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moma-lineage-analysis"
+version = "0.1.0"
+description = "Mother-machine cell lineage construction, interactive curation, and AI-assisted trajectory cleaning"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "joblib",
+    "torch",
+    "streamlit>=1.30",
+    "plotly",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+moma-lineage = "moma_lineage_analysis.app.cli:main"
+moma-trajectory-cleaning = "moma_lineage_analysis.trajectory_cleaning.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+moma_lineage_analysis = [
+    "models/trajectory_cleaning_run/**/*",
+    "trajectory_cleaning/*.md",
+]

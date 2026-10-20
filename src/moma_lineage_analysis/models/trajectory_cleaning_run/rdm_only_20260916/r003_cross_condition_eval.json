@@ -1,0 +1,106 @@
+{
+  "old_corpus_test": {
+    "r003_cnn": {
+      "pointF1": 0.9465,
+      "pointR": 0.9495,
+      "pointP": 0.9436,
+      "eventF1": 0.9662,
+      "eventR": 0.9885,
+      "tailR": 0.9242,
+      "lastMiss": 0.0,
+      "exclF1": 0.152
+    },
+    "r003_resnet": {
+      "pointF1": 0.9132,
+      "pointR": 0.9621,
+      "pointP": 0.8689,
+      "eventF1": 0.9292,
+      "eventR": 0.9934,
+      "tailR": 0.9545,
+      "lastMiss": 0.0,
+      "exclF1": 0.1188
+    },
+    "r003_lstm": {
+      "pointF1": 0.9576,
+      "pointR": 0.9432,
+      "pointP": 0.9724,
+      "eventF1": 0.9779,
+      "eventR": 0.9836,
+      "tailR": 0.9242,
+      "lastMiss": 0.013,
+      "exclF1": 0.0467
+    },
+    "r002_cnn": {
+      "pointF1": 0.9538,
+      "pointR": 0.9763,
+      "pointP": 0.9322,
+      "eventF1": 0.9627,
+      "eventR": 0.9967,
+      "tailR": 0.9621,
+      "lastMiss": 0.0,
+      "exclF1": 0.4878
+    },
+    "r002_resnet": {
+      "pointF1": 0.9684,
+      "pointR": 0.9653,
+      "pointP": 0.9714,
+      "eventF1": 0.9796,
+      "eventR": 0.9885,
+      "tailR": 0.9394,
+      "lastMiss": 0.013,
+      "exclF1": 0.4898
+    },
+    "r002_lstm": {
+      "pointF1": 0.9457,
+      "pointR": 0.9748,
+      "pointP": 0.9183,
+      "eventF1": 0.9589,
+      "eventR": 0.9984,
+      "tailR": 0.9697,
+      "lastMiss": 0.0,
+      "exclF1": 0.4159
+    },
+    "promoted_r001_cnn": {
+      "pointF1": 0.9889,
+      "pointR": 0.9842,
+      "pointP": 0.9936,
+      "eventF1": 0.9934,
+      "eventR": 0.9918,
+      "tailR": 0.9697,
+      "lastMiss": 0.0,
+      "exclF1": 0.7685
+    }
+  },
+  "rdm_full": {
+    "r003_cnn": {
+      "pointF1": 0.9958,
+      "pointR": 0.9928,
+      "pointP": 0.9989,
+      "eventF1": 0.9967,
+      "eventR": 0.9944,
+      "tailR": 0.9879,
+      "lastMiss": 0.0049,
+      "exclF1": 0.8161
+    },
+    "r003_resnet": {
+      "pointF1": 0.9949,
+      "pointR": 0.9961,
+      "pointP": 0.9938,
+      "eventF1": 0.9955,
+      "eventR": 0.997,
+      "tailR": 0.9937,
+      "lastMiss": 0.0049,
+      "exclF1": 0.5544
+    },
+    "r003_lstm": {
+      "pointF1": 0.9951,
+      "pointR": 0.9927,
+      "pointP": 0.9976,
+      "eventF1": 0.9962,
+      "eventR": 0.9947,
+      "tailR": 0.99,
+      "lastMiss": 0.0049,
+      "exclF1": 0.7575
+    }
+  }
+}

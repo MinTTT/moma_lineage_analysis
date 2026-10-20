@@ -1,0 +1,182 @@
+{
+  "promoted_old_cnn": {
+    "point": {
+      "division_point": {
+        "threshold": 0.8199999928474426,
+        "support": 17244,
+        "precision": 0.99868837281074,
+        "recall": 0.7506379030387381,
+        "f1": 0.8570766429399106,
+        "average_precision": 0.9980370970242372
+      },
+      "excluded_point": {
+        "threshold": 0.8700000047683716,
+        "support": 686,
+        "precision": 0.7912280701754386,
+        "recall": 0.6574344023323615,
+        "f1": 0.7181528662420382,
+        "average_precision": 0.7306860170827041
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 12931,
+      "false_positive": 17,
+      "false_negative": 4279,
+      "precision": 0.9986870559159716,
+      "recall": 0.7513654851830331,
+      "f1": 0.8575502354267523,
+      "mean_absolute_error_frames": 0.0010826695537854768
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 3441,
+        "recall": 0.997675094449288
+      },
+      "division_recall_tail_quintile": {
+        "support": 3485,
+        "recall": 0.08637015781922525
+      },
+      "last_division_event": {
+        "trajectories_with_division": 405,
+        "last_event_missed": 232,
+        "miss_rate": 0.5728395061728395
+      }
+    }
+  },
+  "r002_cnn": {
+    "point": {
+      "division_point": {
+        "threshold": 0.7300000190734863,
+        "support": 17244,
+        "precision": 0.9956488948192841,
+        "recall": 0.995244722802134,
+        "f1": 0.9954467677851571,
+        "average_precision": 0.9998853191444809
+      },
+      "excluded_point": {
+        "threshold": 0.8199999928474426,
+        "support": 686,
+        "precision": 0.609547123623011,
+        "recall": 0.7259475218658892,
+        "f1": 0.6626746506986028,
+        "average_precision": 0.7478848222887946
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 17147,
+      "false_positive": 73,
+      "false_negative": 63,
+      "precision": 0.9957607433217189,
+      "recall": 0.9963393375944218,
+      "f1": 0.996049956433343,
+      "mean_absolute_error_frames": 0.00040823467661981686
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 3441,
+        "recall": 0.995931415286254
+      },
+      "division_recall_tail_quintile": {
+        "support": 3485,
+        "recall": 0.9913916786226685
+      },
+      "last_division_event": {
+        "trajectories_with_division": 405,
+        "last_event_missed": 2,
+        "miss_rate": 0.0049382716049382715
+      }
+    }
+  },
+  "r002_resnet": {
+    "point": {
+      "division_point": {
+        "threshold": 0.7200000286102295,
+        "support": 17244,
+        "precision": 0.9978429429254357,
+        "recall": 0.992577128276502,
+        "f1": 0.9952030700351775,
+        "average_precision": 0.9999023552514583
+      },
+      "excluded_point": {
+        "threshold": 0.8700000047683716,
+        "support": 686,
+        "precision": 0.6900269541778976,
+        "recall": 0.7463556851311953,
+        "f1": 0.7170868347338936,
+        "average_precision": 0.7954835011435389
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 17100,
+      "false_positive": 37,
+      "false_negative": 110,
+      "precision": 0.9978409289840695,
+      "recall": 0.9936083672283557,
+      "f1": 0.9957201502314613,
+      "mean_absolute_error_frames": 0.0003508771929824561
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 3441,
+        "recall": 0.994478349317059
+      },
+      "division_recall_tail_quintile": {
+        "support": 3485,
+        "recall": 0.9868005738880918
+      },
+      "last_division_event": {
+        "trajectories_with_division": 405,
+        "last_event_missed": 3,
+        "miss_rate": 0.007407407407407408
+      }
+    }
+  },
+  "r002_lstm": {
+    "point": {
+      "division_point": {
+        "threshold": 0.6200000047683716,
+        "support": 17244,
+        "precision": 0.9870801033591732,
+        "recall": 0.9968684759916493,
+        "f1": 0.9919501428200468,
+        "average_precision": 0.9997605903487186
+      },
+      "excluded_point": {
+        "threshold": 0.800000011920929,
+        "support": 686,
+        "precision": 0.46487985212569316,
+        "recall": 0.7332361516034985,
+        "f1": 0.5690045248868778,
+        "average_precision": 0.5625685151632701
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 17169,
+      "false_positive": 214,
+      "false_negative": 41,
+      "precision": 0.9876891215555428,
+      "recall": 0.9976176641487507,
+      "f1": 0.9926285664729858,
+      "mean_absolute_error_frames": 0.0007571786359135651
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 3441,
+        "recall": 0.997965707643127
+      },
+      "division_recall_tail_quintile": {
+        "support": 3485,
+        "recall": 0.9945480631276901
+      },
+      "last_division_event": {
+        "trajectories_with_division": 405,
+        "last_event_missed": 2,
+        "miss_rate": 0.0049382716049382715
+      }
+    }
+  }
+}

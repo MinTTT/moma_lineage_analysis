@@ -1,0 +1,76 @@
+Metadata-Version: 2.4
+Name: moma-lineage-analysis
+Version: 0.1.0
+Summary: Mother-machine cell lineage construction, interactive curation, and AI-assisted trajectory cleaning
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scipy
+Requires-Dist: scikit-learn
+Requires-Dist: joblib
+Requires-Dist: torch
+Requires-Dist: streamlit>=1.30
+Requires-Dist: plotly
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+
+# moma-lineage-analysis
+
+Standalone toolkit for **mother-machine (microfluidics) cell lineage analysis**:
+lineage construction from per-frame cell measurements, interactive curation in a
+Streamlit app, and AI-assisted trajectory cleaning (division / noise detection).
+
+Transferred from the `Moma_cellPose` workspace; governed methods contracts live
+in `docs/`.
+
+## Layout
+
+```
+src/moma_lineage_analysis/
+├── app/Moma_lineage_streamlit.py   # Streamlit curation app (entry point)
+├── app/cli.py                      # `moma-lineage` console launcher
+├── moma_logic.py                   # lineage linking, division detection, per-cycle stats
+├── paths.py                        # package-anchored model directory
+├── trajectory_cleaning/            # PyTorch sequence models + Streamlit AI API
+└── models/trajectory_cleaning_run/ # released checkpoints (R001/R002/R003)
+tests/                              # unit + smoke tests (incl. data fixture)
+docs/                               # METHODS_* contracts
+```
+
+## Install (editable)
+
+```powershell
+pip install -e G:\python_code\moma_lineage_analysis
+# with test runner:
+pip install -e G:\python_code\moma_lineage_analysis[dev]
+```
+
+## Run the app
+
+```powershell
+moma-lineage                                   # console script
+# or
+python -m moma_lineage_analysis.app
+# or
+streamlit run src\moma_lineage_analysis\app\Moma_lineage_streamlit.py
+```
+
+Then set **Data Directory Path** in the sidebar to a folder of `*_cells_df.csv`
+files (exported by the upstream `Moma_CPM_FOV.py` pipeline) and click
+**Process Data**.
+
+## Tests
+
+```powershell
+python -m pytest tests\test_trajectory_cleaning.py -q
+python tests\smoke_min_spine_length_filter.py
+```
+
+## Model checkpoints
+
+The app's AI panel resolves checkpoints from the package-anchored
+`models/trajectory_cleaning_run/` directory (see
+`moma_lineage_analysis.paths.PACKAGE_MODELS_RUN_DIR`); no working-directory
+dependence. Override the default checkpoint with the `MOMA_AI_MODEL_PATH`
+environment variable.
