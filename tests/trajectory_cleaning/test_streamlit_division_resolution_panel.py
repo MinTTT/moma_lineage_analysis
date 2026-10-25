@@ -357,6 +357,13 @@ class StreamlitDivisionResolutionPanelTests(unittest.TestCase):
     def test_keep_drop_reuses_figure_and_statistics_caches(self) -> None:
         app = _app_with_entry(_trajectory_entry())
         data = app.session_state["trajectory_dict"][TRAJECTORY_KEY]
+        # The overlay style/notice block must render on every run regardless of
+        # Keep/Drop state, so toggling the button cannot shift its position.
+        initial_markdown_count = len(app.markdown)
+        self.assertNotIn(
+            ".st-key-toggle_trajectory_selection_btn",
+            " ".join(element.value for element in app.markdown),
+        )
         initial_stats_count = data["_trajectory_stats_recompute_count"]
         initial_cache = app.session_state["trajectory_figure_cache"]
         initial_signature = initial_cache["signature"]
@@ -368,6 +375,11 @@ class StreamlitDivisionResolutionPanelTests(unittest.TestCase):
         _element(app.button, "❌ Drop Trajectory").click()
         app.run()
         self.assertFalse(app.exception)
+        self.assertEqual(len(app.markdown), initial_markdown_count)
+        self.assertIn(
+            ".st-key-toggle_trajectory_selection_btn",
+            " ".join(element.value for element in app.markdown),
+        )
         self.assertEqual(app.session_state["selected_keys"], set())
         self.assertEqual(len(app.session_state["selected_keys"]), 0)
         self.assertIn("Selected:** 0", _viewer_status(app))
@@ -383,6 +395,11 @@ class StreamlitDivisionResolutionPanelTests(unittest.TestCase):
         _element(app.button, "✅ Keep Trajectory").click()
         app.run()
         self.assertFalse(app.exception)
+        self.assertEqual(len(app.markdown), initial_markdown_count)
+        self.assertNotIn(
+            ".st-key-toggle_trajectory_selection_btn",
+            " ".join(element.value for element in app.markdown),
+        )
         self.assertEqual(app.session_state["selected_keys"], {TRAJECTORY_KEY})
         self.assertEqual(len(app.session_state["selected_keys"]), 1)
         self.assertIn("Selected:** 1", _viewer_status(app))
@@ -394,6 +411,220 @@ class StreamlitDivisionResolutionPanelTests(unittest.TestCase):
             data["_trajectory_stats_recompute_count"],
             initial_stats_count,
         )
+
+    def test_drop_fov_matches_exact_index_and_preserves_trajectories(self) -> None:
+        entries = {
+            key: _trajectory_entry()
+            for key in (
+                "FOV_0_CH_1", "FOV_00_CH_2", "FOV_1_CH_0",
+                "FOV_01_CH_2", "FOV_10_CH_1", "trajectory_0",
+            )
+        }
+        app = _app_with_entries(entries)
+        initial_cache = app.session_state["trajectory_figure_cache"]
+        initial_epoch = app.session_state["trajectory_plot_epoch"]
+        self.assertEqual(app.sidebar.number_input(key="drop_fov_index").value, 0)
+
+        for fov_index, remaining, count in (
+            (0, {"FOV_1_CH_0", "FOV_01_CH_2", "FOV_10_CH_1", "trajectory_0"}, 2),
+            (1, {"FOV_10_CH_1", "trajectory_0"}, 2),
+        ):
+            with self.subTest(fov_index=fov_index):
+                app.sidebar.number_input(key="drop_fov_index").set_value(fov_index).run()
+                app.sidebar.button(key="drop_fov_trajectories").click().run()
+                self.assertFalse(app.exception)
+                self.assertEqual(app.session_state["selected_keys"], remaining)
+                self.assertEqual(set(app.session_state["trajectory_dict"]), set(entries))
+                self.assertIn(
+                    f"Dropped {count} trajectories from FOV {fov_index}.",
+                    [item.value for item in app.sidebar.success],
+                )
+                self.assertEqual(app.session_state["current_idx"], 0)
+                self.assertEqual(app.session_state["trajectory_plot_epoch"], initial_epoch)
+                self.assertIs(
+                    app.session_state["trajectory_figure_cache"]["figure"],
+                    initial_cache["figure"],
+                )
+                for entry in entries.values():
+                    self.assertEqual(entry["div_indices"], [3, 7])
+                    self.assertEqual(entry["excluded_indices"], set())
+        self.assertFalse(_element(app.button, "✅ Keep Trajectory").disabled)
+        _element(app.button, "✅ Keep Trajectory").click().run()
+        self.assertFalse(app.exception)
+        self.assertIn("FOV_0_CH_1", app.session_state["selected_keys"])
+
+    def test_drop_fov_empty_missing_and_already_dropped_feedback(self) -> None:
+        app = AppTest.from_file(APP_FILE, default_timeout=30).run()
+        self.assertFalse(app.exception)
+        self.assertTrue(app.sidebar.number_input(key="drop_fov_index").disabled)
+        self.assertTrue(app.sidebar.button(key="drop_fov_trajectories").disabled)
+
+        app = _app_with_entries({"FOV_0_CH_1": _trajectory_entry()})
+        app.sidebar.number_input(key="drop_fov_index").set_value(99).run()
+        app.sidebar.button(key="drop_fov_trajectories").click().run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["selected_keys"], {"FOV_0_CH_1"})
+        self.assertIn(
+            "No loaded trajectories match FOV 99.",
+            [item.value for item in app.sidebar.warning],
+        )
+
+        app.sidebar.number_input(key="drop_fov_index").set_value(0).run()
+        app.sidebar.button(key="drop_fov_trajectories").click().run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["selected_keys"], set())
+        self.assertIn("Selected:** 0", _viewer_status(app))
+        app.sidebar.button(key="drop_fov_trajectories").click().run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["selected_keys"], set())
+        self.assertIn(
+            "All trajectories in FOV 0 are already dropped.",
+            [item.value for item in app.sidebar.info],
+        )
+
+    def test_drop_fov_updates_selected_statistics_and_labeled_export(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            entries = {
+                "FOV_0_CH_1": _trajectory_entry(),
+                "FOV_0_CH_2": _trajectory_entry(),
+                "FOV_2_CH_1": _trajectory_entry(),
+            }
+            app = _app_with_entries(entries)
+            _element(app.sidebar.text_input, "Data Directory Path").set_value(
+                temporary_directory
+            ).run()
+            _element(app.toggle, "Calculate selected statistics").set_value(True).run()
+            _element(app.radio, "Statistic").set_value("Generation Time").run()
+
+            def generation_sample_count():
+                histogram = next(
+                    element for element in app.get("plotly_chart")
+                    if element.proto.id.endswith("-selected_generation_histogram")
+                )
+                trace = json.loads(histogram.proto.spec)["data"][0]
+                return len(_trace_values(trace, "x"))
+
+            all_samples = generation_sample_count()
+            self.assertGreater(all_samples, 0)
+            app.sidebar.button(key="drop_fov_trajectories").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["selected_keys"], {"FOV_2_CH_1"})
+            self.assertEqual(generation_sample_count(), all_samples // 3)
+            _element(app.sidebar.button, "📊 Export with Labels").click().run()
+            self.assertFalse(app.exception)
+            exported = pd.read_csv(Path(temporary_directory) / "selected_labeled.csv")
+            self.assertEqual(set(exported["trajectory_key"]), {"FOV_2_CH_1"})
+            self.assertEqual(len(exported), len(entries["FOV_2_CH_1"]["trajectory"]))
+
+    def test_trajectory_jump_controls_sync_and_clear_plot_selection(self) -> None:
+        entries = {
+            f"trajectory_{index}": _trajectory_entry()
+            for index in range(3)
+        }
+        app = _app_with_entries(entries)
+        self.assertEqual(app.select_slider(key="trajectory_jump_slider").value, 1)
+        self.assertEqual(app.number_input(key="trajectory_jump_number").value, 1)
+        epoch = app.session_state["trajectory_plot_epoch"]
+        _select_plot_points(app, [{"x": 3.0, "customdata": [3]}])
+
+        app.select_slider(key="trajectory_jump_slider").set_value(3).run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["current_idx"], 2)
+        self.assertEqual(app.number_input(key="trajectory_jump_number").value, 3)
+        self.assertIn("trajectory_2 (3/3)", _viewer_status(app))
+        self.assertEqual(app.session_state["trajectory_plot_epoch"], epoch + 1)
+        self.assertFalse(app.session_state["traj_plot"]["selection"]["points"])
+
+        app.number_input(key="trajectory_jump_number").set_value(1).run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["current_idx"], 0)
+        self.assertEqual(app.select_slider(key="trajectory_jump_slider").value, 1)
+        self.assertNotIn(
+            "All trajectories have been reviewed",
+            " ".join(element.value for element in app.markdown),
+        )
+
+        for label, number in (
+            ("Next ➡️", 2), ("⬅️ Prev", 1), ("⬅️ Prev", 3), ("Next ➡️", 1)
+        ):
+            with self.subTest(label=label, number=number):
+                _element(app.button, label).click().run()
+                self.assertFalse(app.exception)
+                self.assertEqual(app.session_state["current_idx"], number - 1)
+                self.assertEqual(
+                    app.select_slider(key="trajectory_jump_slider").value, number
+                )
+                self.assertEqual(
+                    app.number_input(key="trajectory_jump_number").value, number
+                )
+        self.assertIn(
+            "All trajectories have been reviewed",
+            " ".join(element.value for element in app.markdown),
+        )
+        for entry in entries.values():
+            self.assertEqual(entry["div_indices"], [3, 7])
+            self.assertEqual(entry["excluded_indices"], set())
+
+    def test_trajectory_jump_controls_reset_with_loaded_data(self) -> None:
+        app = _app_with_entries({
+            f"trajectory_{index}": _trajectory_entry()
+            for index in range(4)
+        })
+        app.number_input(key="trajectory_jump_number").set_value(4).run()
+        self.assertFalse(app.exception)
+
+        # Process Data replaces the trajectories and resets current_idx to zero.
+        for count in (4, 1, 0, 3):
+            with self.subTest(trajectory_count=count):
+                entries = {
+                    f"replacement_{index}": _trajectory_entry()
+                    for index in range(count)
+                }
+                app.session_state["trajectory_dict"] = entries
+                app.session_state["selected_keys"] = set(entries)
+                app.session_state["current_idx"] = 0
+                app.run()
+                self.assertFalse(app.exception)
+                if not count:
+                    self.assertFalse(app.select_slider)
+                    self.assertIn("Load data to start.", [item.value for item in app.info])
+                    continue
+                slider = app.select_slider(key="trajectory_jump_slider")
+                number_input = app.number_input(key="trajectory_jump_number")
+                self.assertEqual(slider.value, 1)
+                self.assertEqual(number_input.value, 1)
+                self.assertEqual(number_input.max, count)
+                self.assertEqual(slider.disabled, count == 1)
+                self.assertEqual(number_input.disabled, count == 1)
+
+    def test_trajectory_jumps_bypass_autopilot(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            checkpoint = os.path.join(temporary_directory, "tiny_model.pt")
+            _save_tiny_checkpoint(checkpoint)
+            entries = {
+                f"trajectory_{index}": _trajectory_entry(divisions=[])
+                for index in range(3)
+            }
+            app = _app_with_entries(entries)
+            _load_tiny_ai_model(app, checkpoint)
+            _element(app.toggle, "Auto pilot on Next").set_value(True).run()
+
+            app.select_slider(key="trajectory_jump_slider").set_value(3).run()
+            app.number_input(key="trajectory_jump_number").set_value(2).run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["current_idx"], 1)
+            self.assertEqual(app.session_state["ai_predictions"], {})
+            self.assertEqual(app.session_state["ai_autopilot_completed_count"], 0)
+            self.assertNotIn("ai_autopilot_request", app.session_state)
+            for entry in entries.values():
+                self.assertEqual(entry["div_indices"], [])
+                self.assertEqual(entry["excluded_indices"], set())
+
+            _element(app.button, "Next ➡️").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["ai_autopilot_completed_count"], 1)
+            self.assertEqual(app.select_slider(key="trajectory_jump_slider").value, 3)
+            self.assertEqual(app.number_input(key="trajectory_jump_number").value, 3)
 
     def test_autopilot_next_predicts_and_applies_destination_labels(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

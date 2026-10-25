@@ -45,6 +45,97 @@ Then set **Data Directory Path** in the sidebar to a folder of `*_cells_df.csv`
 files (exported by the upstream `Moma_CPM_FOV.py` pipeline) and click
 **Process Data**.
 
+To drop an entire field of view, use **Drop trajectories by FOV** in the left
+sidebar. Enter its **FOV index (0-based)** (for example, `0` matches
+`FOV_0_CH_16` and every other channel in FOV 0), then click
+**Drop all trajectories in FOV**. The sidebar shows how many loaded trajectories
+match that FOV. Dropped trajectories are excluded from selected
+exports and statistics and remain available for inspection; use **Keep
+Trajectory** to keep one again.
+
+## Review images for selected observations
+
+1. Keep the upstream `<fov>_exported_data.pkl` beside its matching
+   `<fov>_cells_df.csv` in **Data Directory Path**, then click **Process Data**.
+   Image review uses these local pipeline exports; only use pickles from a
+   source you trust.
+2. Lasso or box-select observations in the trajectory plot, including excluded
+   red X markers when needed, and click **🖼️ Review Images** in **Data Cleaning**.
+3. A large popup shows full saved side-channel images in a compact horizontal
+   strip with small fixed gaps and no per-image captions. The page size adapts
+   to the measured block width, image aspect ratios, and selected image height,
+   so more frames fit when space allows. Click an image to show its FOV, image
+   name, time point, side/optical channel, and cell labels above the strip.
+   **Earlier frames**, **Later frames**, and the page selector navigate longer
+   selections.
+4. Choose an **Optical channel**, toggle **Mask fill** and **Mask outlines**,
+   and choose **Selected cells** or **All cells**. The selected trajectory cells
+   are highlighted. Enable **DT spine and ribs** to draw the saved DT mesh:
+   yellow ribs and a magenta spine through their midpoints. The image height
+   control changes the display scale while preserving aspect ratio and the
+   orientation saved by the pipeline.
+
+The popup captures the selection when opened. Layer and page changes affect
+only image review; close it to return to curation. The clicked-image information
+line also includes exclusion/division annotations. Missing fluorescence frames,
+masks, or saved DT meshes are reported without substituting other cells or
+reconstructing legacy geometry. Images use a shared display contrast across
+each page; the original image data are preserved.
+
+The app pairs the pickle using the original CSV's exact filename and joins rows
+by `channels`, `time_point`, and `cell_index`. Mask boundaries come from the
+segmentation labels, supporting both legacy and DT exports. Image review reads
+the pickle on demand and caches one FOV per browser session. Sessions loaded
+before this feature need **Process Data** again to capture source-file
+information. The image viewer requires Streamlit 1.55 or later.
+
+## Labeled CSV export columns
+
+The app writes curated trajectories with curation labels from two places, both
+using the same schema (one row per cell observation, rows sorted by `time_h`):
+
+- **Export with Labels** (sidebar): all *selected* (kept) trajectories
+  concatenated into `<data dir>/selected_labeled.csv`.
+- **Export Current Trajectory** (analysis panel): only the trajectory on screen,
+  saved as `<data dir>/<trajectory_key>_selected_labeled.csv`.
+
+File names contain `selected` on purpose: the **Process Data** loader skips any
+CSV whose name contains `selected`, so exports are never re-ingested as raw
+input.
+
+### Measurement columns (carried through from the input `*_cells_df.csv`)
+
+| Column | Meaning |
+|---|---|
+| `time_s` | Acquisition time of the frame, in seconds (from the upstream pipeline). |
+| `time_h` | Time in hours since the first frame of this FOV/channel: `(time_s - min time_s) / 3600`. |
+| `time_point` | Frame index (0-based). |
+| `channels` | Channel name the cell was segmented in. |
+| `cell_index` | Per-frame segmentation id (unique only within one frame). |
+| `fov_cell_index` | Cell identity within the FOV, linked across frames; the label columns below reference this id. |
+| `ancestor_index` | Parent `fov_cell_index` from tracking; used to trace the lineage back to its founder cell. |
+| `spine_length` | Cell length along the growth channel (pixels); the main growth/division signal. |
+| `area` | Cell area (pixels²). |
+| `umppx` | Micrometers per pixel (scale calibration). |
+| `width`, `width_area` | Cell width estimates. |
+| `x_min`, `x_max`, `y_min`, `y_max` | Bounding box of the cell mask (pixels). |
+| *(one per fluorescence channel)* | Per-cell fluorescence intensity as exported by the upstream pipeline; any column not listed above is treated as a fluorescence channel. |
+
+### Label columns (added by the app)
+
+| Column | Meaning |
+|---|---|
+| `trajectory_key` | Trajectory identifier (e.g. `FOV_0_CH_16`); constant within one trajectory and matches the key shown in the app. |
+| `division_point` | `True` on the **mother frame immediately before a division** (the last frame before the daughter's length drop), exactly as marked by the curator or the AI. Raw label — never rewritten by conflict resolution. |
+| `excluded_point` | `True` for noise/artifact frames the curator excluded from analysis. Excluded rows are **kept in the file and flagged, never deleted**. |
+| `effective_division_point` | Division boundary actually used for per-cycle statistics, after division/exclusion conflict resolution: if the raw `division_point` frame is excluded, the boundary moves to the previous valid measurement (or is dropped/coalesced when unresolvable). May differ from `division_point`; the raw label stays untouched. |
+| `cell_cycle_index` | 0-based cell-cycle number within the trajectory; increments on the row immediately after each `effective_division_point`. |
+
+To rebuild statistics downstream, filter `~excluded_point`, split by
+`cell_cycle_index` (boundaries at `effective_division_point`), and group by
+`trajectory_key`. These files are also the input format for the training-data
+pipeline (see `scripts/qc_raw_train_data.py` and `AGENTS.md` workflow A).
+
 ## Tests
 
 ```powershell

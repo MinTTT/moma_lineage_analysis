@@ -6,6 +6,7 @@ from plotly.subplots import make_subplots
 import os
 import copy
 import hashlib
+import re
 from pathlib import Path
 from scipy import signal as sg
 from typing import Optional, Iterable, Tuple, Union
@@ -20,6 +21,12 @@ from moma_lineage_analysis.moma_logic import (
     COLNAME_NOT_FLU_CHANNEL
 )
 from moma_lineage_analysis.paths import PACKAGE_MODELS_RUN_DIR
+from moma_lineage_analysis.image_review import ImageReviewError, make_review_snapshot
+from moma_lineage_analysis.app.image_review_panel import (
+    close_image_review,
+    open_image_review,
+    render_image_review_if_open,
+)
 from moma_lineage_analysis.trajectory_cleaning import load_checkpoint
 from moma_lineage_analysis.trajectory_cleaning.training import resolve_device
 from moma_lineage_analysis.trajectory_cleaning.streamlit_api import (
@@ -761,6 +768,16 @@ def toggle_current_trajectory_selection():
         st.session_state.selected_statistics_refresh_requested = True
 
 
+def trajectory_keys_for_fov(trajectory_keys, fov_index):
+    """Match the numeric FOV in loaded keys, including zero-padded indices."""
+    matches = set()
+    for key in trajectory_keys:
+        match = re.fullmatch(r"FOV_([0-9]+)_CH_.+", str(key))
+        if match and int(match.group(1)) == fov_index:
+            matches.add(key)
+    return matches
+
+
 def process_ai_autopilot_request(
     request,
     checkpoint_signature,
@@ -825,6 +842,20 @@ def navigate_trajectory(step):
         # Forward navigation wrapped past the last trajectory back to the first.
         st.session_state.review_completed_notice_pending = True
     advance_trajectory_plot_epoch()
+
+
+def jump_to_trajectory(widget_key):
+    """Jump to a 1-based trajectory number without applying AI or wrapping."""
+    keys = list(st.session_state.get('trajectory_dict', {}))
+    if not keys:
+        return
+    target_index = min(
+        max(int(st.session_state[widget_key]) - 1, 0), len(keys) - 1
+    )
+    st.session_state.ai_autopilot_request = None
+    if target_index != st.session_state.get('current_idx', 0):
+        st.session_state.current_idx = target_index
+        advance_trajectory_plot_epoch()
 
 
 def build_labeled_trajectory_export(trajectory_data, trajectory_key):
@@ -994,7 +1025,10 @@ if st.sidebar.button("Process Data"):
                     name = os.path.basename(f_path).split('_')[1] if '_' in os.path.basename(f_path) else os.path.basename(f_path)
                     df['fov_cell_index'] = np.arange(len(df))
                     for c in df['channels'].unique():
-                        tasks.append((name, c, df[df['channels'] == c].copy()))
+                        tasks.append((
+                            name, c, df[df['channels'] == c].copy(),
+                            str(Path(f_path).resolve()),
+                        ))
                 except Exception as e: st.sidebar.error(f"Error loading {f_path}: {e}")
 
             if tasks:
@@ -1006,7 +1040,11 @@ if st.sidebar.button("Process Data"):
                     ) for t in tasks)
                     traj_dict = {}
                     for i, res in enumerate(gen):
-                        if res: traj_dict[res[0]] = res[1]
+                        if res:
+                            # Keep source provenance outside measurement columns:
+                            # unknown columns are treated as fluorescence signals.
+                            res[1]['source_csv_path'] = tasks[i][3]
+                            traj_dict[res[0]] = res[1]
                         pb.progress((i+1)/len(tasks))
                 for trajectory_data in traj_dict.values():
                     trajectory_data.setdefault('excluded_indices', set())
@@ -1017,6 +1055,7 @@ if st.sidebar.button("Process Data"):
                     )
                     mark_trajectory_data_changed(trajectory_data)
                     ensure_trajectory_statistics(trajectory_data)
+                close_image_review()
                 st.session_state.trajectory_dict = traj_dict
                 st.session_state.current_idx = 0
                 st.session_state.trajectory_figure_cache = {}
@@ -1027,6 +1066,47 @@ if st.sidebar.button("Process Data"):
                 else:
                     st.session_state.selected_keys = set()
                 st.success(f"Loaded {len(traj_dict)} trajectories from {len(tasks)} channels.")
+
+# Sidebar actions rerun the whole app, so update selection before the viewer
+# and aggregate statistics are rendered.
+st.sidebar.subheader("Drop trajectories by FOV")
+st.sidebar.caption(
+    "Drop every channel in a FOV from selected exports and statistics."
+)
+fov_to_drop = st.sidebar.number_input(
+    "FOV index (0-based)",
+    min_value=0,
+    value=0,
+    step=1,
+    key="drop_fov_index",
+    disabled=not st.session_state.trajectory_dict,
+    help="Enter the FOV number in the trajectory name, e.g. 0 for FOV_0_CH_16.",
+)
+fov_trajectory_keys = trajectory_keys_for_fov(
+    st.session_state.trajectory_dict, fov_to_drop
+)
+if st.sidebar.button(
+    "Drop all trajectories in FOV",
+    key="drop_fov_trajectories",
+    width="stretch",
+    disabled=not st.session_state.trajectory_dict,
+    help="Mark all trajectories in this FOV as dropped. You can keep them individually afterward.",
+):
+    selected = set(st.session_state.selected_keys)
+    dropped_count = len(selected & fov_trajectory_keys)
+    if not fov_trajectory_keys:
+        st.sidebar.warning(f"No loaded trajectories match FOV {fov_to_drop}.")
+    elif not dropped_count:
+        st.sidebar.info(f"All trajectories in FOV {fov_to_drop} are already dropped.")
+    else:
+        st.session_state.selected_keys = selected - fov_trajectory_keys
+        st.sidebar.success(
+            f"Dropped {dropped_count} trajectories from FOV {fov_to_drop}."
+        )
+if st.session_state.trajectory_dict:
+    st.sidebar.caption(
+        f"FOV {fov_to_drop}: {len(fov_trajectory_keys)} trajectories loaded."
+    )
 
 # AI configuration is session-wide rather than trajectory-specific. Rendering
 # these widgets in the sidebar before any navigation button can trigger a rerun
@@ -1217,6 +1297,12 @@ with st.sidebar.expander(
                 "manual label types on the next trajectory."
             )
 
+st.markdown(
+    "**Keyboard Shortcuts:**  \n"
+    "`←` Prev | `→` Next | `k` Keep/Drop Trajectory | "
+    "`e` Exclude Points | `r` Restore Selected Exclusions | "
+    "`d` Mark Division | `m` Merge Cycles"
+)
 st.title("🧬 MoMa Cell Lineage Analysis")
 
 if not st.session_state.trajectory_dict:
@@ -1276,6 +1362,70 @@ else:
         curr_key = keys[st.session_state.current_idx]
         data = st.session_state.trajectory_dict[curr_key]
 
+        is_sel = curr_key in st.session_state.selected_keys
+        review_completed_notice = st.session_state.pop(
+            'review_completed_notice_pending', False
+        )
+        # Keep/Drop styling and the review-complete notice render on EVERY run,
+        # before the navigation columns, inside one constant-height block. The
+        # button column itself holds only the button, so toggling Keep/Drop (or
+        # showing the notice) can never shift any widget's position.
+        keep_button_css = "" if is_sel else """
+            .st-key-toggle_trajectory_selection_btn button {
+                background-color: #ff69b4;
+                border-color: #ff1493;
+                color: #ffffff;
+            }
+            .st-key-toggle_trajectory_selection_btn button:hover,
+            .st-key-toggle_trajectory_selection_btn button:focus:not(:active) {
+                background-color: #ff85c1;
+                border-color: #ff1493;
+                color: #ffffff;
+            }
+        """
+        # st.toast only renders in a screen corner, so use a centered overlay
+        # banner that fades out on its own instead. The banner is fixed-position
+        # and therefore does not affect layout when it appears.
+        notice_html = (
+            '<div class="review-complete-notice">🎉 All trajectories have been '
+            'reviewed — back to the first one!</div>'
+            if review_completed_notice
+            else ""
+        )
+        st.markdown(
+            f"""
+            <style>
+            {keep_button_css}
+            .review-complete-notice {{
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000000;
+                background-color: #ffffff;
+                color: #d6336c;
+                border: 2px solid #ff69b4;
+                border-radius: 12px;
+                padding: 24px 36px;
+                font-size: 1.15rem;
+                font-weight: 600;
+                text-align: center;
+                box-shadow: 0 8px 30px rgba(214, 51, 108, 0.35);
+                pointer-events: none;
+                animation: review-complete-fade 4s ease-in-out forwards;
+            }}
+            @keyframes review-complete-fade {{
+                0%   {{ opacity: 0; transform: translate(-50%, -50%) scale(0.9); }}
+                10%  {{ opacity: 1; transform: translate(-50%, -50%) scale(1); }}
+                80%  {{ opacity: 1; }}
+                100% {{ opacity: 0; visibility: hidden; }}
+            }}
+            </style>
+            {notice_html}
+            """,
+            unsafe_allow_html=True,
+        )
+
         # Selection & Navigation
         c1, c2, c3 = st.columns([1, 2, 1])
         with c1:
@@ -1290,27 +1440,6 @@ else:
                 on_click=request_next_trajectory,
             )
         with c2:
-            is_sel = curr_key in st.session_state.selected_keys
-            if not is_sel:
-                # The lineage is dropped: make the Keep button unmistakably pink.
-                st.markdown(
-                    """
-                    <style>
-                    .st-key-toggle_trajectory_selection_btn button {
-                        background-color: #ff69b4;
-                        border-color: #ff1493;
-                        color: #ffffff;
-                    }
-                    .st-key-toggle_trajectory_selection_btn button:hover,
-                    .st-key-toggle_trajectory_selection_btn button:focus:not(:active) {
-                        background-color: #ff85c1;
-                        border-color: #ff1493;
-                        color: #ffffff;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
             st.button(
                 f"{'❌ Drop' if is_sel else '✅ Keep'} Trajectory",
                 width='stretch',
@@ -1318,42 +1447,35 @@ else:
                 on_click=toggle_current_trajectory_selection,
             )
 
-        if st.session_state.pop('review_completed_notice_pending', False):
-            # st.toast only renders in a screen corner, so use a centered overlay
-            # banner that fades out on its own instead.
-            st.markdown(
-                """
-                <div class="review-complete-notice">
-                    🎉 All trajectories have been reviewed — back to the first one!
-                </div>
-                <style>
-                .review-complete-notice {
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    z-index: 1000000;
-                    background-color: #ffffff;
-                    color: #d6336c;
-                    border: 2px solid #ff69b4;
-                    border-radius: 12px;
-                    padding: 24px 36px;
-                    font-size: 1.15rem;
-                    font-weight: 600;
-                    text-align: center;
-                    box-shadow: 0 8px 30px rgba(214, 51, 108, 0.35);
-                    pointer-events: none;
-                    animation: review-complete-fade 4s ease-in-out forwards;
-                }
-                @keyframes review-complete-fade {
-                    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-                    10%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                    80%  { opacity: 1; }
-                    100% { opacity: 0; visibility: hidden; }
-                }
-                </style>
-                """,
-                unsafe_allow_html=True,
+        # Synchronize both jump controls before rendering, including after
+        # Prev/Next, AI auto pilot, or loading a new set of trajectories.
+        trajectory_number = st.session_state.current_idx + 1
+        st.session_state.trajectory_jump_slider = trajectory_number
+        st.session_state.trajectory_jump_number = trajectory_number
+        slider_col, number_col = st.columns([3, 1])
+        with slider_col:
+            st.select_slider(
+                "Trajectory",
+                # The browser slider requires two positions even when disabled.
+                # Duplicate the sole label to keep the one-trajectory view valid.
+                options=range(1, len(keys) + 1) if len(keys) > 1 else (1, 1),
+                key="trajectory_jump_slider",
+                on_change=jump_to_trajectory,
+                args=("trajectory_jump_slider",),
+                disabled=len(keys) == 1,
+                help="Drag to jump to a trajectory by its number in the loaded list.",
+            )
+        with number_col:
+            st.number_input(
+                "Trajectory number",
+                min_value=1,
+                max_value=len(keys),
+                step=1,
+                key="trajectory_jump_number",
+                on_change=jump_to_trajectory,
+                args=("trajectory_jump_number",),
+                disabled=len(keys) == 1,
+                help="Type a trajectory number and press Enter to jump to it.",
             )
 
         st.write(f"**Current:** {curr_key} ({st.session_state.current_idx + 1}/{len(keys)}) | **Selected:** {len(st.session_state.selected_keys)}")
@@ -1770,6 +1892,27 @@ else:
 
         with tool_col:
             st.subheader("Data Cleaning")
+            if st.button(
+                "🖼️ Review Images",
+                key="review_images",
+                help="Lasso or box select points to inspect their side-channel images and masks.",
+                width="stretch",
+            ):
+                selected_indices = selected_fov_cell_indices(
+                    st.session_state.get(plot_key), traj_df['fov_cell_index']
+                )
+                if not selected_indices:
+                    st.info("Select points on the plot first.")
+                else:
+                    try:
+                        snapshot = make_review_snapshot(
+                            curr_key, data, selected_indices,
+                            data.get('source_csv_path'),
+                        )
+                        open_image_review(snapshot)
+                    except ImageReviewError as exc:
+                        st.warning(str(exc))
+            render_image_review_if_open(curr_key)
             resolution_summary = data.get('division_resolution_summary', {})
             shifted_count = int(resolution_summary.get('shifted_previous', 0))
             coalesced_count = int(resolution_summary.get('coalesced_previous', 0))
@@ -2366,8 +2509,11 @@ else:
             doc.removeEventListener('keydown', host[handlerName]);
         }
         const keyHandler = function(e) {
-            // Ignore if user is typing in an input or textarea
-            if (e.repeat || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+            // Image review has its own controls; never edit behind a popup.
+            if (doc.querySelector('[role="dialog"]')) return;
+            // Let text fields and slider thumbs handle their own arrow keys.
+            if (e.repeat || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)
+                || e.target.closest('[role="slider"]')) return;
             
             let btn;
             if (e.key === 'ArrowLeft') {
@@ -2378,6 +2524,8 @@ else:
                 btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Trajectory'))?.parentElement;
             } else if (e.key.toLowerCase() === 'e') {
                 btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Exclude Selected'))?.parentElement;
+            } else if (e.key.toLowerCase() === 'r') {
+                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Restore Selected Exclusions'))?.parentElement;
             } else if (e.key.toLowerCase() === 'd') {
                 btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Mark Division'))?.parentElement;
             } else if (e.key.toLowerCase() === 'm') {
@@ -2393,9 +2541,3 @@ else:
         </script>
     """, height=0)
 
-    # Display shortcut legend at the bottom
-    st.markdown("""
-        ---
-        **Keyboard Shortcuts:**  
-        `←` Prev | `→` Next | `k` Keep/Drop Trajectory | `e` Exclude Points | `d` Mark Division | `m` Merge Cycles
-    """)

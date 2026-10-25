@@ -2,4 +2,6 @@
 .idea
 .history
 runs/*
-
+__pyache__
+/src/moma_lineage_analysis/__pycache__
+*.pyc
