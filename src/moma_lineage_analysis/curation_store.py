@@ -11,14 +11,17 @@ from functools import wraps
 import hashlib
 import json
 import math
-from pathlib import Path
+import os
+from pathlib import Path, PureWindowsPath
 import sqlite3
 from typing import Iterable
+from urllib.parse import quote
 
 import numpy as np
 import pandas as pd
 
 DB_FILENAME = "moma_curation.sqlite3"
+NETWORK_PATHS_SUPPORTED = True
 _SCHEMA_VERSION = 1
 _APPLICATION_ID = 0x4D4F4D43
 _LABELS = ["trajectory_key", "division_point", "excluded_point",
@@ -193,6 +196,67 @@ def _check_schema(connection):
         raise CurationStoreError("Invalid curation database schema")
 
 
+def _sqlite_path_text(path) -> str:
+    """Normalize Windows extended path prefixes without making a URI host."""
+
+    text = path.as_posix()
+    if text.lower().startswith("//?/unc/"):
+        return "//" + text[8:]
+    if text.startswith("//?/"):
+        return text[4:]
+    return text
+
+
+def _sqlite_uri(path, mode: str) -> str:
+    """Keep UNC hosts in the path: SQLite rejects file://server authorities."""
+
+    if mode not in {"ro", "rw", "rwc"}:
+        raise ValueError(f"Unsupported SQLite open mode: {mode}")
+    text = _sqlite_path_text(path)
+    if not text.startswith("/"):
+        text = "/" + text
+    return "file://" + quote(text, safe="/:") + f"?mode={mode}"
+
+
+def _windows_drive_type(root: str) -> int:
+    import ctypes
+    from ctypes import wintypes
+
+    get_drive_type = ctypes.WinDLL("kernel32", use_last_error=True).GetDriveTypeW
+    get_drive_type.argtypes = [wintypes.LPCWSTR]
+    get_drive_type.restype = wintypes.UINT
+    return int(get_drive_type(root))
+
+
+def _is_network_path(path) -> bool:
+    """Recognize UNC paths and mapped remote drives without contacting the share."""
+
+    text = _sqlite_path_text(path)
+    if text.startswith("//"):
+        return True
+    if os.name != "nt":
+        return False
+    root = PureWindowsPath(text).anchor
+    try:
+        # DRIVE_REMOTE=4. An unidentifiable filesystem also uses conservative
+        # rollback journaling, since WAL requires same-host shared memory.
+        return _windows_drive_type(root) in (0, 1, 4)
+    except (OSError, AttributeError):
+        return True
+
+
+def _configure_journal(connection, path) -> None:
+    desired = "delete" if _is_network_path(path) else "wal"
+    row = connection.execute(f"PRAGMA journal_mode={desired}").fetchone()
+    actual = str(row[0]).lower() if row else ""
+    if actual != desired:
+        raise CurationStoreError(
+            f"Could not enable {desired.upper()} journaling for {path} "
+            f"(SQLite returned {actual!r}). Close other connections and retry autosave."
+        )
+    connection.execute("PRAGMA synchronous=FULL")
+
+
 @contextmanager
 def _connect(db_path, *, write=False, create=False):
     path = Path(db_path).resolve()
@@ -200,7 +264,7 @@ def _connect(db_path, *, write=False, create=False):
     if not existed and not create:
         raise CurationStoreError(f"Curation database does not exist: {path}")
     mode = "rwc" if create and not existed else "rw" if write else "ro"
-    connection = sqlite3.connect(path.as_uri() + f"?mode={mode}", uri=True,
+    connection = sqlite3.connect(_sqlite_uri(path, mode), uri=True,
                                  timeout=5, isolation_level=None)
     connection.row_factory = sqlite3.Row
     try:
@@ -210,16 +274,16 @@ def _connect(db_path, *, write=False, create=False):
         if existed:
             _check_schema(connection)
         if write:
-            connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute("PRAGMA synchronous=FULL")
-            connection.execute("BEGIN IMMEDIATE")
             if not existed:
-                _initialize(connection)
-                # Commit an empty, recognizable schema before importing any rows.
-                # A failed dataset import can then be retried on the same file;
-                # pre-existing/unknown files are never replaced or removed.
-                connection.commit()
+                # A fresh SQLite file defaults to rollback journaling. Commit a
+                # recognizable empty schema before switching journal modes so a
+                # network/journal setup failure remains safely retryable.
+                connection.execute("PRAGMA synchronous=FULL")
                 connection.execute("BEGIN IMMEDIATE")
+                _initialize(connection)
+                connection.commit()
+            _configure_journal(connection, path)
+            connection.execute("BEGIN IMMEDIATE")
         else:
             connection.execute("BEGIN")
         yield connection

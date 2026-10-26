@@ -400,6 +400,38 @@ class CurationAutosaveTests(unittest.TestCase):
             self.assertEqual(after['_review_status'], 'reviewed')
             self.assertEqual(after['_reviewed_at'], before['_reviewed_at'])
 
+    def test_retry_initial_network_save_preserves_unsaved_session_edits(self):
+        from moma_lineage_analysis.curation_store import CurationStoreError
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / 'fov_4_cells_df.csv'
+            pd.DataFrame({
+                'time_s':np.arange(8) * 3600.0, 'time_point':[f't{i}.tiff' for i in range(8)],
+                'channels':1, 'cell_index':1, 'spine_length':np.arange(8) * 0.3 + 2,
+            }).to_csv(source, index=False)
+            app = AppTest.from_file(APP_FILE, default_timeout=30).run()
+            _element(app.sidebar.text_input, 'Data Directory Path').set_value(temporary).run()
+            _element(app.sidebar.number_input, 'Min Duration (h)').set_value(0.0).run()
+            _element(app.sidebar.slider, 'Number of Cores').set_value(1).run()
+            with patch('moma_lineage_analysis.app.curation_session.create_dataset',
+                       side_effect=CurationStoreError('create_dataset: invalid uri authority: server')):
+                _element(app.sidebar.button, 'Process Data').click().run()
+                self.assertFalse(app.exception)
+                self.assertIn('invalid uri authority', app.session_state['curation_error'])
+                self.assertIn('curation_pending_initial', app.session_state)
+                _select_plot_points(app, [{'customdata':[2]}])
+                _element(app.button, '🚫 Exclude Selected').click().run()
+                self.assertFalse(app.exception)
+                self.assertEqual(app.session_state['trajectory_dict']['FOV_4_CH_1']['excluded_indices'], {2})
+            app.button(key='retry_curation_save').click().run()
+            self.assertFalse(app.exception)
+            self.assertIsNone(app.session_state['curation_error'])
+            self.assertNotIn('curation_pending_initial', app.session_state)
+            saved = load_dataset(directory / DB_FILENAME, 1)
+            self.assertEqual(saved['trajectory_dict']['FOV_4_CH_1']['excluded_indices'], {2})
+            self.assertEqual(len(saved['trajectory_dict']['FOV_4_CH_1']['trajectory']), 8)
+
     def test_process_data_creates_database_and_reuses_identical_version(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

@@ -116,12 +116,18 @@ with closing(sqlite3.connect("moma_curation.sqlite3")) as connection:
     )
 ```
 
-Views follow the dataset version most recently opened/saved by the app. SQLite
-uses WAL journaling, full synchronization, foreign-key checks, and short
- transactions. Keep this working database on a local filesystem. While the app
-runs, its `-wal` and `-shm` companion files may contain live state; do not delete
-or omit them from a raw copy. Close the app before copying the database, or use
-SQLite's backup API for a live backup.
+Views follow the dataset version most recently opened/saved by the app. Local
+disks use WAL journaling. Windows mapped network drives and UNC shares use
+rollback (`DELETE`) journaling, which avoids WAL shared-memory requirements
+across computers. Both modes retain full synchronization, foreign-key checks,
+short transactions, and revision conflict checks. Network storage must support
+SQLite file locking and stay reachable and writable during a save. A network
+or permission failure leaves edits in memory and pauses navigation; reconnect
+and click **Retry autosave** without reprocessing or discarding the session.
+
+While the app runs, `-wal`, `-shm`, or `-journal` companion files may hold live
+or recovery state; do not delete or omit them from a raw copy. Close the app
+before copying the database, or use SQLite's backup API for a live backup.
 
 ## Review images for selected observations
 

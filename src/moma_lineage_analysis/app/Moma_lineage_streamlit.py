@@ -21,6 +21,14 @@ from moma_lineage_analysis.moma_logic import (
     COLNAME_NOT_FLU_CHANNEL
 )
 from moma_lineage_analysis.paths import PACKAGE_MODELS_RUN_DIR
+from moma_lineage_analysis import curation_store as _curation_store_module
+
+# Upgrade an already-running session without losing unsaved labels or the
+# pending initial-save context. Existing coordinator functions share these globals.
+if not getattr(_curation_store_module, "NETWORK_PATHS_SUPPORTED", False):
+    import importlib
+
+    importlib.reload(_curation_store_module)
 from moma_lineage_analysis.curation_store import (
     DB_FILENAME, CurationStoreError, fingerprint_sources, find_dataset,
     list_datasets, load_dataset,
