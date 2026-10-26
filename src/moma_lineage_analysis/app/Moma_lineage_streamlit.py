@@ -21,6 +21,14 @@ from moma_lineage_analysis.moma_logic import (
     COLNAME_NOT_FLU_CHANNEL
 )
 from moma_lineage_analysis.paths import PACKAGE_MODELS_RUN_DIR
+from moma_lineage_analysis.curation_store import (
+    DB_FILENAME, CurationStoreError, fingerprint_sources, find_dataset,
+    list_datasets, load_dataset,
+)
+from moma_lineage_analysis.app.curation_session import (
+    attach_saved_dataset, flush_curation, initialize_curation, save_recovery_copy,
+    save_current_session_to_curation,
+)
 from moma_lineage_analysis.image_review import ImageReviewError, make_review_snapshot
 from moma_lineage_analysis.app.image_review_panel import (
     close_image_review,
@@ -618,6 +626,8 @@ def apply_ai_input_preflight(trajectory_keys):
         if not st.session_state.ai_predictions:
             st.session_state.ai_prediction_signature = None
             st.session_state.ai_prediction_checkpoint = None
+    if not save_curation():
+        raise CurationStoreError(st.session_state.curation_error)
     return results, invalid_total, newly_excluded
 
 
@@ -626,7 +636,16 @@ def apply_ai_autopilot_to_trajectory(
     checkpoint_signature,
     ai_bundle,
 ):
-    """Predict and atomically apply current AI settings to one trajectory."""
+    """Apply AI to an unreviewed destination; reviewed labels are protected."""
+    entry = st.session_state.trajectory_dict.get(trajectory_key)
+    if entry is None:
+        raise KeyError(f"Unknown trajectory: {trajectory_key}")
+    if entry.get("_review_status") == "reviewed":
+        st.session_state.ai_autopilot_last_key = trajectory_key
+        st.session_state.ai_autopilot_last_status = "skipped_reviewed"
+        st.session_state.ai_last_message = f"Auto pilot skipped {trajectory_key}: already reviewed."
+        st.session_state.ai_model_error = None
+        return None
     if not st.session_state.get('ai_cleaning_enabled', False):
         raise RuntimeError("AI-assisted cleaning is disabled")
     if checkpoint_signature is None or ai_bundle is None:
@@ -723,20 +742,35 @@ def apply_ai_autopilot_to_trajectory(
         f"{invalid_input_count} invalid input point(s) excluded "
         f"({newly_excluded_count} newly added)."
     )
+    if not save_curation():
+        raise CurationStoreError(st.session_state.curation_error)
     return resolution
 
 
 def request_next_trajectory():
-    """Queue destination AI cleaning, or navigate immediately when disarmed."""
+    """Confirm/save the current review, then navigate or apply destination AI."""
     keys = list(st.session_state.get('trajectory_dict', {}))
     if not keys:
         return
+    source_index = int(st.session_state.get('current_idx', 0)) % len(keys)
+    source_key = keys[source_index]
+    if not save_curation(mark_reviewed=source_key):
+        return
+    # Undo must not restore older AI labels over a completed review.
+    undo = st.session_state.get('ai_undo_snapshot')
+    if undo is not None and source_key in undo:
+        remaining = {key: value for key, value in undo.items() if key != source_key}
+        st.session_state.ai_undo_snapshot = remaining or None
     if not st.session_state.get('ai_autopilot_enabled', False):
         navigate_trajectory(1)
         return
 
-    source_index = int(st.session_state.get('current_idx', 0)) % len(keys)
     target_index = (source_index + 1) % len(keys)
+    if st.session_state.trajectory_dict[keys[target_index]].get('_review_status') == 'reviewed':
+        apply_ai_autopilot_to_trajectory(keys[target_index], None, None)
+        st.session_state.ai_autopilot_request = None
+        navigate_trajectory(1)
+        return
     if target_index < source_index:
         # Auto pilot will wrap past the last trajectory back to the first.
         st.session_state.review_completed_notice_pending = True
@@ -764,6 +798,7 @@ def toggle_current_trajectory_selection():
     else:
         selected.add(current_key)
     st.session_state.selected_keys = selected
+    save_curation()
     if st.session_state.get('show_selected_statistics', False):
         st.session_state.selected_statistics_refresh_requested = True
 
@@ -801,7 +836,8 @@ def process_ai_autopilot_request(
         target_key = request['target_key']
         if keys[target_index] != target_key:
             raise RuntimeError("The destination trajectory changed before auto pilot ran")
-        if request.get('model_signature') != checkpoint_signature:
+        if (st.session_state.trajectory_dict[target_key].get('_review_status') != 'reviewed'
+                and request.get('model_signature') != checkpoint_signature):
             raise RuntimeError("The AI model changed before auto pilot ran")
 
         apply_ai_autopilot_to_trajectory(
@@ -809,6 +845,8 @@ def process_ai_autopilot_request(
             checkpoint_signature,
             ai_bundle,
         )
+        if not save_curation(current_key=target_key):
+            raise RuntimeError(st.session_state.curation_error)
         st.session_state.current_idx = target_index
         advance_trajectory_plot_epoch()
     except Exception as exc:
@@ -837,6 +875,8 @@ def navigate_trajectory(step):
         return
     previous_idx = int(st.session_state.get('current_idx', 0)) % len(keys)
     new_idx = (previous_idx + int(step)) % len(keys)
+    if not save_curation(current_key=keys[new_idx]):
+        return
     st.session_state.current_idx = new_idx
     if int(step) > 0 and new_idx < previous_idx:
         # Forward navigation wrapped past the last trajectory back to the first.
@@ -854,8 +894,30 @@ def jump_to_trajectory(widget_key):
     )
     st.session_state.ai_autopilot_request = None
     if target_index != st.session_state.get('current_idx', 0):
+        if not save_curation(current_key=keys[target_index]):
+            return
         st.session_state.current_idx = target_index
         advance_trajectory_plot_epoch()
+
+
+def canonical_labeled_export(trajectory_dict, builder):
+    """Match SQL view row order and full dataset measurement-column union."""
+
+    selected = [
+        builder(entry, key) for key, entry in trajectory_dict.items()
+        if key in st.session_state.selected_keys
+    ]
+    label_columns = ["trajectory_key", "division_point", "excluded_point",
+                     "effective_division_point", "cell_cycle_index"]
+    measurement_columns = []
+    for entry in trajectory_dict.values():
+        measurement_columns.extend(
+            column for column in entry['trajectory'].columns
+            if column not in measurement_columns
+        )
+    if not selected:
+        return pd.DataFrame(columns=measurement_columns + label_columns)
+    return pd.concat(selected, ignore_index=True).reindex(columns=measurement_columns + label_columns)
 
 
 def build_labeled_trajectory_export(trajectory_data, trajectory_key):
@@ -896,6 +958,133 @@ def build_labeled_trajectory_export(trajectory_data, trajectory_key):
         .astype(int)
     )
     return df
+
+
+def save_curation(*, current_key=None, mark_reviewed=None):
+    """Commit edits before a rerun/navigation; leave failed changes in memory."""
+    success = flush_curation(
+        st.session_state, build_labeled_trajectory_export,
+        current_key=current_key, mark_reviewed=mark_reviewed,
+    )
+    if not success:
+        st.session_state.ai_autopilot_enabled = False
+        st.session_state.ai_autopilot_request = None
+    return success
+
+
+def rerun_with_curation():
+    save_curation()
+    st.rerun(scope="app")
+
+
+def save_current_session_to_database():
+    """Widget callback: preserve a session created before autosave was enabled."""
+    if st.session_state.get("curation_dataset_id"):
+        return
+    try:
+        save_current_session_to_curation(
+            st.session_state, data_path, build_labeled_trajectory_export,
+        )
+        close_image_review()
+        st.session_state.trajectory_figure_cache = {}
+        reset_ai_working_state()
+        st.session_state.curation_migration_message = (
+            f"Current session saved as dataset {st.session_state.curation_dataset_id}."
+        )
+    except Exception as exc:
+        st.session_state.curation_error = f"Current-session save failed: {exc}"
+
+
+def recover_after_save_conflict():
+    """Keep a durable local copy before accepting the database's newer revision."""
+    try:
+        recovery_path = save_recovery_copy(st.session_state, build_labeled_trajectory_export)
+        db_path = st.session_state.curation_db_path
+        payload = load_dataset(
+            db_path, st.session_state.curation_dataset_id, source_dir=Path(db_path).parent,
+        )
+        attach_saved_dataset(st.session_state, payload, db_path)
+        close_image_review()
+        st.session_state.trajectory_figure_cache = {}
+        advance_trajectory_plot_epoch()
+        reset_ai_working_state()
+        st.session_state.curation_recovery_message = str(recovery_path)
+    except Exception as exc:
+        st.session_state.curation_error = f"Recovery copy/reload failed: {exc}"
+
+
+def show_curation_save_status():
+    if st.session_state.get("curation_migration_message"):
+        st.success(st.session_state.pop("curation_migration_message"))
+    if st.session_state.get("curation_recovery_message"):
+        st.success("Local edits preserved in " + st.session_state.pop("curation_recovery_message"))
+    if st.session_state.get('curation_error'):
+        st.error(
+            "Autosave failed. Changes remain in this session; navigation is paused. "
+            + st.session_state.curation_error
+        )
+        if st.button("Retry autosave", key="retry_curation_save"):
+            save_curation()
+            rerun_with_curation()
+        if st.session_state.get("curation_dataset_id"):
+            st.button(
+                "Save recovery copy & reload database", key="curation_conflict_recover",
+                on_click=recover_after_save_conflict,
+                help="Save all local edits to a separate SQLite file, then load the latest database revision.",
+            )
+    elif st.session_state.get("curation_error") is None and not st.session_state.get("curation_dataset_id") and st.session_state.get("trajectory_dict"):
+        st.button(
+            "Save current session to SQLite", key="migrate_curation_session",
+            on_click=save_current_session_to_database,
+            help="Preserve this pre-autosave session as a new version, without overwriting older reviews.",
+        )
+    elif st.session_state.get('curation_dataset_id'):
+        st.caption(
+            f"Saved · dataset {st.session_state.curation_dataset_id} · "
+            f"revision {st.session_state.curation_revision} · "
+            f"{st.session_state.get('curation_last_saved', '')}"
+        )
+
+
+def restore_curation_version(db_path, dataset_id):
+    """Run as a widget callback, before restored parameter widgets render."""
+    if not save_curation():
+        return
+    try:
+        info = next(version for version in list_datasets(db_path) if version["dataset_id"] == dataset_id)
+        files = [Path(db_path).parent / source['filename'] for source in info['sources']]
+        sources = fingerprint_sources(files)
+        compatible = find_dataset(
+            db_path, sources=sources, settings=info['settings'],
+            logic_version=str(moma_logic.LOGIC_VERSION),
+        )
+        if compatible is None or compatible['dataset_id'] != dataset_id:
+            raise CurationStoreError(
+                "Source CSVs or app logic changed. Use Process Data to create a new "
+                "dataset version; the saved review is preserved."
+            )
+        payload = load_dataset(db_path, dataset_id, source_dir=Path(db_path).parent)
+        attach_saved_dataset(st.session_state, payload, db_path)
+        for name, value in payload['settings'].items():
+            widget_key = CURATION_PARAMETER_KEYS.get(name)
+            if widget_key and value is not None:
+                st.session_state[widget_key] = value
+        close_image_review()
+        st.session_state.trajectory_figure_cache = {}
+        advance_trajectory_plot_epoch()
+        reset_ai_working_state()
+        st.session_state.curation_resume_message = f"Resumed dataset {dataset_id}."
+    except Exception as exc:
+        st.session_state.curation_resume_error = str(exc)
+
+
+CURATION_PARAMETER_KEYS = {
+    'time_unit': 'processing_time_unit', 'div_thresh': 'processing_div_threshold',
+    'mode': 'processing_tracking_mode', 'min_duration': 'processing_min_duration',
+    'exclude_mode': 'processing_exclude_mode', 'min_spine': 'min_spine_length',
+    'enable_start': 'processing_enable_start', 'start_time': 'processing_start_time',
+    'enable_stop': 'processing_enable_stop', 'stop_time': 'processing_stop_time',
+}
 
 if 'trajectory_dict' not in st.session_state: st.session_state.trajectory_dict = {}
 if 'selected_keys' not in st.session_state: st.session_state.selected_keys = set()
@@ -964,12 +1153,41 @@ if st.session_state.ai_apply_policy not in ('Merge', 'Replace'):
 
 st.sidebar.title("Parameters")
 data_path = st.sidebar.text_input("Data Directory Path", "")
-time_unit = st.sidebar.selectbox("Time Unit", ['s', 'min', 'h', 'd'], index=0,
+curation_db_path = Path(data_path).expanduser() / DB_FILENAME if data_path else None
+if curation_db_path is not None and curation_db_path.is_file():
+    try:
+        saved_versions = list_datasets(curation_db_path)
+    except Exception as exc:
+        saved_versions = []
+        st.sidebar.error(f"Cannot open saved curation: {exc}")
+    if saved_versions:
+        versions_by_id = {version['dataset_id']: version for version in saved_versions}
+        resume_id = st.sidebar.selectbox(
+            "Saved dataset version", options=list(versions_by_id),
+            key="curation_resume_version",
+            format_func=lambda value: (
+                f"Version {value} · {versions_by_id[value].get('reviewed_count', 0)} reviewed · "
+                f"{versions_by_id[value].get('trajectory_count', 0)} trajectories"
+            ),
+        )
+        st.sidebar.button(
+            "Resume saved review", key="resume_curation", width="stretch",
+            on_click=restore_curation_version, args=(str(curation_db_path), resume_id),
+        )
+if st.session_state.get('curation_resume_error'):
+    st.sidebar.error(st.session_state.pop('curation_resume_error'))
+if st.session_state.get('curation_resume_message'):
+    st.sidebar.success(st.session_state.pop('curation_resume_message'))
+# Preserve values restored before conditional parameter widgets render.
+for processing_key in CURATION_PARAMETER_KEYS.values():
+    if processing_key in st.session_state:
+        st.session_state[processing_key] = st.session_state[processing_key]
+time_unit = st.sidebar.selectbox("Time Unit", ['s', 'min', 'h', 'd'], index=0, key="processing_time_unit",
                                  help="Unit of the input time_s values. Moma pipeline exports use seconds (s).")
-div_thresh = st.sidebar.number_input("Division Threshold", 0.1, 5.0, 1.2)
-mode = st.sidebar.selectbox("Tracking Mode", ['longest_lineage', 'most_division'])
-min_duration = st.sidebar.number_input("Min Duration (h)", 0.0, 100.0, 10.0)
-exclude_mode = st.sidebar.toggle("Exclude Mode", value=True, help="If ON, all trajectories are kept by default and you click 'Drop' to remove them.")
+div_thresh = st.sidebar.number_input("Division Threshold", 0.1, 5.0, 1.2, key="processing_div_threshold")
+mode = st.sidebar.selectbox("Tracking Mode", ['longest_lineage', 'most_division'], key="processing_tracking_mode")
+min_duration = st.sidebar.number_input("Min Duration (h)", 0.0, 100.0, 10.0, key="processing_min_duration")
+exclude_mode = st.sidebar.toggle("Exclude Mode", value=True, key="processing_exclude_mode", help="If ON, all trajectories are kept by default and you click 'Drop' to remove them.")
 
 # --- Cell Filter (applied BEFORE division-point finding) ---
 st.sidebar.subheader("Cell Filter (pre-division)")
@@ -1007,66 +1225,97 @@ min_spine = st.sidebar.slider(
 st.sidebar.subheader("Time Range Filter")
 col_start, col_stop = st.sidebar.columns(2)
 with col_start:
-    enable_start = st.checkbox("Enable Start", value=False)
-    start_time = st.number_input("Start (h)", value=0.0) if enable_start else None
+    enable_start = st.checkbox("Enable Start", value=False, key="processing_enable_start")
+    start_time = st.number_input("Start (h)", value=0.0, key="processing_start_time") if enable_start else None
 with col_stop:
-    enable_stop = st.checkbox("Enable Stop", value=False)
-    stop_time = st.number_input("Stop (h)", value=100.0) if enable_stop else None
+    enable_stop = st.checkbox("Enable Stop", value=False, key="processing_enable_stop")
+    stop_time = st.number_input("Stop (h)", value=100.0, key="processing_stop_time") if enable_stop else None
 
 num_cores = st.sidebar.slider("Number of Cores", 1, os.cpu_count(), 4)
 
-if st.sidebar.button("Process Data"):
-    if os.path.exists(data_path):
-        fov_files = [os.path.join(data_path, f) for f in os.listdir(data_path) if f.endswith('.csv') and 'selected' not in f]
-        if fov_files:
-            tasks = []
-            for f_path in sorted(fov_files):
-                try:
+if st.sidebar.button("Process Data") and save_curation():
+    if os.path.isdir(data_path):
+        fov_files = sorted(
+            str(path) for path in Path(data_path).glob('*.csv')
+            if 'selected' not in path.name
+        )
+        settings = {
+            'time_unit': time_unit, 'div_thresh': div_thresh, 'mode': mode,
+            'min_duration': min_duration, 'exclude_mode': exclude_mode,
+            'min_spine': min_spine, 'enable_start': enable_start,
+            'start_time': start_time, 'enable_stop': enable_stop, 'stop_time': stop_time,
+        }
+        try:
+            if not fov_files:
+                raise CurationStoreError("No source CSV files found in this directory.")
+            sources = fingerprint_sources(fov_files)
+            db_path = Path(data_path) / DB_FILENAME
+            existing = find_dataset(
+                db_path, sources=sources, settings=settings,
+                logic_version=str(moma_logic.LOGIC_VERSION),
+            )
+            if existing is not None:
+                payload = load_dataset(db_path, existing['dataset_id'], source_dir=data_path)
+                attach_saved_dataset(st.session_state, payload, db_path)
+                st.success(f"Resumed saved dataset {existing['dataset_id']}.")
+            else:
+                tasks = []
+                for f_path in fov_files:
                     df = pd.read_csv(f_path)
                     name = os.path.basename(f_path).split('_')[1] if '_' in os.path.basename(f_path) else os.path.basename(f_path)
                     df['fov_cell_index'] = np.arange(len(df))
                     for c in df['channels'].unique():
-                        tasks.append((
-                            name, c, df[df['channels'] == c].copy(),
-                            str(Path(f_path).resolve()),
-                        ))
-                except Exception as e: st.sidebar.error(f"Error loading {f_path}: {e}")
-
-            if tasks:
+                        tasks.append((name, c, df[df['channels'] == c].copy(), str(Path(f_path).resolve())))
+                traj_dict = {}
                 pb = st.progress(0.0, text="Processing...")
                 with Parallel(n_jobs=num_cores, return_as="generator") as parallel:
                     gen = parallel(delayed(process_channel_worker)(
                         t[0], t[1], t[2], div_thresh, time_unit, mode, min_duration, start_time, stop_time,
-                        min_spine_length=min_spine
+                        min_spine_length=min_spine,
                     ) for t in tasks)
-                    traj_dict = {}
                     for i, res in enumerate(gen):
                         if res:
-                            # Keep source provenance outside measurement columns:
-                            # unknown columns are treated as fluorescence signals.
+                            if res[0] in traj_dict:
+                                raise CurationStoreError(f"Duplicate trajectory key: {res[0]}")
                             res[1]['source_csv_path'] = tasks[i][3]
                             traj_dict[res[0]] = res[1]
-                        pb.progress((i+1)/len(tasks))
-                for trajectory_data in traj_dict.values():
-                    trajectory_data.setdefault('excluded_indices', set())
-                    trajectory_data['trajectory'] = (
-                        trajectory_data['trajectory']
-                        .sort_values('time_h', kind='stable')
-                        .copy()
-                    )
-                    mark_trajectory_data_changed(trajectory_data)
-                    ensure_trajectory_statistics(trajectory_data)
-                close_image_review()
+                        pb.progress((i + 1) / len(tasks))
+                if fingerprint_sources(fov_files) != sources:
+                    raise CurationStoreError("Source CSVs changed while processing; retry Process Data.")
+                if not traj_dict:
+                    raise CurationStoreError("No trajectories passed the processing filters.")
+                for entry in traj_dict.values():
+                    entry.setdefault('excluded_indices', set())
+                    entry.setdefault('original_div_indices', list(entry['div_indices']))
+                    entry['_review_status'] = 'unreviewed'
+                    entry['_reviewed_at'] = None
+                    entry['trajectory'] = entry['trajectory'].sort_values('time_h', kind='stable').copy()
+                    mark_trajectory_data_changed(entry)
+                    ensure_trajectory_statistics(entry)
+                # Detach the previous version before installing newly reconstructed data.
+                for state_key in ('curation_dataset_id', 'curation_db_path', 'curation_error'):
+                    st.session_state.pop(state_key, None)
                 st.session_state.trajectory_dict = traj_dict
+                st.session_state.selected_keys = set(traj_dict) if exclude_mode else set()
                 st.session_state.current_idx = 0
-                st.session_state.trajectory_figure_cache = {}
-                advance_trajectory_plot_epoch()
-                reset_ai_working_state()
-                if exclude_mode:
-                    st.session_state.selected_keys = set(traj_dict.keys())
+                try:
+                    initialize_curation(
+                        st.session_state, db_path, sources=sources, settings=settings,
+                        logic_version=str(moma_logic.LOGIC_VERSION), builder=build_labeled_trajectory_export,
+                    )
+                except Exception as exc:
+                    st.session_state.curation_error = str(exc)
+                    st.error(f"Initial database save failed. Trajectories remain in memory: {exc}")
                 else:
-                    st.session_state.selected_keys = set()
-                st.success(f"Loaded {len(traj_dict)} trajectories from {len(tasks)} channels.")
+                    st.success(f"Loaded and saved {len(traj_dict)} trajectories from {len(tasks)} channels.")
+            close_image_review()
+            st.session_state.trajectory_figure_cache = {}
+            advance_trajectory_plot_epoch()
+            reset_ai_working_state()
+        except Exception as exc:
+            st.sidebar.error(f"Process Data failed: {exc}")
+    else:
+        st.sidebar.error("Choose an existing data directory.")
 
 # Sidebar actions rerun the whole app, so update selection before the viewer
 # and aggregate statistics are rendered.
@@ -1101,14 +1350,22 @@ if st.sidebar.button(
         st.sidebar.info(f"All trajectories in FOV {fov_to_drop} are already dropped.")
     else:
         st.session_state.selected_keys = selected - fov_trajectory_keys
-        st.sidebar.success(
-            f"Dropped {dropped_count} trajectories from FOV {fov_to_drop}."
-        )
+        if save_curation():
+            st.sidebar.success(f"Dropped {dropped_count} trajectories from FOV {fov_to_drop}.")
+        else:
+            st.sidebar.error("FOV drop is not saved yet. Retry autosave before navigating.")
 if st.session_state.trajectory_dict:
     st.sidebar.caption(
         f"FOV {fov_to_drop}: {len(fov_trajectory_keys)} trajectories loaded."
     )
 
+st.session_state.curation_current_parameters = {
+    'time_unit': time_unit, 'div_thresh': div_thresh, 'mode': mode,
+    'min_duration': min_duration, 'exclude_mode': exclude_mode,
+    'min_spine': min_spine, 'enable_start': enable_start,
+    'start_time': start_time, 'enable_stop': enable_stop, 'stop_time': stop_time,
+}
+st.session_state.curation_current_logic_version = str(moma_logic.LOGIC_VERSION)
 # AI configuration is session-wide rather than trajectory-specific. Rendering
 # these widgets in the sidebar before any navigation button can trigger a rerun
 # keeps their state attached for every trajectory in the current data set.
@@ -1287,15 +1544,15 @@ with st.sidebar.expander(
             key="ai_autopilot_enabled",
             disabled=not autopilot_available,
             help=(
-                "When enabled, Next predicts and immediately applies the current "
-                "thresholds, label types, and Merge/Replace policy to the "
-                "destination trajectory before opening it. Prev never applies AI."
+                "Next confirms the current review, then applies the current "
+                "thresholds, label types, and Merge/Replace policy only to an "
+                "unreviewed destination. Reviewed trajectories are skipped. Prev never applies AI."
             ),
         )
         if st.session_state.ai_autopilot_enabled:
             st.caption(
-                "Auto pilot is active. Replace policy can overwrite the enabled "
-                "manual label types on the next trajectory."
+                "Auto pilot is active. Reviewed trajectories are protected; "
+                "Merge/Replace applies only to unreviewed destinations."
             )
 
 st.markdown(
@@ -1338,7 +1595,7 @@ else:
         if st.session_state.pop(
             'selected_statistics_refresh_requested', False
         ):
-            st.rerun(scope="app")
+            rerun_with_curation()
 
         autopilot_request = st.session_state.pop(
             'ai_autopilot_request', None
@@ -1353,7 +1610,7 @@ else:
                     ai_bundle,
                 )
             if request_was_handled:
-                st.rerun(scope="app")
+                rerun_with_curation()
 
         if st.session_state.pop('reset_trajectory_plot_state', False):
             st.session_state.pop('traj_plot', None)
@@ -1428,6 +1685,8 @@ else:
         )
 
         # Selection & Navigation
+        save_curation()
+        show_curation_save_status()
         c1, c2, c3 = st.columns([1, 2, 1])
         with c1:
             st.button(
@@ -1439,6 +1698,7 @@ else:
             st.button(
                 "Next ➡️",
                 on_click=request_next_trajectory,
+                help="Mark this trajectory reviewed, save it, and open the next. Auto pilot skips reviewed destinations.",
             )
         with c2:
             st.button(
@@ -1480,6 +1740,9 @@ else:
             )
 
         st.write(f"**Current:** {curr_key} ({st.session_state.current_idx + 1}/{len(keys)}) | **Selected:** {len(st.session_state.selected_keys)}")
+        if st.session_state.get("curation_dataset_id"):
+            reviewed_count = sum(entry.get("_review_status") == "reviewed" for entry in st.session_state.trajectory_dict.values())
+            st.caption(f"Review: {data.get('_review_status', 'unreviewed').replace('_', ' ')} · {reviewed_count}/{len(keys)} reviewed")
 
         # Normalize older/injected sessions to the mutable set used by all manual
         # and AI exclusion actions.
@@ -1987,7 +2250,7 @@ else:
                                 "next AI inference unless their source values change."
                             )
                             advance_trajectory_plot_epoch()
-                            st.rerun(scope="app")
+                            rerun_with_curation()
             if st.button("🚫 Exclude Selected", help="Lasso/Box select on the plot first", use_container_width=True):
                 plot_state = st.session_state.get(plot_key)
                 selected_indices = selected_fov_cell_indices(
@@ -2004,7 +2267,7 @@ else:
                         ensure_trajectory_statistics(data)
                         st.success(f"Excluded {len(indices_to_exclude)} point(s).")
                         advance_trajectory_plot_epoch()
-                        st.rerun(scope="app")
+                        rerun_with_curation()
                     else:
                         st.info("Every selected point is already excluded.")
                 else:
@@ -2029,7 +2292,7 @@ else:
                     ensure_trajectory_statistics(data)
                     st.success(f"Restored {len(indices_to_restore)} point(s).")
                     advance_trajectory_plot_epoch()
-                    st.rerun(scope="app")
+                    rerun_with_curation()
                 elif selected_indices:
                     st.info("The selection contains no applied exclusions.")
                 else:
@@ -2045,7 +2308,7 @@ else:
                     data['excluded_indices'] = set()
                     ensure_trajectory_statistics(data)
                     advance_trajectory_plot_epoch()
-                    st.rerun(scope="app")
+                    rerun_with_curation()
                 else:
                     st.info("This trajectory has no applied exclusions.")
 
@@ -2072,7 +2335,7 @@ else:
                             ensure_trajectory_statistics(data)
                             st.success(f"Division at {max_t:.2f}h")
                             advance_trajectory_plot_epoch()
-                            st.rerun(scope="app")
+                            rerun_with_curation()
                         else:
                             st.warning("Already marked.")
                 else:
@@ -2168,7 +2431,7 @@ else:
                                 f"{preserved_message}"
                             )
                             advance_trajectory_plot_epoch()
-                            st.rerun(scope="app")
+                            rerun_with_curation()
                         elif protected_sources:
                             st.info("Latest selected division was preserved; no earlier division was removed.")
                         else:
@@ -2183,7 +2446,7 @@ else:
                 data['excluded_indices'] = set()
                 ensure_trajectory_statistics(data)
                 advance_trajectory_plot_epoch()
-                st.rerun(scope="app")
+                rerun_with_curation()
 
             st.divider()
             st.subheader("AI Cleaning")
@@ -2195,13 +2458,20 @@ else:
                 if st.session_state.ai_last_message:
                     st.success(st.session_state.ai_last_message)
 
-                scope_keys = ai_scope_keys(
+                requested_scope = ai_scope_keys(
                     st.session_state.ai_scope,
                     keys,
                     curr_key,
                 )
+                scope_keys = [
+                    key for key in requested_scope
+                    if st.session_state.trajectory_dict[key].get("_review_status") != "reviewed"
+                ]
+                reviewed_skipped = len(requested_scope) - len(scope_keys)
+                if reviewed_skipped:
+                    st.caption(f"{reviewed_skipped} reviewed trajectory(s) protected from AI changes.")
                 if not scope_keys:
-                    st.warning("The selected scope contains no trajectories.")
+                    st.info("No unreviewed trajectories in this scope. Reviewed labels are protected.")
 
                 if st.button(
                     "✨ Run AI Preview",
@@ -2234,7 +2504,7 @@ else:
                         )
                         st.session_state.ai_model_error = None
                         advance_trajectory_plot_epoch()
-                        st.rerun(scope="app")
+                        rerun_with_curation()
                     except Exception as exc:
                         st.session_state.ai_model_error = f"Prediction failed: {exc}"
                         st.error(st.session_state.ai_model_error)
@@ -2306,7 +2576,7 @@ else:
                         )
                         st.session_state.ai_model_error = None
                         advance_trajectory_plot_epoch()
-                        st.rerun(scope="app")
+                        rerun_with_curation()
                     except Exception as exc:
                         st.session_state.ai_model_error = f"Apply failed: {exc}"
                         st.error(st.session_state.ai_model_error)
@@ -2330,7 +2600,10 @@ else:
                     key="ai_undo_changes",
                     disabled=st.session_state.ai_undo_snapshot is None,
                 ):
-                    snapshot = st.session_state.ai_undo_snapshot
+                    snapshot = {
+                        key: value for key, value in st.session_state.ai_undo_snapshot.items()
+                        if st.session_state.trajectory_dict[key].get("_review_status") != "reviewed"
+                    }
                     restore_cleaning_snapshot(
                         st.session_state.trajectory_dict,
                         snapshot,
@@ -2343,7 +2616,7 @@ else:
                     st.session_state.ai_last_message = "Restored labels from before AI apply."
                     st.session_state.ai_model_error = None
                     advance_trajectory_plot_epoch()
-                    st.rerun(scope="app")
+                    rerun_with_curation()
 
                 if st.button(
                     "🧹 Clear AI Preview",
@@ -2365,7 +2638,7 @@ else:
                     st.session_state.ai_last_message = "Cleared AI preview for this scope."
                     st.session_state.ai_model_error = None
                     advance_trajectory_plot_epoch()
-                    st.rerun(scope="app")
+                    rerun_with_curation()
             else:
                 st.info(
                     "Enable AI-assisted cleaning in the left sidebar. The setting "
@@ -2484,13 +2757,7 @@ else:
 
     if st.sidebar.button("📊 Export with Labels"):
         if st.session_state.selected_keys:
-            labeled_dfs = [
-                build_labeled_trajectory_export(
-                    st.session_state.trajectory_dict[k], k
-                )
-                for k in st.session_state.selected_keys
-            ]
-            final_labeled = pd.concat(labeled_dfs, ignore_index=True)
+            final_labeled = canonical_labeled_export(st.session_state.trajectory_dict, build_labeled_trajectory_export)
             out_path = os.path.join(data_path, "selected_labeled.csv")
             final_labeled.to_csv(out_path, index=False)
             st.sidebar.success(f"Saved labeled data to {out_path}")

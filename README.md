@@ -63,6 +63,66 @@ match that FOV. Dropped trajectories are excluded from selected
 exports and statistics and remain available for inspection; use **Keep
 Trajectory** to keep one again.
 
+## Autosave and resume curation
+
+**Process Data** creates `moma_curation.sqlite3` in the input directory after
+reconstruction. It stores all reconstructed measurements, initial division
+labels, current labels, keep/drop membership, review status, and the current
+cursor. Image pickle arrays and AI preview caches stay outside this database.
+This local working database is separate from the frozen training-data store.
+
+- Each manual label edit, reset, keep/drop action, FOV drop, AI application,
+  and AI undo commits immediately in a SQLite transaction.
+- **Next** confirms the current trajectory as reviewed, saves it, and opens
+  the next one. The right-arrow shortcut uses the same action. **Prev** and
+  trajectory-number jumps navigate without confirming review.
+- AI auto pilot skips reviewed destinations, including after wrapping back to
+  the first trajectory. AI Merge/Replace, input preflight, and AI undo preserve
+  reviewed trajectories; only unreviewed trajectories in the selected scope
+  are eligible for AI changes.
+- Editing a reviewed trajectory changes its status back to **in progress**.
+- After a crash or restart, enter the same directory, choose a saved dataset
+  version, and click **Resume saved review**. Measurements, labels, keep/drop
+  choices, processing settings, and the last trajectory are restored.
+- Processing identical CSVs with identical settings resumes the saved version.
+  Changed source contents, settings, or app logic create a new version while
+  preserving older versions. Incompatible sources/logic block resume to avoid
+  incorrect image joins and reconstruction assumptions.
+- **Saved** displays the committed revision. An **Autosave failed** error means
+  edits remain in memory; navigation and auto pilot pause until saving succeeds.
+  Revision checks reject silent overwrites from a second browser session. On
+  conflict, **Save recovery copy & reload database** first writes unsaved local
+  edits into a separate `moma_curation_recovery_*.sqlite3` file, then reloads
+  the latest revision. Both versions are preserved.
+- For a session loaded before autosave was introduced, click **Save current
+  session to SQLite**. This creates a new version, preserving its unsaved
+  labels without overwriting an older review. Later loads use **Process Data**.
+
+Three active-dataset SQL views have the same measurement and label columns as
+labeled CSV exports. Boolean labels use 0/1. `selected_labeled` contains kept
+ trajectories; `reviewed_selected_labeled` contains reviewed, kept trajectories;
+`all_labeled` also includes dropped trajectories. Source/review bookkeeping
+stays in separate tables and never becomes measurement columns.
+
+```python
+import sqlite3
+from contextlib import closing
+import pandas as pd
+
+with closing(sqlite3.connect("moma_curation.sqlite3")) as connection:
+    df = pd.read_sql_query(
+        "SELECT * FROM reviewed_selected_labeled ORDER BY trajectory_key, time_h",
+        connection,
+    )
+```
+
+Views follow the dataset version most recently opened/saved by the app. SQLite
+uses WAL journaling, full synchronization, foreign-key checks, and short
+ transactions. Keep this working database on a local filesystem. While the app
+runs, its `-wal` and `-shm` companion files may contain live state; do not delete
+or omit them from a raw copy. Close the app before copying the database, or use
+SQLite's backup API for a live backup.
+
 ## Review images for selected observations
 
 1. Keep the upstream `<fov>_exported_data.pkl` beside its matching
