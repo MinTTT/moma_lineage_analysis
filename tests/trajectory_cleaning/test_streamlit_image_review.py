@@ -12,6 +12,7 @@ from unittest.mock import MagicMock as _OriginalMagicMock
 
 import numpy as np
 import pandas as pd
+import tifffile
 from streamlit.components.v2.component_manager import BidiComponentManager
 from streamlit.runtime import Runtime
 from streamlit.testing.v1 import AppTest
@@ -214,6 +215,58 @@ class StreamlitImageReviewTests(unittest.TestCase):
             app.button(key="review_images").click().run()
             self.assertFalse(app.exception)
             self.assertTrue(app.toggle(key="image_review_dt").value)
+
+
+    def test_export_selected_image_and_mask_tiffs_to_source_folder(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            entry = _review_entry(directory)
+            app = _app_with_entries({"FOV_0_CH_7": entry})
+            _select_plot_points(app, [{"customdata": [100]}, {"customdata": [101]}])
+            app.button(key="review_images").click().run()
+            self.assertFalse(app.exception)
+            self.assertTrue(app.button(key="export_review_image").disabled)
+
+            app.session_state["image_review_selected_frame"] = "1"
+            app.toggle(key="image_review_dt").set_value(True).run()
+            self.assertFalse(app.exception)
+            self.assertFalse(app.button(key="export_review_image").disabled)
+            app.button(key="export_review_image").click().run()
+            self.assertFalse(app.exception)
+
+            outputs = [
+                path for path in directory.glob("fov_000_t1_phase_side7_*.tif")
+                if not path.stem.endswith("_masks")
+            ]
+            self.assertEqual(len(outputs), 1)
+            output = outputs[0]
+            tag = output.stem.rsplit("_", 1)[1]
+            self.assertEqual(len(tag), 8)
+            mask_output = output.with_name(output.stem + "_masks.tif")
+            self.assertTrue(mask_output.is_file())
+            with (directory / "fov_000_exported_data.pkl").open("rb") as handle:
+                export = pickle.load(handle)
+            expected_image = export["cells_sideChannel_image_dict"]["fov_channels_image_dict"][7]["t1.tiff"]["phase"]
+            expected_mask = export["cells_sideChannel_image_dict"]["fov_cells_mask_dict"][7]["t1.tiff"]
+            pixels = tifffile.imread(output)
+            # DT was enabled for the display, but export must be the untouched
+            # original 2D source image with no mask/spine/rib pixels burned in.
+            self.assertEqual(pixels.dtype, expected_image.dtype)
+            np.testing.assert_array_equal(pixels, expected_image)
+            mask_pixels = tifffile.imread(mask_output)
+            self.assertEqual(mask_pixels.dtype, expected_mask.dtype)
+            np.testing.assert_array_equal(mask_pixels, expected_mask)
+
+            app.button(key="export_review_image").click().run()
+            self.assertFalse(app.exception)
+            all_images = [
+                path for path in directory.glob("fov_000_t1_phase_side7_*.tif")
+                if not path.stem.endswith("_masks")
+            ]
+            all_masks = list(directory.glob("fov_000_t1_phase_side7_*_masks.tif"))
+            self.assertEqual(len(all_images), 2)
+            self.assertEqual(len(all_masks), 2)
+            self.assertEqual(len({path.stem.rsplit("_", 1)[1] for path in all_images}), 2)
 
     def test_layer_change_is_an_actual_dialog_fragment_run(self):
         from ._image_review_fragment_check import run_dialog_fragment

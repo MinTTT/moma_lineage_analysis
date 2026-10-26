@@ -134,7 +134,7 @@ DIVISION_CONFLICT_DROP_RATIO = 0.75
 # Bump this whenever the conflict-resolution or statistics schema changes.
 # It is part of every trajectory cache signature, so older Streamlit sessions
 # are migrated automatically without requiring users to reload their data.
-TRAJECTORY_STATISTICS_SCHEMA_VERSION = 1
+TRAJECTORY_STATISTICS_SCHEMA_VERSION = 2
 
 
 # High-contrast palette for cell-cycle segments (Tol "bright" extended with
@@ -964,7 +964,8 @@ if st.session_state.ai_apply_policy not in ('Merge', 'Replace'):
 
 st.sidebar.title("Parameters")
 data_path = st.sidebar.text_input("Data Directory Path", "")
-time_unit = st.sidebar.selectbox("Time Unit", ['s', 'min', 'h', 'd'], index=3)
+time_unit = st.sidebar.selectbox("Time Unit", ['s', 'min', 'h', 'd'], index=0,
+                                 help="Unit of the input time_s values. Moma pipeline exports use seconds (s).")
 div_thresh = st.sidebar.number_input("Division Threshold", 0.1, 5.0, 1.2)
 mode = st.sidebar.selectbox("Tracking Mode", ['longest_lineage', 'most_division'])
 min_duration = st.sidebar.number_input("Min Duration (h)", 0.0, 100.0, 10.0)

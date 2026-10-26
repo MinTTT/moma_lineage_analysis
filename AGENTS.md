@@ -42,7 +42,7 @@ moma_lineage_analysis/
 │   │   ├── Moma_lineage_streamlit.py  # Streamlit curation app (UI, AI panel, exports)
 │   │   ├── cli.py                     # `moma-lineage` console launcher
 │   │   └── __main__.py                # `python -m moma_lineage_analysis.app`
-│   ├── moma_logic.py                  # lineage tracing, division detection, per-cycle stats (LOGIC_VERSION 2.2)
+│   ├── moma_logic.py                  # lineage tracing, division detection, per-cycle stats (LOGIC_VERSION 2.3)
 │   ├── sciplot.py                     # plotting helpers
 │   ├── paths.py                       # PACKAGE_MODELS_RUN_DIR (package-anchored checkpoints)
 │   ├── trajectory_cleaning/
@@ -408,9 +408,11 @@ foreach ($m in @('cnn','resnet','lstm')) {
 
 ---
 
-## 9. Current state (as of 2026-10-17)
+## 9. Current state (lineage updated 2026-10-26; model/data as of 2026-10-17)
 
-- Method version `0.7.0`; rounds R001-R013 closed (R011 = R010 CNN promotion; R012 = dataset-store training layer; R013 = legacy-CSV retirement; neither R012 nor R013 changed a model/metric).
+- Lineage-construction method `1.1.0`, round R002 (2026-10-26), `LOGIC_VERSION 2.3`; app statistics schema 2. Founder divisions count non-self children before the root stop; exact daughter-length conservation is accepted, with strict upper and first-daughter bounds retained. Fresh **Time Unit** is `s`; explicit `d` remains supported and unknown units raise `ValueError`. Statistics use stable numeric-time copies, finite positive fit observations, centered OLS with rank checks and explicit residual R², and `RuntimeWarning` for invalid observations/degenerate fits. Reconstruct with **Process Data** for new lineage rules; cached-statistics invalidation does not migrate existing annotations. Regression commands/outcomes are tracked in `docs/METHODS_LINEAGE_TRAJECTORY_CONSTRUCTION.md`; R001 results remain historical.
+- Upstream spine length/width are already µm and area µm² (`Cell` and `CellDT` calibrate by `umppx` before export); `time_s` comes from `time_points_seconds`. Do not rescale numerical lengths or change the minimum-length filter to repair the earlier pixels wording. `fov_cell_index` is a unique observation ID within the loaded FOV, not persistent identity.
+- Cleaning-model method version `0.7.0`; rounds R001-R013 closed (R011 = R010 CNN promotion; R012 = dataset-store training layer; R013 = legacy-CSV retirement; neither R012 nor R013 changed a model/metric).
 - Production checkpoint: R010 CNN, sha256
   `6e7c5a5896c90bd0de2b068af087f2d9c942b2de94e8deb87e419fd005cb230b`;
   previous R008 CNN backed up at

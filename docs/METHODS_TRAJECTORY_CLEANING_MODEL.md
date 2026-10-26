@@ -484,10 +484,20 @@ interactive diagnostics, not contract figures.
 | `POINT_AP` | point-level average precision | `point_level.<label>.average_precision` | AP | unitless | observation, per label | `sklearn.metrics.average_precision_score` | Threshold-independent ranking quality | — | AP | None | Active / 0.1.0 |
 | `DIVISION_EVENT_F1` | division-event F1 | `division_event.f1` in metrics.json | F1_event | unitless | division event | event-level P/R/F1 with `cluster_event_indices`, tolerance ±1 frame | Biological correctness of division timing | Tolerant by design; a ±1 frame error counts as a true positive | Event F1 | None | Active / 0.1.0 |
 | `DIVISION_EVENT_MAE` | division-event mean absolute frame error | `division_event.mean_absolute_error_frames` | MAE_frames | frames | matched division event | mean \|predicted frame − true frame\| over matched events | Timing sharpness of matched events | Defined only over true positives | Event MAE | None | Active / 0.1.0 |
-| `SPINE_LENGTH` | spine length | `spine_length` | ell_t | pixels (source acquisition) | observation | arc length of fitted cell spine polynomial (upstream `cell_coord_utility.Cell`) | Proxy for cell size; drives both labels | Segmentation-derived; units vary by acquisition | Spine length | None | Active / 0.1.0 |
+| `SPINE_LENGTH` | spine length | `spine_length` | ell_t | µm (calibrated upstream) | observation | fitted cell-spine arc length multiplied by `umppx` upstream (`cell_coord_utility.Cell`; DT: `_length_px * umppx`) | Proxy for cell size; drives both labels | Segmentation-derived; calibration depends on acquisition `umppx` | Spine length (µm) | None | Active / 0.1.0 |
 | `DIVISION_RECALL_TAIL` | tail-quintile division recall | `position.division_recall_tail_quintile.recall` | R_tail | unitless | observation, division positives with relative position >= 0.8 | fraction of true division points in the last trajectory quintile predicted at the calibrated threshold | Boundary recall — the R002 failure-mode metric | Quintile boundaries per trajectory; support varies | Tail division recall | None | Active / 0.2.0 |
 | `DIVISION_RECALL_HEAD` | head-quintile division recall | `position.division_recall_head_quintile.recall` | R_head | unitless | observation, division positives with relative position <= 0.2 | fraction of true division points in the first trajectory quintile predicted at the calibrated threshold | Baseline recall for contrast with tail | Quintile boundaries per trajectory | Head division recall | None | Active / 0.2.0 |
 | `LAST_EVENT_MISS_RATE` | last-division-event miss rate | `position.last_division_event.miss_rate` | M_last | unitless | trajectory | fraction of trajectories with at least one true division whose LAST true division event is unmatched (tolerance ±1 frame) | The user-reported failure mode (missed final division) | Trajectory-level; no uncertainty interval | Last event miss rate | None | Active / 0.2.0 |
+
+Units documentation correction (2026-10-26): the supported upstream `Cell`
+implementation multiplies fitted spine length by `umppx`
+(`G:/python_code/Moma_cellPose/cell_coord_utility.py:1156–1157`), and `CellDT`
+uses `_length_px * umppx` (`cell_morphology_compat.py:182`). The upstream CSV
+exporters carry those calibrated attributes through unchanged; the full source
+locators are recorded in `docs/METHODS_LINEAGE_TRAJECTORY_CONSTRUCTION.md`.
+The earlier pixels wording was incorrect. This corrects prose only: numerical
+features, normalization, frozen corpora, model artifacts, and the minimum-length
+filter are unchanged; no cleaning-model method-version or round is added.
 
 ### Parameter registry
 

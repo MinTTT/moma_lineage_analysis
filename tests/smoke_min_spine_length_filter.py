@@ -1,6 +1,8 @@
-"""Smoke test for the min_spine_length pre-division filter (moma_logic LOGIC_VERSION 2.2).
+"""Smoke test for the min_spine_length pre-division filter (moma_logic LOGIC_VERSION 2.3).
 
-Evidence for round R001 of METHODS_LINEAGE_TRAJECTORY_CONSTRUCTION.md.
+Introduced as evidence for round R001 of METHODS_LINEAGE_TRAJECTORY_CONSTRUCTION.md;
+retained as a regression command for method 1.1.0, round R002. A run is required
+to establish a current outcome; the historical R001 result is not a fresh pass.
 Acceptance gates checked here:
   1. With min_spine_length > 0, no constructed-trajectory row has spine_length < threshold.
   3. A channel whose rows all fall below the threshold returns None without error.

@@ -45,6 +45,16 @@ Then set **Data Directory Path** in the sidebar to a folder of `*_cells_df.csv`
 files (exported by the upstream `Moma_CPM_FOV.py` pipeline) and click
 **Process Data**.
 
+Fresh sessions default **Time Unit** to `s`, matching upstream `time_s` exports.
+Choose `min`, `h`, or `d` explicitly only when the input values use that unit;
+unsupported units raise `ValueError`. Lineage method 1.1.0 (R002, logic 2.3)
+corrects founder-division counting, accepts exact daughter-length conservation,
+and uses sorted, finite observations for per-cycle fits. Reconstruct with
+**Process Data** to use these rules; existing annotations are not migrated.
+Recheck division labels after reconstruction because selected paths and cycle
+boundaries can change. Historical runs using `d` for seconds-valued inputs have
+incorrect durations and rates and require reconstruction with `s`.
+
 To drop an entire field of view, use **Drop trajectories by FOV** in the left
 sidebar. Enter its **FOV index (0-based)** (for example, `0` matches
 `FOV_0_CH_16` and every other channel in FOV 0), then click
@@ -74,6 +84,13 @@ Trajectory** to keep one again.
    yellow ribs and a magenta spine through their midpoints. The image height
    control changes the display scale while preserving aspect ratio and the
    orientation saved by the pipeline.
+5. Click an image, then use **Export selected image + mask (TIFF)** to save the
+   original source image and its original 2D label mask into the source data
+   folder. The image contains no mask, outline, spine, or rib overlays; those
+   remain display-only. Pixel values and dtypes are preserved. The pair shares
+   a random eight-character filename tag; the mask filename ends in
+   `_masks.tif`. Repeated exports create new tags and never overwrite existing
+   files.
 
 The popup captures the selection when opened. Layer and page changes affect
 only image review; close it to return to curation. The clicked-image information
@@ -112,14 +129,19 @@ input.
 | `time_point` | Frame index (0-based). |
 | `channels` | Channel name the cell was segmented in. |
 | `cell_index` | Per-frame segmentation id (unique only within one frame). |
-| `fov_cell_index` | Cell identity within the FOV, linked across frames; the label columns below reference this id. |
+| `fov_cell_index` | Unique observation ID within the loaded FOV table (assigned from row position), not a persistent cell identity across frames; the label columns below reference this ID. |
 | `ancestor_index` | Parent `fov_cell_index` from tracking; used to trace the lineage back to its founder cell. |
-| `spine_length` | Cell length along the growth channel (pixels); the main growth/division signal. |
-| `area` | Cell area (pixels²). |
+| `spine_length` | Cell spine length (µm), already calibrated upstream; the main growth/division signal. |
+| `area` | Cell area (µm²), already calibrated upstream. |
 | `umppx` | Micrometers per pixel (scale calibration). |
-| `width`, `width_area` | Cell width estimates. |
+| `width`, `width_area` | Cell width estimates (µm), already calibrated upstream. |
 | `x_min`, `x_max`, `y_min`, `y_max` | Bounding box of the cell mask (pixels). |
 | *(one per fluorescence channel)* | Per-cell fluorescence intensity as exported by the upstream pipeline; any column not listed above is treated as a fluorescence channel. |
+
+Length, width, and area calibration happens upstream using `umppx`; do not
+multiply these exported measurements by it again. Source-code evidence for both
+legacy and DT exports is recorded in
+[the lineage methods contract](docs/METHODS_LINEAGE_TRAJECTORY_CONSTRUCTION.md).
 
 ### Label columns (added by the app)
 

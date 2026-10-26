@@ -3,8 +3,8 @@ import numpy as np
 from typing import Optional, Iterable, Tuple, Union
 from warnings import warn
 
-# Version 2.2 - Added min_spine_length pre-division cell filter
-LOGIC_VERSION = 2.2
+# Version 2.3 - Root divisions, exact halving, validated units and cycle fits
+LOGIC_VERSION = 2.3
 
 def get_distY_mat(cells_t1: np.ndarray, cells_t2: np.ndarray) -> np.ndarray:
     return np.abs(cells_t1[:, np.newaxis] - cells_t2)
@@ -33,13 +33,16 @@ def tracing_lineage(cells_index, cells_ancestor_index, end_cell_index: Union[int
             mask = cells_index == current_fov_cell_index
             if not np.any(mask): break
             ancestor_index = cells_ancestor_index[mask][0]
+            # Roots use a self-edge, which is not a biological child. Record
+            # their real divisions before stopping the backward walk.
+            children = ((cells_ancestor_index == current_fov_cell_index)
+                        & (cells_index != current_fov_cell_index))
+            if children.sum() > 1:
+                division_count += 1
+                division_index_list.append(current_fov_cell_index)
             if ancestor_index == current_fov_cell_index: break
 
             lineage_length += 1
-            if (cells_ancestor_index == current_fov_cell_index).sum() > 1:
-                division_count += 1
-                division_index_list.append(current_fov_cell_index)
-
             current_fov_cell_index = ancestor_index
             tracing_lineage_list.append(current_fov_cell_index)
 
@@ -67,7 +70,7 @@ def get_cell_lineage(time_order, time_points, fov_cell_index, cell_index, cells_
                 l1_0, l1_1 = c1_len[j_sort[j]], c1_len[j_sort[j+1]]
                 sum_l1 = l1_0 + l1_1 
                 l0 = c0_len[i_sort[i]]
-                if (l0 * division_threshold > (sum_l1 - l0) > 0 and (l0 * 0.9 > l1_0)):
+                if (l0 * division_threshold > (sum_l1 - l0) >= 0 and (l0 * 0.9 > l1_0)):
                     lin_t1[j_sort[j]] = c0_fov[i_sort[i]]
                     lin_t1[j_sort[j+1]] = c0_fov[i_sort[i]]
                     j_start = j + 2
@@ -82,36 +85,83 @@ def get_cell_lineage(time_order, time_points, fov_cell_index, cell_index, cells_
     return lineage
 
 def compute_traj_stats(traj_df, div_indices):
-    div_pts = traj_df[traj_df['fov_cell_index'].isin(div_indices)]['time_h'].values
-    div_pts.sort()
-    
-    div_time = np.array([(div_pts[:-1] + div_pts[1:]) / 2, np.diff(div_pts)]) if len(div_pts) > 1 else np.array([])
-    
+    """Split after division mothers and fit log-length slopes in hours.
+
+    Work on a stable time-sorted copy. Rows without finite times cannot be
+    placed in a cycle; other rows remain in segments, but fitting requires
+    finite, positive lengths. Invalid observations are reported, not imputed.
+    """
+    ordered = traj_df.copy()
+    ordered['time_h'] = pd.to_numeric(ordered['time_h'], errors='coerce')
+    ordered['spine_length'] = pd.to_numeric(ordered['spine_length'], errors='coerce')
+    finite_time = np.isfinite(ordered['time_h'].to_numpy(dtype=float))
+    lengths = ordered['spine_length'].to_numpy(dtype=float)
+    valid_length = np.isfinite(lengths) & (lengths > 0)
+    invalid_count = int((~(finite_time & valid_length)).sum())
+    if invalid_count:
+        warn(f"Ignoring {invalid_count} invalid observation(s) in trajectory fits; "
+             "finite time and finite positive spine_length are required.",
+             RuntimeWarning, stacklevel=2)
+    ordered = ordered.loc[finite_time].sort_values('time_h', kind='stable')
+    t_h = ordered['time_h'].to_numpy(dtype=float)
+    division_positions = np.flatnonzero(ordered['fov_cell_index'].isin(div_indices))
+    div_pts = t_h[division_positions]
+    div_time = (np.array([(div_pts[:-1] + div_pts[1:]) / 2, np.diff(div_pts)])
+                if len(div_pts) > 1 else np.array([]))
+
     segs = []
-    t_h = traj_df['time_h'].values
     s_idx = 0
-    for pt in div_pts:
-        e_idx = np.searchsorted(t_h, pt) + 1
-        segs.append((t_h[s_idx:e_idx], traj_df.iloc[s_idx:e_idx]))
+    for position in division_positions:
+        e_idx = position + 1
+        segs.append((t_h[s_idx:e_idx], ordered.iloc[s_idx:e_idx]))
         s_idx = e_idx
-    if s_idx < len(t_h): segs.append((t_h[s_idx:], traj_df.iloc[s_idx:]))
+    if s_idx < len(t_h):
+        segs.append((t_h[s_idx:], ordered.iloc[s_idx:]))
 
     gr_data = []
-    for ts, df in segs:
-        l = df['spine_length'].values
-        m = ~np.isnan(l)
-        if m.sum() >= 4:
-            try:
-                coeffs, RSS, _, _, _ = np.polyfit(ts[m], np.log(l[m]), 1, full=True)
-                r2 = 1 - (RSS[0] / np.sum((np.log(l[m]) - np.log(l[m]).mean())**2))
-                gr_data.append([(ts[m][0]+ts[m][-1])/2, coeffs[0], r2])
-            except: gr_data.append([np.nan, np.nan, np.nan])
-        else: gr_data.append([np.nan, np.nan, np.nan])
-    
-    return segs, div_time, np.array(gr_data).T
+    for segment_index, (ts, df) in enumerate(segs):
+        lengths = df['spine_length'].to_numpy(dtype=float)
+        valid = np.isfinite(lengths) & (lengths > 0)
+        if valid.sum() < 4:
+            gr_data.append([np.nan, np.nan, np.nan])
+            continue
+        fit_time = ts[valid]
+        if np.ptp(fit_time) == 0:
+            warn(f"Cannot fit trajectory segment {segment_index}: no time variation.",
+                 RuntimeWarning, stacklevel=2)
+            gr_data.append([np.nan, np.nan, np.nan])
+            continue
+        log_length = np.log(lengths[valid])
+        midpoint = (fit_time[0] + fit_time[-1]) / 2
+        # A constant response has a valid zero slope but undefined R^2.
+        if np.ptp(log_length) == 0:
+            gr_data.append([midpoint, 0.0, np.nan])
+            continue
+        centered_time = fit_time - fit_time[0]
+        try:
+            coeffs, _, rank, _, _ = np.polyfit(centered_time, log_length, 1, full=True)
+        except (ValueError, np.linalg.LinAlgError, FloatingPointError) as exc:
+            warn(f"Cannot fit trajectory segment {segment_index}: {exc}",
+                 RuntimeWarning, stacklevel=2)
+            gr_data.append([np.nan, np.nan, np.nan])
+            continue
+        if rank < 2 or not np.isfinite(coeffs).all():
+            warn(f"Cannot fit trajectory segment {segment_index}: invalid linear fit.",
+                 RuntimeWarning, stacklevel=2)
+            gr_data.append([np.nan, np.nan, np.nan])
+            continue
+        residual = log_length - np.polyval(coeffs, centered_time)
+        total_ss = np.sum((log_length - log_length.mean()) ** 2)
+        r2 = 1 - np.sum(residual ** 2) / total_ss
+        gr_data.append([midpoint, coeffs[0], r2])
+
+    return segs, div_time, np.array(gr_data, dtype=float).reshape(-1, 3).T
 
 def get_one_trajectory(cells_data, division_threshold=0.4, time_unit='s', mode='most_division', start_time=None, stop_time=None, min_spine_length=0.0):
-    time_scale = {'s': 3600, 'h': 1., 'min': 60., 'd': 1/24}.get(time_unit, 3600)
+    time_scales = {'s': 3600., 'min': 60., 'h': 1., 'd': 1/24}
+    if time_unit not in time_scales:
+        raise ValueError(f"Unsupported time_unit {time_unit!r}; expected one of {tuple(time_scales)}")
+    time_scale = time_scales[time_unit]
     cells_data = cells_data.copy()
     # Pre-division filter: drop abnormal cells (e.g. segmentation debris) whose spine
     # length is below min_spine_length BEFORE lineage linking / division finding.
@@ -146,7 +196,8 @@ def get_one_trajectory(cells_data, division_threshold=0.4, time_unit='s', mode='
     if not lin_dict: return None
 
     key_cell = max(lin_dict, key=lambda x: lin_dict[x][1] if mode=='most_division' else lin_dict[x][0])
-    traj = cells_data[cells_data['fov_cell_index'].isin(lin_dict[key_cell][2])]
+    traj = (cells_data[cells_data['fov_cell_index'].isin(lin_dict[key_cell][2])]
+            .sort_values('time_h', kind='stable').copy())
     div_indices = lin_dict[key_cell][-1]
     
     segs, div_time, gr_data = compute_traj_stats(traj, div_indices)

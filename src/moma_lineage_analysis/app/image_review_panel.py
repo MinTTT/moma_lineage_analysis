@@ -14,6 +14,15 @@ from moma_lineage_analysis.app.image_review_gallery import (
     review_display_width,
 )
 from moma_lineage_analysis.image_review_dt import get_dt_meshes, render_dt_overlay
+from moma_lineage_analysis import image_review_export as _export_module
+
+# A running Streamlit process may still hold the earlier RGB-only helper even
+# after this panel reloads. Refresh only that outdated module, not the session.
+if not getattr(_export_module, "EXPORTS_ORIGINAL_IMAGE", False):
+    import importlib
+
+    _export_module = importlib.reload(_export_module)
+export_review_pair = _export_module.export_review_pair
 from moma_lineage_analysis.image_review import (
     ImageReviewError,
     ReviewSnapshot,
@@ -206,15 +215,19 @@ def _render_review(snapshot: ReviewSnapshot) -> None:
     st.caption("Display contrast uses the 1st–99th percentiles across the images on this page.")
 
     gallery_frames = []
+    source_frames = {}
+    mask_frames = {}
     diagnostics = []
     for frame_index, frame, item in zip(page_indices, page_frames, loaded):
         image, mask, messages, error = item
+        mask_frames[str(frame_index)] = mask
         messages = list(messages)
         source = None
         display_width = 88
         if error is not None:
             messages.append(error)
         else:
+            source_frames[str(frame_index)] = image
             labels = tuple(observation.cell_index for observation in frame.observations)
             rgb = render_review_overlay(
                 image, mask, labels, fill=fill, outline=outline,
@@ -238,6 +251,42 @@ def _render_review(snapshot: ReviewSnapshot) -> None:
     if dt:
         st.caption("DT overlay: spine magenta · ribs yellow.")
     render_image_gallery(gallery_frames, reported_width=available_width)
+    selected_id = st.session_state.get("image_review_selected_frame")
+    has_image = isinstance(selected_id, str) and selected_id in source_frames
+    has_mask = has_image and mask_frames.get(selected_id) is not None
+    can_export = has_image and has_mask
+    export_col, note_col = st.columns([1, 2])
+    with export_col:
+        if st.button(
+            "Export selected image + mask (TIFF)",
+            key="export_review_image",
+            disabled=not can_export,
+            help="Save original image pixels and the original label mask, without overlays, into the source data folder.",
+        ):
+            frame_index = int(selected_id)
+            frame = snapshot.frames[frame_index]
+            try:
+                image_output, mask_output = export_review_pair(
+                    source_frames[selected_id],
+                    mask_frames[selected_id],
+                    output_dir=Path(snapshot.source_csv).parent,
+                    fov_name=Path(snapshot.source_csv).name.removesuffix("_cells_df.csv"),
+                    time_point=frame.time_point,
+                    optical_channel=optical,
+                    side_channel=frame.side_channel,
+                )
+            except (OSError, ValueError) as exc:
+                st.warning(f"TIFF export failed: {exc}")
+            else:
+                st.success(f"Saved {image_output.name} and {mask_output.name} to {image_output.parent}")
+    with note_col:
+        if not has_image:
+            note = "Select an image on this page to enable TIFF export."
+        elif not has_mask:
+            note = "No mask is available for this image; TIFF pair export is disabled."
+        else:
+            note = "Original image only—no overlays. Image and mask share an 8-character tag; mask ends in _masks."
+        st.caption(note)
     if diagnostics:
         with st.expander(f"Image notes ({len(diagnostics)})", expanded=False):
             for message in dict.fromkeys(diagnostics):

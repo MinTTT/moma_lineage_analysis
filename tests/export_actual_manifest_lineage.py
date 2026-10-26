@@ -3,8 +3,9 @@
 Parameter defaults are introspected from live code:
   - function defaults from moma_logic signatures (inspect);
   - sidebar UI defaults extracted from Moma_lineage_streamlit.py source.
-Narrative keys (metrics/populations/plots) restate the contract sections verified
-by code review and the smoke test in round R001.
+Narrative keys restate the reviewed method 1.1.0 / R002 contract. The exporter
+introspects defaults and versions; it does not run tests. Historical R001 evidence
+is retained separately and is not a claim about current regression outcomes.
 
 Run:  python tests\\export_actual_manifest_lineage.py
       (requires an editable install of moma_lineage_analysis)
@@ -42,7 +43,13 @@ pcw = inspect.signature(moma_logic.process_channel_worker).parameters
 
 actual = {
     "analysis_id": "lineage_trajectory_construction",
-    "method_version": "1.0.0",
+    "method_version": "1.1.0",
+    "round_id": "R002",
+    "round_date": "2026-10-26",
+    "logic_version": moma_logic.LOGIC_VERSION,
+    "statistics_schema_version": int(re.search(
+        r"^TRAJECTORY_STATISTICS_SCHEMA_VERSION\s*=\s*([0-9]+)", src, re.MULTILINE
+    ).group(1)),
     "entry_points": [
         "Moma_lineage_streamlit.py (Streamlit app, sidebar Parameters)",
         "moma_logic.process_channel_worker",
@@ -61,10 +68,10 @@ actual = {
         ],
     },
     "metrics": {
-        "SPINE_LENGTH": "spine_length (um), upstream-owned input field",
+        "SPINE_LENGTH": "spine_length (um), calibrated upstream before CSV export",
         "TIME_H": "time_h (h), (time_s - min(time_s)) / time_scale",
         "GENERATION_TIME": "division_time[1, :] (h), diff of consecutive division times",
-        "GROWTH_RATE_CYC": "growth_rate[1, :] (1/h), polyfit slope of ln(spine_length) vs time_h per cycle",
+        "GROWTH_RATE_CYC": "growth_rate[1, :] (1/h), centered-time OLS slope of ln(spine_length) per cycle using finite positive lengths",
     },
     "parameters": {
         "min_spine_length": {
@@ -80,6 +87,9 @@ actual = {
             "ui_default": {3: "d", 2: "h", 1: "min", 0: "s"}[
                 int(app_default(r'"Time Unit", \[[^\]]*\], index=([0-9])', cast=int))
             ],
+            "function_default": got["time_unit"].default,
+            "supported": ["s", "min", "h", "d"],
+            "invalid": "ValueError",
         },
         "mode": {
             "ui_default": "longest_lineage"
@@ -92,7 +102,20 @@ actual = {
         },
     },
     "statistics": {
-        "per_cycle_fit": "OLS via numpy.polyfit deg 1 on ln(spine_length) vs time_h, R^2 reported"
+        "per_cycle_fit": "OLS via numpy.polyfit deg 1 full=True on ln(spine_length) vs time minus first valid time; rank 2 and finite coefficients required",
+        "ordering": "defensive numeric-time/length copy, stable ascending time; input unchanged",
+        "segments": "split immediately after division-mother rows; nonfinite-time rows omitted with RuntimeWarning; invalid lengths retained",
+        "fit_observations": "at least 4 finite times with finite positive lengths; invalid observations warn with RuntimeWarning",
+        "degenerate": "fewer than 4 valid observations -> NaNs; no time variation -> RuntimeWarning and NaNs; constant length -> slope 0 and NaN R^2",
+        "r_squared": "1 - sum(residual^2) / sum((log_length - mean(log_length))^2), explicit residual calculation",
+        "numerical_failures": "expected numerical failures, deficient rank or nonfinite coefficients -> RuntimeWarning and NaNs; no broad exception swallow"
+    },
+    "rules": {
+        "division": "0 <= (L_a + L_b) - L_0 < division_threshold * L_0 and L_a < 0.9 * L_0",
+        "tracing": "count more than one non-self child before the root self-edge stop",
+        "trajectory_order": "get_one_trajectory returns a stable ascending-time_h trajectory",
+        "upstream_units": "length and width already um; area already um^2; time_s seconds; no length rescaling",
+        "reconstruction": "Process Data required for new lineage rules; old annotations are not migrated"
     },
     "plots": {"TRAJ_VIEWER": "spine_length (log y) vs time_h, per-cycle segments"},
     "outputs": [
@@ -104,12 +127,36 @@ actual = {
         "filter executes before get_cell_lineage (code order)",
         "fully filtered channel returns None without error",
         "sidebar parameter reaches process_channel_worker on Process Data",
+        "founder with two non-self children counted once; root plus one continuation not a division",
+        "exact conservation accepted; negative difference and equality to either strict upper bound rejected",
+        "fresh UI seconds default; all supported time units convert correctly; invalid time_unit raises ValueError",
+        "sorted numeric-time copies preserve input and recover known exponential slopes",
+        "nonfinite times omitted from segments; invalid lengths retained but excluded from fits with RuntimeWarning",
+        "insufficient observations, repeated times, constant lengths and numerical fit failures follow declared NaN/warning policy",
+        "app statistics schema 2 invalidates stale statistics; sorted trajectory returned"
     ],
     "evidence": {
-        "logic_version": moma_logic.LOGIC_VERSION,
-        "worker_forwards_param": pcw["min_spine_length"].default == got["min_spine_length"].default,
+        "scope": "Defaults/versions introspected; rule narrative reviewed; regression tests not executed by this exporter",
+        "worker_default_matches_function": pcw["min_spine_length"].default == got["min_spine_length"].default,
         "worker_call_has_kwarg": "min_spine_length=min_spine" in src,
-        "smoke_test": "tests/smoke_min_spine_length_filter.py ALL GATES PASSED (round R001)",
+        "regression_commands": [
+            "python -m pytest tests/test_moma_logic.py tests/test_lineage_app.py -q",
+            "python tests/smoke_min_spine_length_filter.py",
+            "python -m pytest tests/trajectory_cleaning/test_contract_integrity.py -q",
+        ],
+        "regression_results": "Not collected by exporter; see R002 reconciliation and Lead validation",
+        "upstream_unit_sources": [
+            "G:/python_code/Moma_cellPose/cell_coord_utility.py:1143,1156-1157,1163",
+            "G:/python_code/Moma_cellPose/cell_morphology_compat.py:179-186",
+            "G:/python_code/Moma_cellPose/Moma_CPM_FOV.py:439-468",
+            "G:/python_code/Moma_cellPose/moma_dt_pipeline_utils.py:95-134",
+        ],
+        "historical_r001": {
+            "logic_version": 2.2,
+            "worker_forwards_param": True,
+            "worker_call_has_kwarg": True,
+            "smoke_test": "tests/smoke_min_spine_length_filter.py ALL GATES PASSED (round R001)",
+        },
     },
 }
 
