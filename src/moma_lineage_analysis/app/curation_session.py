@@ -6,7 +6,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 import secrets
 
-from moma_lineage_analysis.curation_store import create_dataset, fingerprint_sources, load_dataset, save_changes
+from moma_lineage_analysis.curation_store import DB_FILENAME, create_dataset, fingerprint_sources, load_dataset, save_changes
+
+COMPACT_CURATED_SCHEMA = 3
 
 
 def _signature(entry, selected):
@@ -93,7 +95,7 @@ def save_current_session_to_curation(state, data_path, builder):
         raise ValueError("Current processing parameters are unavailable; use Process Data first.")
     settings["session_import_id"] = secrets.token_hex(4)
     return initialize_curation(
-        state, directory / "moma_curation.sqlite3",
+        state, directory / DB_FILENAME,
         sources=fingerprint_sources(source_paths), settings=settings,
         logic_version=state.get("curation_current_logic_version"),
         builder=builder,
@@ -119,6 +121,10 @@ def flush_curation(state, builder, *, current_key=None, mark_reviewed=None):
 
     if state.get("curation_pending_initial"):
         context = state["curation_pending_initial"].copy()
+        if Path(context["db_path"]).name in {"moma_curation.sqlite3", "moma_curation_v2.sqlite3"}:
+            context["db_path"] = str(Path(context["db_path"]).with_name(DB_FILENAME))
+            context["settings"] = dict(context["settings"], session_import_id=secrets.token_hex(4))
+            state["curation_pending_initial"] = context
         try:
             initialize_curation(state, builder=builder, **context)
         except Exception as exc:
@@ -154,6 +160,16 @@ def flush_curation(state, builder, *, current_key=None, mark_reviewed=None):
     if not changed and cursor == state.get("curation_saved_cursor") and not state.get("curation_error"):
         return True
     try:
+        previous_path = Path(state["curation_db_path"])
+        if previous_path.name in {"moma_curation.sqlite3", "moma_curation_v2.sqlite3"}:
+            # Carry the open session from memory; legacy files stay untouched.
+            # A distinct identity prevents a saved v3 dataset replacing local edits.
+            settings = dict(state["curation_settings"], session_import_id=secrets.token_hex(4))
+            initialize_curation(
+                state, previous_path.with_name(DB_FILENAME), sources=state["curation_sources"],
+                settings=settings, logic_version=state["curation_logic_version"], builder=builder,
+            )
+            return flush_curation(state, builder, current_key=cursor)
         labeled = {key: builder(entry, key) for key, entry in changed.items()}
         revision = save_changes(
             state["curation_db_path"], state["curation_dataset_id"],

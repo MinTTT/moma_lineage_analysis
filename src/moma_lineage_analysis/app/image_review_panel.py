@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import numpy as np
 import streamlit as st
@@ -33,6 +34,9 @@ from moma_lineage_analysis.image_review import (
     render_review_overlay,
 )
 
+PAGE_STATE_VERSION = 2
+
+
 @st.cache_resource(max_entries=1, show_spinner=False, scope="session")
 def _cached_export(path: str, modified_ns: int, size: int) -> dict:
     """Keep one FOV per session; file changes invalidate the cache key."""
@@ -59,6 +63,7 @@ def open_image_review(snapshot: ReviewSnapshot) -> None:
     st.session_state.image_review_snapshot = snapshot
     st.session_state.image_review_open = True
     st.session_state.image_review_page = 1
+    st.session_state.pop("image_review_page_selector", None)
     st.session_state.image_review_selected_frame = None
     st.session_state.pop("image_review_gallery", None)
     st.session_state.pop("image_review_optical_channel", None)
@@ -70,13 +75,32 @@ def open_image_review(snapshot: ReviewSnapshot) -> None:
         )
 
 
+def _page_number(value, page_count: int) -> int:
+    """Recover old display labels and clamp stale selections after repagination."""
+    if isinstance(value, str):
+        label = re.fullmatch(r"Page +([0-9]+)(?: +of +[0-9]+)?", value.strip())
+        if label:
+            value = label.group(1)
+    try:
+        number = int(value)
+    except (TypeError, ValueError, OverflowError):
+        number = 1
+    return min(page_count, max(1, number))
+
+
+def _select_page() -> None:
+    st.session_state.image_review_page = _page_number(
+        st.session_state.get("image_review_page_selector", 1),
+        st.session_state.get("image_review_page_count", 1),
+    )
+
+
 def _change_page(step: int) -> None:
-    snapshot = st.session_state.get("image_review_snapshot")
-    if snapshot is None:
+    if st.session_state.get("image_review_snapshot") is None:
         return
     pages = max(1, int(st.session_state.get("image_review_page_count", 1)))
-    current = int(st.session_state.get("image_review_page", 1))
-    st.session_state.image_review_page = min(pages, max(1, current + step))
+    current = _page_number(st.session_state.get("image_review_page", 1), pages)
+    st.session_state.image_review_page = _page_number(current + step, pages)
 
 
 def _frame_info(snapshot: ReviewSnapshot, frame, optical: str, messages=()) -> str:
@@ -157,7 +181,7 @@ def _render_review(snapshot: ReviewSnapshot) -> None:
     pages = paginate_review_frames(frame_widths, available_width) or [()]
     page_count = len(pages)
     st.session_state.image_review_page_count = page_count
-    page = min(page_count, max(1, int(st.session_state.get("image_review_page", 1))))
+    page = _page_number(st.session_state.get("image_review_page", 1), page_count)
     st.session_state.image_review_page = page
     page_indices = pages[page - 1]
     page_frames = [snapshot.frames[index] for index in page_indices]
@@ -170,15 +194,16 @@ def _render_review(snapshot: ReviewSnapshot) -> None:
         )
     with page_col:
         if page_count > 1:
-            page = st.selectbox(
+            # Keep widget labels separate from the canonical numeric page. A
+            # changing total in format_func can leave stale browser labels that
+            # Streamlit deserializes as strings instead of option values.
+            st.session_state.image_review_page_selector = page
+            st.selectbox(
                 "Frame page", options=range(1, page_count + 1),
-                key="image_review_page", label_visibility="collapsed",
-                format_func=lambda number: f"Page {number} of {page_count}",
+                key="image_review_page_selector", label_visibility="collapsed",
+                format_func=lambda number: f"Page {number}", on_change=_select_page,
             )
-            page_indices = pages[page - 1]
-            page_frames = [snapshot.frames[index] for index in page_indices]
-        else:
-            st.caption("Page 1 of 1")
+        st.caption(f"Page {page} of {page_count}")
     with later_col:
         st.button(
             "Later frames ▶", key="image_review_later", disabled=page >= page_count,

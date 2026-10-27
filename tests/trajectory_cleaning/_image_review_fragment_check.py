@@ -10,7 +10,7 @@ from streamlit.runtime.scriptrunner_utils.script_requests import RerunData
 from streamlit.testing.v1.local_script_runner import LocalScriptRunner
 
 
-def run_dialog_fragment(app):
+def run_dialog_fragment(app, *, widget_key="image_review_fill", string_value=None):
     results = {"delta_types": []}
 
     class FragmentRunner(LocalScriptRunner):
@@ -26,12 +26,15 @@ def run_dialog_fragment(app):
                 elif event == ScriptRunnerEvent.SCRIPT_STOPPED_WITH_SUCCESS and not self.queued:
                     self.queued = True
                     state = self.session_state._state
-                    widget_id = state._key_id_mapper.get_id_from_key("image_review_fill")
+                    widget_id = state._key_id_mapper.get_id_from_key(widget_key)
                     metadata = state._new_widget_state.widget_metadata[widget_id]
                     states = WidgetStates(widgets=state.get_widget_states())
                     for widget in states.widgets:
                         if widget.id == widget_id:
-                            widget.bool_value = not state["image_review_fill"]
+                            if string_value is not None:
+                                widget.string_value = string_value
+                            else:
+                                widget.bool_value = not state[widget_key]
                     results["fragment_id"] = metadata.fragment_id
                     self.request_rerun(RerunData(
                         widget_states=states, fragment_id_queue=[metadata.fragment_id]

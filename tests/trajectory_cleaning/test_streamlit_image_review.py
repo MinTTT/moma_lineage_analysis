@@ -314,6 +314,73 @@ class StreamlitImageReviewTests(unittest.TestCase):
             self.assertNotIn("image_review_snapshot", app.session_state)
 
 
+    def test_stale_formatted_page_state_recovers_and_dropdown_stays_numeric(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            app = _app_with_entries({"FOV_0_CH_7": _review_entry(Path(temporary_directory))})
+            _select_plot_points(app, [{"customdata": [index]} for index in range(100, 108)])
+            app.session_state["image_review_viewport_width"] = 300
+            app.button(key="review_images").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["image_review_page_count"], 3)
+            labels = (app.session_state["trajectory_dict"]["FOV_0_CH_7"]["div_indices"].copy(),
+                      app.session_state["trajectory_dict"]["FOV_0_CH_7"]["excluded_indices"].copy())
+
+            # Recover the exact state reported by a browser using the old widget.
+            app.session_state["image_review_page"] = "Page 1 of 3"
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["image_review_page"], 1)
+            app.selectbox(key="image_review_page_selector").set_value(3).run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["image_review_page"], 3)
+            self.assertEqual([frame["id"] for frame in _gallery_frames(app)], ["6", "7"])
+
+            # A label from an earlier page count must still select the intended
+            # page, then clamp safely if the gallery becomes wider.
+            app.session_state["image_review_page"] = "Page 2 of 3"
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertEqual([frame["id"] for frame in _gallery_frames(app)], ["3", "4", "5"])
+            app.button(key="image_review_later").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["image_review_page"], 3)
+            app.session_state["image_review_viewport_width"] = 500
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["image_review_page"], 2)
+            self.assertEqual(app.selectbox(key="image_review_page_selector").options, ["Page 1", "Page 2"])
+            app.session_state["image_review_viewport_width"] = 1100
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["image_review_page"], 1)
+            self.assertEqual(len(_gallery_frames(app)), 8)
+            self.assertFalse(any(item.key == "image_review_page_selector" for item in app.selectbox))
+            self.assertEqual(app.session_state["trajectory_dict"]["FOV_0_CH_7"]["div_indices"], labels[0])
+            self.assertEqual(app.session_state["trajectory_dict"]["FOV_0_CH_7"]["excluded_indices"], labels[1])
+
+    def test_dialog_fragment_recovers_stale_page_selector_label(self):
+        from ._image_review_fragment_check import run_dialog_fragment
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            app = _app_with_entries({"FOV_0_CH_7": _review_entry(Path(temporary_directory))})
+            _select_plot_points(app, [{"customdata": [index]} for index in range(100, 108)])
+            app.session_state["image_review_viewport_width"] = 300
+            app.button(key="review_images").click().run()
+            self.assertFalse(app.exception)
+            before = app.session_state["trajectory_figure_cache"]["build_count"]
+            result = run_dialog_fragment(
+                app, widget_key="image_review_page_selector", string_value="Page 2 of 3",
+            )
+            self.assertFalse(app.exception)
+            self.assertTrue(result["fragment_success"])
+            self.assertNotIn("plotly_chart", result["delta_types"])
+            self.assertEqual(app.session_state["image_review_page"], 2)
+            self.assertEqual([frame["id"] for frame in _gallery_frames(app)], ["3", "4", "5"])
+            self.assertEqual(app.session_state["trajectory_figure_cache"]["build_count"], before)
+            app.button(key="image_review_earlier").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.session_state["image_review_page"], 1)
+
     def test_page_size_uses_measured_gallery_width(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             entry = _review_entry(Path(temporary_directory))

@@ -22,13 +22,16 @@ from moma_lineage_analysis.moma_logic import (
 )
 from moma_lineage_analysis.paths import PACKAGE_MODELS_RUN_DIR
 from moma_lineage_analysis import curation_store as _curation_store_module
+import importlib
 
 # Upgrade an already-running session without losing unsaved labels or the
 # pending initial-save context. Existing coordinator functions share these globals.
-if not getattr(_curation_store_module, "NETWORK_PATHS_SUPPORTED", False):
-    import importlib
-
+if (not getattr(_curation_store_module, "NETWORK_PATHS_SUPPORTED", False)
+        or getattr(_curation_store_module, "_SCHEMA_VERSION", 0) < 3):
     importlib.reload(_curation_store_module)
+import moma_lineage_analysis.app.curation_session as _curation_session_module
+if getattr(_curation_session_module, "COMPACT_CURATED_SCHEMA", 0) < 3:
+    importlib.reload(_curation_session_module)
 from moma_lineage_analysis.curation_store import (
     DB_FILENAME, CurationStoreError, fingerprint_sources, find_dataset,
     list_datasets, load_dataset,
@@ -38,6 +41,9 @@ from moma_lineage_analysis.app.curation_session import (
     save_current_session_to_curation,
 )
 from moma_lineage_analysis.image_review import ImageReviewError, make_review_snapshot
+import moma_lineage_analysis.app.image_review_panel as _image_review_panel_module
+if getattr(_image_review_panel_module, "PAGE_STATE_VERSION", 0) < 2:
+    importlib.reload(_image_review_panel_module)
 from moma_lineage_analysis.app.image_review_panel import (
     close_image_review,
     open_image_review,

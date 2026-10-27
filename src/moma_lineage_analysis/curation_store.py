@@ -20,15 +20,18 @@ from urllib.parse import quote
 import numpy as np
 import pandas as pd
 
-DB_FILENAME = "moma_curation.sqlite3"
+DB_FILENAME = "moma_curation_v3.sqlite3"
 NETWORK_PATHS_SUPPORTED = True
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 3
 _APPLICATION_ID = 0x4D4F4D43
 _LABELS = ["trajectory_key", "division_point", "excluded_point",
            "effective_division_point", "cell_cycle_index"]
 _BOOLEANS = _LABELS[1:4]
-_INTERNAL = {"_moma_dataset_id", "_moma_trajectory_key", "_moma_cell_id",
-             "_moma_row_order"}
+_INTERNAL = {
+    "_moma_dataset_id", "_moma_trajectory_key", "_moma_cell_id", "_moma_row_order",
+    "_moma_label_order", "_moma_division_state", "_moma_excluded_point",
+    "_moma_effective_division_point", "_moma_cell_cycle_index",
+}
 
 
 class CurationStoreError(RuntimeError):
@@ -142,32 +145,31 @@ _SCHEMA = [
         logic_version TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
         current_key TEXT, measurement_schema_json TEXT NOT NULL)""",
     """CREATE TABLE source_files (
-        dataset_id INTEGER NOT NULL REFERENCES datasets(dataset_id), filename TEXT NOT NULL,
-        sha256 TEXT NOT NULL, size INTEGER NOT NULL, path TEXT,
-        PRIMARY KEY(dataset_id, filename))""",
+        dataset_id INTEGER NOT NULL REFERENCES datasets(dataset_id), source_id INTEGER NOT NULL,
+        filename TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, path TEXT,
+        PRIMARY KEY(dataset_id, source_id), UNIQUE(dataset_id, filename))""",
+    """CREATE TABLE measurement_schemas (
+        schema_id INTEGER PRIMARY KEY, dtype_json TEXT NOT NULL UNIQUE)""",
     """CREATE TABLE trajectories (
         dataset_id INTEGER NOT NULL REFERENCES datasets(dataset_id), trajectory_key TEXT NOT NULL,
-        trajectory_order INTEGER NOT NULL, source_filename TEXT NOT NULL, source_path TEXT NOT NULL,
+        trajectory_order INTEGER NOT NULL, source_id INTEGER NOT NULL, schema_id INTEGER NOT NULL
+            REFERENCES measurement_schemas(schema_id),
         selected INTEGER NOT NULL CHECK(selected IN (0,1)),
         review_status TEXT NOT NULL CHECK(review_status IN ('reviewed','unreviewed','in_progress')),
-        reviewed_at TEXT, original_div_indices_json TEXT NOT NULL, dtype_json TEXT NOT NULL,
-        PRIMARY KEY(dataset_id, trajectory_key))""",
+        reviewed_at TEXT, PRIMARY KEY(dataset_id, trajectory_key),
+        FOREIGN KEY(dataset_id, source_id) REFERENCES source_files(dataset_id, source_id))""",
     """CREATE TABLE observations (
         _moma_dataset_id INTEGER NOT NULL, _moma_trajectory_key TEXT NOT NULL,
         _moma_cell_id TEXT NOT NULL, _moma_row_order INTEGER NOT NULL,
+        _moma_label_order INTEGER NOT NULL DEFAULT 0,
+        _moma_division_state INTEGER NOT NULL DEFAULT 0 CHECK(_moma_division_state >= 0),
+        _moma_excluded_point INTEGER NOT NULL DEFAULT 0 CHECK(_moma_excluded_point IN (0,1)),
+        _moma_effective_division_point INTEGER NOT NULL DEFAULT 0 CHECK(_moma_effective_division_point IN (0,1)),
+        _moma_cell_cycle_index INTEGER NOT NULL DEFAULT 0 CHECK(_moma_cell_cycle_index >= 0),
         PRIMARY KEY(_moma_dataset_id, _moma_trajectory_key, _moma_cell_id),
         UNIQUE(_moma_dataset_id, _moma_trajectory_key, _moma_row_order),
         FOREIGN KEY(_moma_dataset_id, _moma_trajectory_key)
             REFERENCES trajectories(dataset_id, trajectory_key))""",
-    """CREATE TABLE annotations (
-        dataset_id INTEGER NOT NULL, trajectory_key TEXT NOT NULL, fov_cell_index TEXT NOT NULL,
-        label_order INTEGER NOT NULL, division_point INTEGER NOT NULL CHECK(division_point IN (0,1)),
-        excluded_point INTEGER NOT NULL CHECK(excluded_point IN (0,1)),
-        effective_division_point INTEGER NOT NULL CHECK(effective_division_point IN (0,1)),
-        cell_cycle_index INTEGER NOT NULL CHECK(cell_cycle_index >= 0),
-        PRIMARY KEY(dataset_id, trajectory_key, fov_cell_index),
-        FOREIGN KEY(dataset_id, trajectory_key, fov_cell_index)
-            REFERENCES observations(_moma_dataset_id, _moma_trajectory_key, _moma_cell_id))""",
     """CREATE TABLE app_state (
         singleton INTEGER PRIMARY KEY CHECK(singleton=1),
         active_dataset_id INTEGER NOT NULL REFERENCES datasets(dataset_id))""",
@@ -183,17 +185,27 @@ def _initialize(connection):
     connection.execute(f"PRAGMA user_version={_SCHEMA_VERSION}")
 
 
+def _schema_version(connection) -> int:
+    return int(connection.execute("PRAGMA user_version").fetchone()[0])
+
+
 def _check_schema(connection):
-    version = connection.execute("PRAGMA user_version").fetchone()[0]
+    version = _schema_version(connection)
     app_id = connection.execute("PRAGMA application_id").fetchone()[0]
     if version != _SCHEMA_VERSION or app_id != _APPLICATION_ID:
         raise CurationStoreError(f"Unrecognized or unsupported curation schema (version {version}); database left intact")
-    expected = {"store_metadata", "datasets", "source_files", "trajectories",
-                "observations", "annotations", "app_state"}
+    expected = {"store_metadata", "datasets", "source_files", "measurement_schemas",
+                "trajectories", "observations", "app_state"}
     present = {r[0] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(observations)")}
+    expected_labels = {"_moma_label_order", "_moma_division_state", "_moma_excluded_point",
+                       "_moma_effective_division_point", "_moma_cell_cycle_index"}
+    if not expected_labels <= columns:
+        raise CurationStoreError("Incomplete compact curation schema")
     if not expected <= present or connection.execute(
             "SELECT value FROM store_metadata WHERE key='format'").fetchone()[0] != "moma_curation":
         raise CurationStoreError("Invalid curation database schema")
+
 
 
 def _sqlite_path_text(path) -> str:
@@ -306,7 +318,7 @@ def _summary(connection, dataset_id):
             "logic_version": row["logic_version"], "created_at": row["created_at"],
             "updated_at": row["updated_at"], "current_key": row["current_key"],
             "trajectory_count": counts[0], "reviewed_count": counts[1], "selected_count": counts[2],
-            "sources": [{k: v for k, v in dict(source).items() if k != "dataset_id" and v is not None}
+            "sources": [{k: v for k, v in dict(source).items() if k not in {"dataset_id", "source_id"} and v is not None}
                         for source in connection.execute("SELECT * FROM source_files WHERE dataset_id=? ORDER BY filename", (dataset_id,))]}
 
 
@@ -395,6 +407,12 @@ def _equal_measurements(left, right):
         raise CurationStoreError("Labeled rows or updated immutable measurements differ from the raw trajectory") from exc
 
 
+def _validate_public_columns(columns):
+    folded = [name.casefold() for name in columns]
+    if len(set(folded)) != len(folded) or set(folded) & {name.casefold() for name in _LABELS}:
+        raise CurationStoreError("Measurement names must be unique ignoring case and cannot overlap export labels")
+
+
 def _prepare(key, entry, labeled):
     if not isinstance(key, str) or not key:
         raise CurationStoreError("trajectory_key must be a nonempty string")
@@ -405,6 +423,7 @@ def _prepare(key, entry, labeled):
     if (not raw.columns.is_unique or any(not isinstance(c, str) or not c or "\x00" in c for c in columns)
             or "fov_cell_index" not in columns or set(columns) & set(_LABELS)):
         raise CurationStoreError("Raw measurements need unique string columns and fov_cell_index; label columns are reserved")
+    _validate_public_columns(columns)
     if not labeled.columns.is_unique or set(labeled.columns) != set(columns) | set(_LABELS):
         raise CurationStoreError("Labeled frame must contain exactly raw columns and the five export labels")
     raw_ids = [_cell_id(v) for v in raw["fov_cell_index"]]
@@ -427,7 +446,10 @@ def _prepare(key, entry, labeled):
     division_ids = {_cell_id(v) for v in entry.get("div_indices", [])}
     excluded_ids = {_cell_id(v) for v in entry.get("excluded_indices", set())}
     original = list(entry.get("original_div_indices", entry.get("div_indices", [])))
-    original_ids = {_cell_id(v) for v in original}
+    original_order = {_cell_id(v): order + 1 for order, v in enumerate(original)}
+    original_ids = set(original_order)
+    if len(original_order) != len(original):
+        raise CurationStoreError("Original division baseline contains duplicate cell IDs")
     if not (division_ids | excluded_ids | original_ids) <= set(raw_ids):
         raise CurationStoreError("Annotations reference an unknown fov_cell_index")
     if division_ids != {cell for cell, flag in zip(label_ids, labeled["division_point"]) if flag} or excluded_ids != {cell for cell, flag in zip(label_ids, labeled["excluded_point"]) if flag}:
@@ -443,7 +465,8 @@ def _prepare(key, entry, labeled):
                    for order, (cell, row) in enumerate(zip(label_ids, labeled[_LABELS[1:]].itertuples(index=False, name=None)))]
     return {"raw": raw, "ids": raw_ids, "metadata": _dtype_metadata(raw),
             "values": [tuple(_sql_value(v) for v in row) for row in raw.itertuples(index=False, name=None)],
-            "annotations": annotations, "original": _json(original), "status": status,
+            "annotations": annotations, "original": _json(original),
+            "original_order": original_order, "status": status,
             "reviewed_at": reviewed_at, "source_path": source_path,
             "source_filename": Path(source_path).name}
 
@@ -479,21 +502,30 @@ def _activate(connection, dataset_id):
     schema = json.loads(connection.execute("SELECT measurement_schema_json FROM datasets WHERE dataset_id=?", (dataset_id,)).fetchone()[0])
     mapping = _column_map(connection)
     projection = [f"o.{_quote(mapping[name])} AS {_quote(name)}" for name in schema]
-    projection += ['t.trajectory_key AS "trajectory_key"'] + [f"a.{_quote(name)} AS {_quote(name)}" for name in _LABELS[1:]]
+    projection += ['t.trajectory_key AS "trajectory_key"']
+    projection += ['(o._moma_division_state & 1) AS "division_point"']
+    projection += [f"o._moma_{name} AS {_quote(name)}" for name in _LABELS[2:]]
     base = """ FROM observations o
         JOIN trajectories t ON t.dataset_id=o._moma_dataset_id AND t.trajectory_key=o._moma_trajectory_key
-        JOIN annotations a ON a.dataset_id=o._moma_dataset_id AND a.trajectory_key=o._moma_trajectory_key AND a.fov_cell_index=o._moma_cell_id
         JOIN app_state s ON s.singleton=1 AND s.active_dataset_id=t.dataset_id"""
     for view, condition in (("all_labeled", ""), ("selected_labeled", " WHERE t.selected=1"),
                             ("reviewed_selected_labeled", " WHERE t.selected=1 AND t.review_status='reviewed'")):
         connection.execute(f"DROP VIEW IF EXISTS {view}")
-        connection.execute(f"CREATE VIEW {view} AS SELECT " + ", ".join(projection) + base + condition + " ORDER BY t.trajectory_order, a.label_order")
+        label_order = "o._moma_label_order"
+        connection.execute(f"CREATE VIEW {view} AS SELECT " + ", ".join(projection) + base + condition + f" ORDER BY t.trajectory_order, {label_order}")
     connection.execute("INSERT INTO app_state VALUES (1,?) ON CONFLICT(singleton) DO UPDATE SET active_dataset_id=excluded.active_dataset_id", (dataset_id,))
 
 
 def _insert_annotations(connection, dataset_id, key, prepared):
-    connection.executemany("INSERT INTO annotations VALUES (?,?,?,?,?,?,?,?)",
-                           [(dataset_id, key, *row) for row in prepared["annotations"]])
+    # Bit 0 is the current label; higher bits preserve the original division
+    # ordinal (zero means absent). This replaces the per-trajectory JSON list
+    # without adding a column or losing its leaf-to-root reset order.
+    connection.executemany("""UPDATE observations SET _moma_label_order=?, _moma_division_state=?,
+        _moma_excluded_point=?, _moma_effective_division_point=?, _moma_cell_cycle_index=?
+        WHERE _moma_dataset_id=? AND _moma_trajectory_key=? AND _moma_cell_id=?""",
+        [(order, (prepared["original_order"].get(cell, 0) << 1) | division,
+          exclusion, effective, cycle, dataset_id, key, cell)
+         for cell, order, division, exclusion, effective, cycle in prepared["annotations"]])
 
 
 @_guard
@@ -520,6 +552,7 @@ def create_dataset(db_path, *, trajectory_dict: dict[str, dict],
     if any(p["source_filename"] not in filenames for p in prepared.values()):
         raise CurationStoreError("Trajectory source filename is absent from source fingerprints")
     schema = list(dict.fromkeys(column for p in prepared.values() for column in p["raw"].columns))
+    _validate_public_columns(schema)
     with _connect(db_path, write=True, create=True) as connection:
         # Recheck under the writer lock: another process may have initialized it.
         row = connection.execute("SELECT dataset_id FROM datasets WHERE signature=?", (signature,)).fetchone()
@@ -530,10 +563,26 @@ def create_dataset(db_path, *, trajectory_dict: dict[str, dict],
         dataset_id = connection.execute("""INSERT INTO datasets(signature,revision,settings_json,
             logic_version,created_at,updated_at,current_key,measurement_schema_json)
             VALUES (?,0,?,?,?,?,?,?)""", (signature, _json(settings), logic_version, stamp, stamp, current_key, _json(schema))).lastrowid
-        connection.executemany("INSERT INTO source_files VALUES (?,?,?,?,?)", [(dataset_id, s["filename"], s["sha256"], s["size"], s.get("path")) for s in sources])
+        source_ids = {}
+        for source_id, source in enumerate(sources):
+            source_ids[source["filename"]] = source_id
+            path = source.get("path")
+            if path is None:
+                path = next((p["source_path"] for p in prepared.values()
+                             if p["source_filename"] == source["filename"]), None)
+            connection.execute("INSERT INTO source_files VALUES (?,?,?,?,?,?)",
+                               (dataset_id, source_id, source["filename"], source["sha256"], source["size"], path))
         mapping = _column_map(connection, schema)
+        schema_ids = {}
         for order, (key, p) in enumerate(prepared.items()):
-            connection.execute("INSERT INTO trajectories VALUES (?,?,?,?,?,?,?,?,?,?)", (dataset_id, key, order, p["source_filename"], p["source_path"], int(key in selected_keys), p["status"], p["reviewed_at"], p["original"], _json(p["metadata"])))
+            dtype_json = _json(p["metadata"])
+            if dtype_json not in schema_ids:
+                connection.execute("INSERT INTO measurement_schemas(dtype_json) VALUES (?) ON CONFLICT DO NOTHING", (dtype_json,))
+                schema_ids[dtype_json] = connection.execute(
+                    "SELECT schema_id FROM measurement_schemas WHERE dtype_json=?", (dtype_json,)).fetchone()[0]
+            connection.execute("INSERT INTO trajectories VALUES (?,?,?,?,?,?,?,?)",
+                               (dataset_id, key, order, source_ids[p["source_filename"]],
+                                schema_ids[dtype_json], int(key in selected_keys), p["status"], p["reviewed_at"]))
             columns = [mapping[name] for name in p["raw"].columns]
             statement = "INSERT INTO observations (" + ",".join(_quote(name) for name in ["_moma_dataset_id", "_moma_trajectory_key", "_moma_cell_id", "_moma_row_order", *columns]) + ") VALUES (" + ",".join("?" for _ in range(4 + len(columns))) + ")"
             connection.executemany(statement, [(dataset_id, key, cell, row_order, *values) for row_order, (cell, values) in enumerate(zip(p["ids"], p["values"]))])
@@ -548,6 +597,26 @@ def _read_raw(connection, dataset_id, key, metadata, mapping):
     return _restore_frame(rows, metadata)
 
 
+def _annotation_rows(connection, dataset_id, key):
+    """Read labels in raw row order from compact observation storage."""
+
+    return connection.execute("""SELECT _moma_cell_id AS fov_cell_index,
+        _moma_label_order AS label_order, (_moma_division_state & 1) AS division_point,
+        (_moma_division_state >> 1) AS original_division_order,
+        _moma_excluded_point AS excluded_point,
+        _moma_effective_division_point AS effective_division_point,
+        _moma_cell_cycle_index AS cell_cycle_index
+        FROM observations WHERE _moma_dataset_id=? AND _moma_trajectory_key=?
+        ORDER BY _moma_row_order""", (dataset_id, key)).fetchall()
+
+
+def _original_divisions(annotations, values):
+    return [values[row["fov_cell_index"]] for row in sorted(
+        (row for row in annotations if row["original_division_order"]),
+        key=lambda row: row["original_division_order"],
+    )]
+
+
 @_guard
 def load_dataset(db_path, dataset_id: int, *, source_dir: str | Path | None = None) -> dict:
     """Recover raw measurements and annotations; activate the requested SQL views."""
@@ -555,25 +624,27 @@ def load_dataset(db_path, dataset_id: int, *, source_dir: str | Path | None = No
         result = _summary(connection, dataset_id)
         mapping = _column_map(connection)
         entries, selected = {}, set()
-        for t in connection.execute("SELECT * FROM trajectories WHERE dataset_id=? ORDER BY trajectory_order", (dataset_id,)).fetchall():
+        for t in connection.execute("""SELECT t.*, s.filename, s.path, m.dtype_json FROM trajectories t
+                JOIN source_files s ON s.dataset_id=t.dataset_id AND s.source_id=t.source_id
+                JOIN measurement_schemas m ON m.schema_id=t.schema_id
+                WHERE t.dataset_id=? ORDER BY t.trajectory_order""", (dataset_id,)).fetchall():
             key = t["trajectory_key"]
             frame = _read_raw(connection, dataset_id, key, json.loads(t["dtype_json"]), mapping)
-            annotations = connection.execute("""SELECT a.* FROM annotations a JOIN observations o
-                ON o._moma_dataset_id=a.dataset_id AND o._moma_trajectory_key=a.trajectory_key AND o._moma_cell_id=a.fov_cell_index
-                WHERE a.dataset_id=? AND a.trajectory_key=? ORDER BY o._moma_row_order""", (dataset_id, key)).fetchall()
+            annotations = _annotation_rows(connection, dataset_id, key)
             values = dict(zip((_cell_id(v) for v in frame["fov_cell_index"]), frame["fov_cell_index"].tolist()))
             entry = {"trajectory": frame,
                      "div_indices": [values[a["fov_cell_index"]] for a in annotations if a["division_point"]],
                      "excluded_indices": {values[a["fov_cell_index"]] for a in annotations if a["excluded_point"]},
-                     "original_div_indices": json.loads(t["original_div_indices_json"]),
-                     "source_csv_path": str(Path(source_dir) / t["source_filename"]) if source_dir is not None else t["source_path"],
+                     "original_div_indices": _original_divisions(annotations, values),
+                     "source_csv_path": str(Path(source_dir) / t["filename"]) if source_dir is not None
+                         else t["path"] or str(Path(db_path).resolve().parent / t["filename"]),
                      "_review_status": t["review_status"], "_reviewed_at": t["reviewed_at"],
                      "_saved_revision": result["revision"]}
             entries[key] = entry
             if t["selected"]:
                 selected.add(key)
         result.update(trajectory_dict=entries, selected_keys=selected,
-                      sources=[{k: v for k, v in dict(s).items() if k != "dataset_id" and v is not None} for s in connection.execute("SELECT * FROM source_files WHERE dataset_id=? ORDER BY filename", (dataset_id,))])
+                      sources=[{k: v for k, v in dict(s).items() if k not in {"dataset_id", "source_id"} and v is not None} for s in connection.execute("SELECT * FROM source_files WHERE dataset_id=? ORDER BY filename", (dataset_id,))])
         _activate(connection, dataset_id)
         return result
 
@@ -591,7 +662,10 @@ def save_changes(db_path, dataset_id, *, expected_revision: int,
         summary = _summary(connection, dataset_id)
         if summary["revision"] != expected_revision:
             raise CurationConflictError(f"Dataset {dataset_id} changed: expected revision {expected_revision}, found {summary['revision']}")
-        stored = {t["trajectory_key"]: t for t in connection.execute("SELECT * FROM trajectories WHERE dataset_id=?", (dataset_id,))}
+        stored = {t["trajectory_key"]: t for t in connection.execute("""
+            SELECT t.*, s.filename, m.dtype_json FROM trajectories t
+            JOIN source_files s ON s.dataset_id=t.dataset_id AND s.source_id=t.source_id
+            JOIN measurement_schemas m ON m.schema_id=t.schema_id WHERE t.dataset_id=?""", (dataset_id,))}
         _validate_membership(stored, selected_keys, current_key)
         if not set(trajectory_dict) <= set(stored):
             raise CurationStoreError("Changed batch contains an unknown trajectory")
@@ -602,13 +676,17 @@ def save_changes(db_path, dataset_id, *, expected_revision: int,
             old = stored[key]
             raw = _read_raw(connection, dataset_id, key, json.loads(old["dtype_json"]), mapping)
             _equal_measurements(raw, p["raw"])
-            if p["original"] != old["original_div_indices_json"] or p["source_filename"] != old["source_filename"]:
+            annotations = _annotation_rows(connection, dataset_id, key)
+            values = dict(zip((_cell_id(v) for v in raw["fov_cell_index"]), raw["fov_cell_index"].tolist()))
+            original = _original_divisions(annotations, values)
+            if list(p["original_order"]) != [_cell_id(value) for value in original] or p["source_filename"] != old["filename"]:
                 raise CurationStoreError("Original division baseline and source filename are immutable")
             prepared[key] = p
         for key, p in prepared.items():
-            connection.executemany("""UPDATE annotations SET label_order=?, division_point=?,
-                excluded_point=?, effective_division_point=?, cell_cycle_index=?
-                WHERE dataset_id=? AND trajectory_key=? AND fov_cell_index=?""",
+            connection.executemany("""UPDATE observations SET _moma_label_order=?,
+                _moma_division_state=(_moma_division_state & ~1) | ?,
+                _moma_excluded_point=?, _moma_effective_division_point=?, _moma_cell_cycle_index=?
+                WHERE _moma_dataset_id=? AND _moma_trajectory_key=? AND _moma_cell_id=?""",
                 [(order, division, exclusion, effective, cycle, dataset_id, key, cell) for cell, order, division, exclusion, effective, cycle in p["annotations"]])
             connection.execute("UPDATE trajectories SET review_status=?, reviewed_at=? WHERE dataset_id=? AND trajectory_key=?", (p["status"], p["reviewed_at"], dataset_id, key))
         connection.executemany("UPDATE trajectories SET selected=? WHERE dataset_id=? AND trajectory_key=?", [(int(key in selected_keys), dataset_id, key) for key in stored])

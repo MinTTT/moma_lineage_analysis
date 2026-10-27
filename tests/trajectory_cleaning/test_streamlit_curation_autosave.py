@@ -452,3 +452,23 @@ class CurationAutosaveTests(unittest.TestCase):
             self.assertFalse(app.exception)
             self.assertEqual(app.session_state['curation_dataset_id'], 1)
             self.assertEqual(next(iter(app.session_state['trajectory_dict'].values()))['_review_status'], 'reviewed')
+    def test_open_legacy_session_carries_unsaved_edits_to_new_database(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            app = _saved_app(directory)
+            legacy_path = directory / 'moma_curation_v2.sqlite3'
+            legacy_path.write_bytes(b'legacy database must remain untouched')
+            app.session_state['curation_db_path'] = str(legacy_path)
+            entry = app.session_state['trajectory_dict']['FOV_0_CH_1']
+            entry['excluded_indices'] = {4}
+            app.run()
+            _element(app.button, 'Next ➡️').click().run()
+            self.assertFalse(app.exception, app.exception)
+            self.assertIsNone(app.session_state['curation_error'])
+            self.assertEqual(legacy_path.read_bytes(), b'legacy database must remain untouched')
+            self.assertEqual(Path(app.session_state['curation_db_path']).name, DB_FILENAME)
+            self.assertEqual(app.session_state['curation_dataset_id'], 2)
+            saved = load_dataset(directory / DB_FILENAME, 2)
+            self.assertEqual(saved['current_key'], 'FOV_0_CH_2')
+            self.assertEqual(saved['trajectory_dict']['FOV_0_CH_1']['excluded_indices'], {4})
+            self.assertEqual(saved['trajectory_dict']['FOV_0_CH_1']['_review_status'], 'reviewed')

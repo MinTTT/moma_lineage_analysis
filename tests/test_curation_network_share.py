@@ -60,7 +60,7 @@ def test_mapped_share_and_unc_alias_create_save_recover_and_crash_rollback():
 import os,sys
 from moma_lineage_analysis import curation_store as store
 with store._connect(sys.argv[1], write=True) as connection:
-    connection.execute("UPDATE annotations SET excluded_point=1")
+    connection.execute("UPDATE observations SET _moma_excluded_point=1")
     os._exit(73)
 '''
         killed = subprocess.run([sys.executable, "-c", program, str(unc_db)], timeout=30)

@@ -65,11 +65,23 @@ Trajectory** to keep one again.
 
 ## Autosave and resume curation
 
-**Process Data** creates `moma_curation.sqlite3` in the input directory after
+**Process Data** creates `moma_curation_v3.sqlite3` in the input directory after
 reconstruction. It stores all reconstructed measurements, initial division
 labels, current labels, keep/drop membership, review status, and the current
 cursor. Image pickle arrays and AI preview caches stay outside this database.
 This local working database is separate from the frozen training-data store.
+The compact schema keeps measurements and their five curation labels in each
+observation row; there is no separate annotation table duplicating cell keys.
+The `trajectories` table stores one small row per trajectory for keep/drop,
+review status, row order, and integer references to a source and measurement
+schema. Source filenames and paths are stored once per source in `source_files`;
+identical dtype schemas are shared in `measurement_schemas`. The original
+division baseline and its order share a compact integer with the current
+division label, so reset still works after reopening without a JSON list per
+trajectory. SQL views expose only the current boolean division label.
+New databases use the `moma_curation_v3.sqlite3` filename. Older database files
+are preserved and not imported. An open session can carry its current in-memory
+edits into a new database version without reprocessing the source data.
 
 - Each manual label edit, reset, keep/drop action, FOV drop, AI application,
   and AI undo commits immediately in a SQLite transaction.
@@ -109,7 +121,7 @@ import sqlite3
 from contextlib import closing
 import pandas as pd
 
-with closing(sqlite3.connect("moma_curation.sqlite3")) as connection:
+with closing(sqlite3.connect("moma_curation_v3.sqlite3")) as connection:
     df = pd.read_sql_query(
         "SELECT * FROM reviewed_selected_labeled ORDER BY trajectory_key, time_h",
         connection,
