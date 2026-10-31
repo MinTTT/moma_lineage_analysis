@@ -1,255 +1,303 @@
 {
   "thresholds": {
-    "division_point": 0.6800000071525574,
-    "excluded_point": 0.8899999856948853
+    "division_point": 0.8299999833106995,
+    "excluded_point": 0.8600000143051147
   },
   "validation": {
     "point": {
       "division_point": {
-        "threshold": 0.6800000071525574,
-        "support": 4842,
-        "precision": 0.991973657131097,
-        "recall": 0.9954564229657167,
-        "f1": 0.9937119884547985,
-        "average_precision": 0.999792417394535
+        "threshold": 0.8299999833106995,
+        "support": 5029,
+        "precision": 0.9982021574111066,
+        "recall": 0.993636905945516,
+        "f1": 0.9959142999501744,
+        "average_precision": 0.9998818103405954
       },
       "excluded_point": {
-        "threshold": 0.8899999856948853,
-        "support": 314,
-        "precision": 0.8397212543554007,
-        "recall": 0.767515923566879,
-        "f1": 0.8019966722129783,
-        "average_precision": 0.8837236496566349
+        "threshold": 0.8600000143051147,
+        "support": 270,
+        "precision": 0.8577405857740585,
+        "recall": 0.7592592592592593,
+        "f1": 0.8055009823182712,
+        "average_precision": 0.8689320988470512
       }
     },
     "division_event": {
       "tolerance_frames": 1,
-      "true_positive": 4805,
-      "false_positive": 29,
-      "false_negative": 16,
-      "precision": 0.9940008274720729,
-      "recall": 0.9966811864758349,
-      "f1": 0.9953392024857588,
-      "mean_absolute_error_frames": 0.0018730489073881373
+      "true_positive": 5000,
+      "false_positive": 6,
+      "false_negative": 25,
+      "precision": 0.9988014382740711,
+      "recall": 0.9950248756218906,
+      "f1": 0.9969095803010667,
+      "mean_absolute_error_frames": 0.0006
     },
     "position": {
       "division_recall_head_quintile": {
-        "support": 1020,
-        "recall": 0.996078431372549
+        "support": 1060,
+        "recall": 0.9952830188679245
       },
       "division_recall_tail_quintile": {
-        "support": 964,
-        "recall": 0.9979253112033195
+        "support": 988,
+        "recall": 0.9939271255060729
       },
       "last_division_event": {
-        "trajectories_with_division": 172,
-        "last_event_missed": 1,
-        "miss_rate": 0.005813953488372093
+        "trajectories_with_division": 173,
+        "last_event_missed": 2,
+        "miss_rate": 0.011560693641618497
       }
     }
   },
   "test": {
     "point": {
       "division_point": {
-        "threshold": 0.6800000071525574,
-        "support": 4939,
-        "precision": 0.991539081385979,
-        "recall": 0.9965580076938652,
-        "f1": 0.9940422094314854,
-        "average_precision": 0.9998992914438005
+        "threshold": 0.8299999833106995,
+        "support": 5137,
+        "precision": 0.9978486211617446,
+        "recall": 0.9931866848355071,
+        "f1": 0.9955121951219512,
+        "average_precision": 0.9998811643418268
       },
       "excluded_point": {
-        "threshold": 0.8899999856948853,
-        "support": 306,
-        "precision": 0.9044117647058824,
-        "recall": 0.803921568627451,
-        "f1": 0.8512110726643599,
-        "average_precision": 0.9229975153366456
+        "threshold": 0.8600000143051147,
+        "support": 274,
+        "precision": 0.8638297872340426,
+        "recall": 0.7408759124087592,
+        "f1": 0.7976424361493124,
+        "average_precision": 0.8782543577500175
       }
     },
     "division_event": {
       "tolerance_frames": 1,
-      "true_positive": 4902,
-      "false_positive": 31,
-      "false_negative": 11,
-      "precision": 0.9937157916075411,
-      "recall": 0.9977610421331162,
-      "f1": 0.9957343083485679,
-      "mean_absolute_error_frames": 0.002039983680130559
+      "true_positive": 5104,
+      "false_positive": 9,
+      "false_negative": 26,
+      "precision": 0.9982397809505182,
+      "recall": 0.9949317738791423,
+      "f1": 0.9965830323147514,
+      "mean_absolute_error_frames": 0.00039184952978056425
     },
     "position": {
       "division_recall_head_quintile": {
-        "support": 1027,
-        "recall": 0.997078870496592
+        "support": 1079,
+        "recall": 0.9907321594068582
       },
       "division_recall_tail_quintile": {
-        "support": 988,
-        "recall": 0.9949392712550608
+        "support": 1037,
+        "recall": 0.9922854387656702
       },
       "last_division_event": {
         "trajectories_with_division": 173,
-        "last_event_missed": 1,
-        "miss_rate": 0.005780346820809248
+        "last_event_missed": 2,
+        "miss_rate": 0.011560693641618497
       }
     }
   },
   "training_data": {
-    "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_merged_20261017\\verified_training_data.csv",
-    "sha256": "7ecc9753cf02c0dfc020fd70f6b077f997799d46d4f3af3fd89d12a16eaee2bc",
-    "rows": 373440,
-    "trajectories": 1149,
+    "source": "sqlite_dataset_store",
+    "store_path": "G:\\python_code\\moma_lineage_analysis\\datasets\\store\\lineage.sqlite3",
+    "rows": 385815,
+    "trajectories": 1152,
     "target_columns": [
       "division_point",
       "excluded_point"
+    ],
+    "lineage_ids": [
+      "reviewed_20261031_verified_20260916_no_longruns@v1",
+      "reviewed_20261031_verified_20261013@v1",
+      "reviewed_20261031_verified_20261016@v1",
+      "reviewed_20261031_verified_20261017@v1",
+      "reviewed_20261031_verified_20261029@v1"
     ]
+  },
+  "model_config": {
+    "model_type": "cnn",
+    "input_size": 5,
+    "output_size": 2,
+    "hidden_size": 64,
+    "num_layers": 4,
+    "kernel_size": 5,
+    "dropout": 0.15,
+    "bidirectional": true,
+    "conv_dilations": null
+  },
+  "temporal_context": {
+    "effective_conv_dilations": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "receptive_field": 17,
+    "temporal_offsets": [
+      -8,
+      -7,
+      -6,
+      -5,
+      -4,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "has_dense_temporal_support": true
   },
   "split_summary": {
     "train": {
-      "trajectories": 804,
-      "rows": 261377,
-      "division_points": 22689,
-      "excluded_points": 1304,
+      "trajectories": 806,
+      "rows": 269699,
+      "division_points": 23499,
+      "excluded_points": 1196,
       "trajectories_by_source": {
-        "baseline_0_10h": 334,
-        "baseline_0_8h": 13,
-        "curated_20261013": 24,
-        "curated_20261016": 33,
+        "baseline_0_10h": 315,
+        "baseline_0_8h": 12,
+        "curated_20261013": 22,
+        "curated_20261016": 27,
         "curated_20261017": 11,
-        "rdm_gluc_toggle_20260905": 382,
+        "curated_20261029": 34,
+        "rdm_gluc_toggle_20260905": 378,
         "starvation_20251111": 7
       }
     },
     "validation": {
-      "trajectories": 172,
-      "rows": 55866,
-      "division_points": 4842,
-      "excluded_points": 314,
+      "trajectories": 173,
+      "rows": 58007,
+      "division_points": 5029,
+      "excluded_points": 270,
       "trajectories_by_source": {
-        "baseline_0_10h": 71,
-        "baseline_0_8h": 3,
+        "baseline_0_10h": 68,
+        "baseline_0_8h": 2,
         "curated_20261013": 5,
-        "curated_20261016": 7,
+        "curated_20261016": 6,
         "curated_20261017": 2,
-        "rdm_gluc_toggle_20260905": 82,
+        "curated_20261029": 7,
+        "rdm_gluc_toggle_20260905": 81,
         "starvation_20251111": 2
       }
     },
     "test": {
       "trajectories": 173,
-      "rows": 56197,
-      "division_points": 4939,
-      "excluded_points": 306,
+      "rows": 58109,
+      "division_points": 5137,
+      "excluded_points": 274,
       "trajectories_by_source": {
-        "baseline_0_10h": 72,
-        "baseline_0_8h": 3,
+        "baseline_0_10h": 68,
+        "baseline_0_8h": 2,
         "curated_20261013": 5,
-        "curated_20261016": 7,
+        "curated_20261016": 6,
         "curated_20261017": 2,
-        "rdm_gluc_toggle_20260905": 82,
+        "curated_20261029": 7,
+        "rdm_gluc_toggle_20260905": 81,
         "starvation_20251111": 2
       }
     }
   },
-  "dataset_manifest": {
-    "schema_version": "1.0-merge",
-    "generated_at_utc": "2026-10-17T11:55:55.442339+00:00",
-    "human_verified": true,
-    "verification_basis": "constituent_corpora_attested",
-    "canonical_target_columns": [
-      "division_point",
-      "excluded_point"
-    ],
-    "feature_columns": [
-      "time_h",
-      "spine_length"
-    ],
-    "merge_rule": "concatenate verified corpora; keys are pre-namespaced and unique",
-    "r004_filter": {
-      "rule": "drop trajectory when longest contiguous exclusion run >= 5 frames",
-      "applied_to": [
-        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261013\\verified_training_data.csv",
-        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\verified_training_data.csv",
-        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261017\\verified_training_data.csv"
-      ],
-      "dropped": {
-        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261013\\verified_training_data.csv": [
-          "curated_20261013::FOV_121_CH_7"
-        ],
-        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\verified_training_data.csv": [
-          "curated_20261016::FOV_53_CH_11"
-        ],
-        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261017\\verified_training_data.csv": [
-          "curated_20261017::FOV_14_CH_14"
-        ]
-      }
-    },
-    "sources": [
+  "dataset_lineage": {
+    "source": "sqlite_dataset_store",
+    "store_path": "G:\\python_code\\moma_lineage_analysis\\datasets\\store\\lineage.sqlite3",
+    "schema_version": 2,
+    "lineages": [
       {
-        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20260916\\verified_training_data_no_longruns.csv",
-        "sha256": "a2b3793d2138d806f5d5a85c3f51e15b9629953b4c0ef54b9490b74f99bc0092",
-        "rows": 312317,
-        "trajectories": 1053,
-        "r004_filter_applied": false,
-        "pre_filtered_violations": []
+        "lineage_id": "reviewed_20261031_verified_20260916_no_longruns@v1",
+        "content_ref": "reviewed_20261031_verified_20260916_no_longruns@v1#39e53054fdb0",
+        "dataset_id": "reviewed_20261031_verified_20260916_no_longruns",
+        "version": 1,
+        "kind": "review_finalized",
+        "label": "review-finalized from verified_20260916_no_longruns@v1",
+        "round_name": null,
+        "canonical_hash": "39e53054fdb007cb0750b6d9166ac789e9ee116d4a32ecc19000865784ecba9e",
+        "legacy_csv_path": null,
+        "legacy_csv_sha256": "6118c555c10298f985efebae85068430d6692e7e11ea9b0abd6f357033b591ca",
+        "rows": 305503,
+        "trajectories": 1018,
+        "frozen": true,
+        "human_verified": true
       },
       {
-        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261013\\verified_training_data.csv",
-        "sha256": "15721ab757e956fc5c8a79855f67ce5713cc5a619a1b88ed2a80404b4c2870b3",
-        "rows": 22890,
-        "trajectories": 35,
-        "r004_filter_applied": true,
-        "dropped_trajectories": [
-          "curated_20261013::FOV_121_CH_7"
-        ],
-        "retained_rows": 22236,
-        "retained_trajectories": 34
+        "lineage_id": "reviewed_20261031_verified_20261013@v1",
+        "content_ref": "reviewed_20261031_verified_20261013@v1#c82f5b3e16d3",
+        "dataset_id": "reviewed_20261031_verified_20261013",
+        "version": 1,
+        "kind": "review_finalized",
+        "label": "review-finalized from verified_20261013@v1",
+        "round_name": null,
+        "canonical_hash": "c82f5b3e16d37889a6719d5c4708cd96ddeb4b3b1966272dde77e3e71a583238",
+        "legacy_csv_path": null,
+        "legacy_csv_sha256": "76ee96543663b0f74f80c8b97d01caa1315190516679dbfbd18dfbdb3782fd39",
+        "rows": 20928,
+        "trajectories": 32,
+        "frozen": true,
+        "human_verified": true
       },
       {
-        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\verified_training_data.csv",
-        "sha256": "e4fced1a3958840954e334ac49acfdeeb0d6f4b2602a35760154e5f2ea13cf76",
-        "rows": 31384,
+        "lineage_id": "reviewed_20261031_verified_20261016@v1",
+        "content_ref": "reviewed_20261031_verified_20261016@v1#d25300304e42",
+        "dataset_id": "reviewed_20261031_verified_20261016",
+        "version": 1,
+        "kind": "review_finalized",
+        "label": "review-finalized from verified_20261016@v1",
+        "round_name": null,
+        "canonical_hash": "d25300304e42bbba4a37296036869c63595a69800bfd22d710e0b56d88a0ec4a",
+        "legacy_csv_path": null,
+        "legacy_csv_sha256": "601cd314752c7d7ab7306889f0a702c4e18b18f931b2955c1fcae27a1bd7d429",
+        "rows": 25499,
+        "trajectories": 39,
+        "frozen": true,
+        "human_verified": true
+      },
+      {
+        "lineage_id": "reviewed_20261031_verified_20261017@v1",
+        "content_ref": "reviewed_20261031_verified_20261017@v1#6b9960f7a65f",
+        "dataset_id": "reviewed_20261031_verified_20261017",
+        "version": 1,
+        "kind": "review_finalized",
+        "label": "review-finalized from verified_20261017@v1",
+        "round_name": null,
+        "canonical_hash": "6b9960f7a65fdecf06f4c916e47c46124ce13ec81fdf61f7b3bc8faadfce07f6",
+        "legacy_csv_path": null,
+        "legacy_csv_sha256": "fdea054c7e387779ccc6af938929b9d782c3be9e8858ec40d7714c7237650241",
+        "rows": 8157,
+        "trajectories": 15,
+        "frozen": true,
+        "human_verified": true
+      },
+      {
+        "lineage_id": "reviewed_20261031_verified_20261029@v1",
+        "content_ref": "reviewed_20261031_verified_20261029@v1#2727f8644cb2",
+        "dataset_id": "reviewed_20261031_verified_20261029",
+        "version": 1,
+        "kind": "review_finalized",
+        "label": "review-finalized from verified_20261029@v1",
+        "round_name": null,
+        "canonical_hash": "2727f8644cb24492cf3a1020afb72a110d4e5cfe7a68c080642c659e5448ab2f",
+        "legacy_csv_path": null,
+        "legacy_csv_sha256": "3f0787aed4b6464c7a8b3dddbb2ec52bc93f5366e338201b21d277ce28872b06",
+        "rows": 25728,
         "trajectories": 48,
-        "r004_filter_applied": true,
-        "dropped_trajectories": [
-          "curated_20261016::FOV_53_CH_11"
-        ],
-        "retained_rows": 30730,
-        "retained_trajectories": 47
-      },
-      {
-        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261017\\verified_training_data.csv",
-        "sha256": "247da098e97d060c4c24696ef4ed78862a0ef3932b717492d21f1c8219d8ad67",
-        "rows": 8757,
-        "trajectories": 16,
-        "r004_filter_applied": true,
-        "dropped_trajectories": [
-          "curated_20261017::FOV_14_CH_14"
-        ],
-        "retained_rows": 8157,
-        "retained_trajectories": 15
+        "frozen": true,
+        "human_verified": true
       }
     ],
-    "summary": {
-      "rows": 373440,
-      "trajectories": 1149,
-      "division_points": 32470,
-      "excluded_points": 1924,
-      "division_and_excluded_overlap": 295,
-      "source_datasets": {
-        "baseline_0_10h": 477,
-        "baseline_0_8h": 19,
-        "curated_20261013": 34,
-        "curated_20261016": 47,
-        "curated_20261017": 15,
-        "rdm_gluc_toggle_20260905": 546,
-        "starvation_20251111": 11
-      }
-    },
-    "output": {
-      "training_csv": "datasets\\verified_merged_20261017\\verified_training_data.csv",
-      "training_csv_sha256": "7ecc9753cf02c0dfc020fd70f6b077f997799d46d4f3af3fd89d12a16eaee2bc"
-    },
-    "manifest_path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_merged_20261017\\merge_manifest.json",
-    "manifest_sha256": "94a54d9169ac66e81dde8728222fa7b067078ef8cd302ffaae967c96c4df6b6d"
+    "composition": {
+      "lineage_ids": [
+        "reviewed_20261031_verified_20260916_no_longruns@v1",
+        "reviewed_20261031_verified_20261013@v1",
+        "reviewed_20261031_verified_20261016@v1",
+        "reviewed_20261031_verified_20261017@v1",
+        "reviewed_20261031_verified_20261029@v1"
+      ],
+      "rows": 385815,
+      "trajectories": 1152,
+      "duplicate_observation_rows_collapsed": 0,
+      "trajectory_keys_sha256": "bf43037eac9e44e748f0e020d41994c81c8081a22bed16a653bbabd0ded45629"
+    }
   }
 }

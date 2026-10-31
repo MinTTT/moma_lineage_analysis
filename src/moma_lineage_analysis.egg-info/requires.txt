@@ -4,8 +4,10 @@ scipy
 scikit-learn
 joblib
 torch
-streamlit>=1.30
+streamlit>=1.55
 plotly
+pillow
+tifffile
 
 [dev]
 pytest

@@ -6,6 +6,7 @@ These tests use synthetic corpora only; they do not touch datasets/store/.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -230,3 +231,41 @@ def test_backup_creates_compressed_snapshot(tmp_path: Path) -> None:
     assert Path(backup["path"]).is_file()
     assert Path(backup["path"]).suffix == ".gz"
     assert len(backup["sha256"]) == 64
+
+
+def test_corpus_specs_skip_store_removed_entries(tmp_path: Path, monkeypatch) -> None:
+    script_path = Path(__file__).resolve().parents[2] / "scripts" / "dataset_store.py"
+    spec = importlib.util.spec_from_file_location("dataset_store_cli", script_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    manifest = {
+        "datasets": [
+            {
+                "id": "keep_corpus",
+                "path": "keep_corpus/verified_training_data.csv",
+                "role": "batch",
+                "human_verified": True,
+            },
+            {
+                "id": "gone_corpus",
+                "path": "gone_corpus/verified_training_data.csv",
+                "role": "merged",
+                "human_verified": True,
+                "store_removed": {
+                    "date": "2026-10-31",
+                    "reason": "duplicate dataset version removed from the store",
+                },
+            },
+        ]
+    }
+    datasets_dir = tmp_path / "datasets"
+    datasets_dir.mkdir()
+    (datasets_dir / "manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+    monkeypatch.setattr(module, "IMPORT_ORDER", ("keep_corpus", "gone_corpus"))
+    specs = module.corpus_specs(tmp_path)
+    assert [item["dataset_id"] for item in specs] == ["keep_corpus"]
+    assert specs[0]["csv_path"] == (
+        tmp_path / "datasets" / "keep_corpus" / "verified_training_data.csv"
+    )

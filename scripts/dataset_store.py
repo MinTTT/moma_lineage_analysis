@@ -54,24 +54,32 @@ CORPUS_METADATA = {
     "verified_20261017": ("batch", "R009"),
     "verified_merged_20261016": ("merged", "R008"),
     "verified_merged_20261017": ("merged", "R010"),
+    "verified_20261029": ("batch", "R014"),
+    "verified_merged_20261029": ("merged", "R015"),
 }
 
 
-def corpus_specs() -> list[dict]:
+def corpus_specs(repo_root: Path = REPO_ROOT) -> list[dict]:
     """Derive the corpus import specification from datasets/manifest.json.
 
     Known corpora are imported in a stable documented order; any additional
     manifest entries (a newly curated batch) are appended in sorted order, so
     `build` is idempotent and only inserts genuinely new versions.
+
+    Entries carrying `store_removed` name corpora whose dataset version was
+    removed from the live store at the user's request (the frozen CSV and its
+    hashes stay documented).  They are excluded from build/verify expectations.
     """
 
-    entries = dataset_store.load_manifest_entries(REPO_ROOT)
+    entries = dataset_store.load_manifest_entries(repo_root)
     directories = list(IMPORT_ORDER) + sorted(set(entries) - set(IMPORT_ORDER))
     specs: list[dict] = []
     for directory in directories:
         entry = entries.get(directory)
         if entry is None:
             raise SystemExit(f"manifest entry missing for {directory}")
+        if entry.get("store_removed"):
+            continue
         role = str(entry["role"])
         kind, round_name = CORPUS_METADATA.get(
             directory, ("batch", None)
@@ -82,7 +90,7 @@ def corpus_specs() -> list[dict]:
         specs.append(
             {
                 "dataset_id": entry["id"],
-                "csv_path": REPO_ROOT / "datasets" / str(entry["path"]),
+                "csv_path": repo_root / "datasets" / str(entry["path"]),
                 "kind": kind,
                 "label": role,
                 "round_name": round_name,
@@ -98,6 +106,7 @@ def command_build(args: argparse.Namespace) -> int:
     connection = dataset_store.connect(db_path)
     try:
         dataset_store.initialize(connection)
+        dataset_store.assert_import_allowed(connection)
         summary: list[dict] = []
         for spec in corpus_specs():
             if not Path(spec["csv_path"]).is_file():

@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-10-28T17:42:07.647860Z",
+  "human_verified": true,
+  "verification_basis": "user_attested_2026-10-29_expansion_of_verified_merged_20261017@v1",
+  "canonical_target_columns": [
+    "division_point",
+    "excluded_point"
+  ],
+  "feature_columns": [
+    "time_h",
+    "spine_length"
+  ],
+  "inputs": [
+    {
+      "lineage_id": "verified_merged_20261017@v1",
+      "content_ref": "verified_merged_20261017@v1#e3af02bd392a",
+      "dataset_id": "verified_merged_20261017",
+      "version": 1,
+      "kind": "merged",
+      "label": "merged retraining corpus (round R010): R004 production corpus + batches 20261013, 20261016 and 20261017",
+      "round_name": "R010",
+      "canonical_hash": "e3af02bd392a2d09f375ce2e116c91ad0e71c6e6e388922185e91c5ef9780d90",
+      "legacy_csv_path": "datasets\\verified_merged_20261017\\verified_training_data.csv",
+      "legacy_csv_sha256": "7ecc9753cf02c0dfc020fd70f6b077f997799d46d4f3af3fd89d12a16eaee2bc",
+      "rows": 373440,
+      "trajectories": 1149,
+      "frozen": true,
+      "human_verified": true
+    },
+    {
+      "dataset_id": "verified_20261029",
+      "path": "datasets/verified_20261029/verified_training_data.csv",
+      "sha256": "95654104ae88a50a432064c5772c49e550a0fb6f6d969fbb2a74c0f72d8030e6",
+      "rows": 25728,
+      "trajectories": 48,
+      "r004_filter_applied": true,
+      "dropped_trajectories": [],
+      "retained_rows": 25728,
+      "retained_trajectories": 48
+    }
+  ],
+  "output": {
+    "training_csv": "datasets\\verified_merged_20261029\\verified_training_data.csv",
+    "training_csv_sha256": "d8a288a1833858e95f5138d02f1473737d585c44d5cd7a6266b43c1fff9dd566"
+  },
+  "summary": {
+    "rows": 399168,
+    "trajectories": 1197,
+    "division_points": 35032,
+    "excluded_points": 2022,
+    "overlap_rows": 295,
+    "trajectories_by_source": {
+      "baseline_0_10h": 477,
+      "baseline_0_8h": 19,
+      "curated_20261013": 34,
+      "curated_20261016": 47,
+      "curated_20261017": 15,
+      "curated_20261029": 48,
+      "rdm_gluc_toggle_20260905": 546,
+      "starvation_20251111": 11
+    }
+  },
+  "caveats": [
+    "Eight reused channel identifiers were date-prefixed; no matching time/length sequences were found against historical trajectories, so biological identity across acquisitions is not established.",
+    "Historical R010 membership and its one known identical-content pair remain frozen.",
+    "295 legacy division/exclusion overlap rows retained; new batch has zero overlap."
+  ]
+}

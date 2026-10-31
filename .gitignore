@@ -6,3 +6,7 @@ __pyache__
 /src/moma_lineage_analysis/__pycache__
 *.pyc
 /tests/data
+/datasets/raw_train_data
+/datasets/store/backups
+/datasets/store/review_backups
+/datasets/verified_20261029

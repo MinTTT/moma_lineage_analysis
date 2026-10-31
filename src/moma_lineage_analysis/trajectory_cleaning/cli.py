@@ -59,6 +59,19 @@ def _write_json(path: Path, values: Any) -> None:
     )
 
 
+def _parse_conv_dilations(value: str) -> tuple[int, ...]:
+    """Parse a comma-separated schedule; layer count is checked by ModelConfig."""
+    try:
+        dilations = tuple(int(part.strip()) for part in value.split(","))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "conv dilations must be comma-separated positive integers, e.g. 1,2,3,6"
+        ) from exc
+    if not dilations or any(dilation <= 0 for dilation in dilations):
+        raise argparse.ArgumentTypeError("conv dilations must be positive integers")
+    return dilations
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -223,6 +236,7 @@ def train_command(args: argparse.Namespace) -> None:
         kernel_size=args.kernel_size,
         dropout=args.dropout,
         bidirectional=not args.unidirectional,
+        conv_dilations=getattr(args, "conv_dilations", None),
     )
     train_config = TrainConfig(
         epochs=args.epochs,
@@ -288,6 +302,13 @@ def train_command(args: argparse.Namespace) -> None:
         "length_column": args.length_column,
         "source_column": args.source_column,
         "train_config": train_config.to_dict(),
+        "model_config": model_config.to_dict(),
+        "temporal_context": {
+            "effective_conv_dilations": model_config.effective_conv_dilations,
+            "receptive_field": model_config.receptive_field,
+            "temporal_offsets": model_config.temporal_offsets,
+            "has_dense_temporal_support": model_config.has_dense_temporal_support,
+        },
         "training_data": training_data,
     }
     if dataset_manifest is not None:
@@ -312,6 +333,8 @@ def train_command(args: argparse.Namespace) -> None:
         "validation": validation_metrics,
         "test": test_metrics,
         "training_data": metadata["training_data"],
+        "model_config": metadata["model_config"],
+        "temporal_context": metadata["temporal_context"],
         "split_summary": _summarize_splits(
             dataframe,
             splits,
@@ -386,6 +409,15 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--hidden-size", type=int, default=64)
     train.add_argument("--num-layers", type=int, default=4)
     train.add_argument("--kernel-size", type=int, default=5)
+    train.add_argument(
+        "--conv-dilations",
+        type=_parse_conv_dilations,
+        metavar="D1,D2,...",
+        help=(
+            "Positive dilation per CNN layer or ResNet block (both convolutions); "
+            "exactly --num-layers comma-separated values. Omit for legacy defaults."
+        ),
+    )
     train.add_argument("--dropout", type=float, default=0.15)
     train.add_argument("--unidirectional", action="store_true")
     train.add_argument("--epochs", type=int, default=100)

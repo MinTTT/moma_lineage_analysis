@@ -1,0 +1,40 @@
+{
+  "format_version": 1,
+  "release_id": "R015_CNN_merged_20261029",
+  "round": "R015",
+  "model_type": "cnn",
+  "registry_tag": "R015 CNN (expanded merged corpus · selectable)",
+  "is_production": false,
+  "production_checkpoint": "best_model.pt",
+  "production_sha256": "6e7c5a5896c90bd0de2b068af087f2d9c942b2de94e8deb87e419fd005cb230b",
+  "source_run": "runs/merged_20261029/cnn",
+  "dataset": {
+    "lineage_id": "verified_merged_20261029@v1",
+    "canonical_hash": "8decab478c8037d93d412215fd338f1f8f12626b9979d897de9f112537549561",
+    "rows": 399168,
+    "trajectories": 1197
+  },
+  "receptive_field": 17,
+  "artifacts": {
+    "best_model.pt": {
+      "source": "runs/merged_20261029/cnn/best_model.pt",
+      "sha256": "9753298022805b4bc9f277d70e4da29aa8d88cac84a9575691477f332ff21687",
+      "bytes": 264117
+    },
+    "history.csv": {
+      "source": "runs/merged_20261029/cnn/history.csv",
+      "sha256": "0da53133b5d7dbc9a3d429c5446d300f2bda3003b941f371c9ee4f6d8d79628e",
+      "bytes": 1927
+    },
+    "metrics.json": {
+      "source": "runs/merged_20261029/cnn/metrics.json",
+      "sha256": "03bde2f4bd469404f89ffd2fec475a19b52fc3fbeed6b9b6a235140f181840b0",
+      "bytes": 5731
+    },
+    "splits.json": {
+      "source": "runs/merged_20261029/cnn/splits.json",
+      "sha256": "8788d93b7b1e2775028f9154426b1b83524d5ce00641664dbf90ed41f383ba2e",
+      "bytes": 50113
+    }
+  }
+}

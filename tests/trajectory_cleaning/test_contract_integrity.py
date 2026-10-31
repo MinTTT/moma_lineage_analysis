@@ -22,11 +22,11 @@ REPO_ROOT = Path(
 
 RUN_DIR = PACKAGE_MODELS_RUN_DIR
 PROMOTED_CHECKPOINT = RUN_DIR / "best_model.pt"
-# SHA-256 recorded at promotion time (R010 CNN checkpoint, run merged_20261017,
-# promoted 2026-10-17 as the validation-only rule winner; previous R008 CNN
-# backed up under promotion_backups/20261017T124420.980675Z).
-PROMOTED_SHA256 = "6e7c5a5896c90bd0de2b068af087f2d9c942b2de94e8deb87e419fd005cb230b"
-PROMOTED_RUN = RUN_DIR / "no_longruns_20260916"
+# SHA-256 recorded at promotion time (R019 CNN checkpoint, run reviewed_20261031,
+# promoted 2026-10-31 as the validation-only rule winner; previous R010 CNN
+# backed up under promotion_backups/20261030T184217.243155Z).
+PROMOTED_SHA256 = "816a8b392ec206dca578a093c6cbc2fc9ec5ba12480d6aca7c8b08349796af99"
+PROMOTED_RUN = REPO_ROOT / "runs" / "reviewed_20261031"
 VERIFIED_RUN = REPO_ROOT / "datasets" / "verified_20260916"
 METHODS_FILE = REPO_ROOT / "docs" / "METHODS_TRAJECTORY_CLEANING_MODEL.md"
 

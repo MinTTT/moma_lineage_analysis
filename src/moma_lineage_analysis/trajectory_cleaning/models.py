@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from numbers import Integral
 from typing import Any
 
 import torch
@@ -23,6 +24,7 @@ class ModelConfig:
     kernel_size: int = 5
     dropout: float = 0.15
     bidirectional: bool = True
+    conv_dilations: tuple[int, ...] | None = None
 
     def __post_init__(self) -> None:
         if self.model_type not in {"cnn", "resnet", "lstm"}:
@@ -35,6 +37,64 @@ class ModelConfig:
             raise ValueError("kernel_size must be a positive odd integer")
         if not 0 <= self.dropout < 1:
             raise ValueError("dropout must be in [0, 1)")
+        if self.conv_dilations is not None:
+            if self.model_type == "lstm":
+                raise ValueError("conv_dilations is only supported for cnn and resnet")
+            if not isinstance(self.conv_dilations, (tuple, list)):
+                raise ValueError("conv_dilations must be a tuple or list of positive integers")
+            if len(self.conv_dilations) != self.num_layers:
+                raise ValueError("conv_dilations must contain exactly num_layers values")
+            if any(
+                isinstance(dilation, bool) or not isinstance(dilation, Integral) or dilation <= 0
+                for dilation in self.conv_dilations
+            ):
+                raise ValueError("conv_dilations values must be positive integers (not bool)")
+            # JSON checkpoints decode tuples as lists; keep one canonical config type.
+            object.__setattr__(self, "conv_dilations", tuple(int(d) for d in self.conv_dilations))
+
+    @property
+    def effective_conv_dilations(self) -> tuple[int, ...] | None:
+        """Resolve the historical defaults without changing serialized configs."""
+        if self.model_type == "lstm":
+            return None
+        if self.conv_dilations is not None:
+            return self.conv_dilations
+        if self.model_type == "cnn":
+            return (1,) * self.num_layers
+        return tuple(2 ** (index % 4) for index in range(self.num_layers))
+
+    @property
+    def receptive_field(self) -> int | None:
+        """Width in normalized feature frames; LSTM context is sequence-wide."""
+        dilations = self.effective_conv_dilations
+        if dilations is None:
+            return None
+        convolutions_per_layer = 2 if self.model_type == "resnet" else 1
+        return 1 + convolutions_per_layer * (self.kernel_size - 1) * sum(dilations)
+
+    @property
+    def temporal_offsets(self) -> tuple[int, ...] | None:
+        """Exact structural offsets via kernel-support sums, independent of weights.
+
+        Residual identities add no new offsets: odd kernels already include zero.
+        This describes interior network support, not trajectory normalization.
+        """
+        dilations = self.effective_conv_dilations
+        if dilations is None:
+            return None
+        offsets = {0}
+        radius = self.kernel_size // 2
+        convolutions_per_layer = 2 if self.model_type == "resnet" else 1
+        for dilation in dilations:
+            kernel_offsets = range(-radius * dilation, radius * dilation + 1, dilation)
+            for _ in range(convolutions_per_layer):
+                offsets = {left + right for left in offsets for right in kernel_offsets}
+        return tuple(sorted(offsets))
+
+    @property
+    def has_dense_temporal_support(self) -> bool | None:
+        offsets = self.temporal_offsets
+        return None if offsets is None else len(offsets) == self.receptive_field
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -58,10 +118,14 @@ class ChannelLayerNorm(nn.Module):
 class CNNLabeler(nn.Module):
     def __init__(self, config: ModelConfig) -> None:
         super().__init__()
+        self.conv_dilations = config.effective_conv_dilations
+        self.receptive_field = config.receptive_field
+        self.temporal_offsets = config.temporal_offsets
+        self.has_dense_temporal_support = config.has_dense_temporal_support
         layers: list[nn.Module] = []
         in_channels = config.input_size
-        padding = config.kernel_size // 2
-        for _ in range(config.num_layers):
+        for dilation in self.conv_dilations:
+            padding = dilation * (config.kernel_size - 1) // 2
             layers.append(
                 nn.Sequential(
                     nn.Conv1d(
@@ -69,6 +133,7 @@ class CNNLabeler(nn.Module):
                         config.hidden_size,
                         kernel_size=config.kernel_size,
                         padding=padding,
+                        dilation=dilation,
                     ),
                     ChannelLayerNorm(config.hidden_size),
                     nn.GELU(),
@@ -136,16 +201,20 @@ class ResNetLabeler(nn.Module):
 
     def __init__(self, config: ModelConfig) -> None:
         super().__init__()
+        self.conv_dilations = config.effective_conv_dilations
+        self.receptive_field = config.receptive_field
+        self.temporal_offsets = config.temporal_offsets
+        self.has_dense_temporal_support = config.has_dense_temporal_support
         self.input_projection = nn.Conv1d(config.input_size, config.hidden_size, kernel_size=1)
         self.blocks = nn.ModuleList(
             [
                 ResidualBlock(
                     config.hidden_size,
                     config.kernel_size,
-                    dilation=2 ** (layer_index % 4),
+                    dilation=dilation,
                     dropout=config.dropout,
                 )
-                for layer_index in range(config.num_layers)
+                for dilation in self.conv_dilations
             ]
         )
         self.head = nn.Conv1d(config.hidden_size, config.output_size, kernel_size=1)

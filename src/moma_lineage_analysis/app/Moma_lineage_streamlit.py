@@ -21,6 +21,15 @@ from moma_lineage_analysis.moma_logic import (
     COLNAME_NOT_FLU_CHANNEL
 )
 from moma_lineage_analysis.paths import PACKAGE_MODELS_RUN_DIR
+from moma_lineage_analysis.model_registry import AI_MODEL_REGISTRY
+from moma_lineage_analysis.trajectory_view_style import (
+    AI_DIVISION_MARKER,
+    AI_EXCLUSION_MARKER,
+    APPLIED_EXCLUSION_MARKER,
+    TRAJECTORY_TRACE_COLORS,
+    shortcut_script,
+    trajectory_plot_runs,
+)
 from moma_lineage_analysis import curation_store as _curation_store_module
 import importlib
 
@@ -71,54 +80,7 @@ DEFAULT_AI_CHECKPOINT = os.environ.get(
     str(PACKAGE_MODELS_RUN_DIR / "best_model.pt"),
 )
 
-# Registry of released trajectory-cleaning checkpoints with usage guidance.
-# Key = display name tag; value = (checkpoint path, usage suggestion).
-# Paths are anchored to the package-shipped models directory
-# (moma_lineage_analysis.paths.PACKAGE_MODELS_RUN_DIR), independent of the
-# working directory the app is launched from.
-AI_MODEL_REGISTRY = {
-    "R010 CNN (merged corpus · production)": (
-        str(PACKAGE_MODELS_RUN_DIR / "best_model.pt"),
-        "Current production model (promoted 2026-10-17): CNN trained on the "
-        "merged verified corpus (1,149 trajectories, all conditions incl. the "
-        "2026-10 curated batches). Test division-event F1 0.996, exclusion F1 "
-        "0.851, tail recall 0.995. Validation-only rule winner; paired evaluation "
-        "shows significantly better exclusion AP than the previous R008 CNN on "
-        "identical test sets.",
-    ),
-    "R002 CNN (mixed corpus · all conditions)": (
-        str(PACKAGE_MODELS_RUN_DIR / "verified_20260916" / "cnn" / "best_model.pt"),
-        "Trained on all conditions incl. the 21.6 h RDM-Gluc dataset. Safe "
-        "default for mixed workloads: tail division recall 0.99, last-event "
-        "miss rate <1%; slightly lower precision on short trajectories.",
-    ),
-    "R002 ResNet (mixed corpus · all conditions)": (
-        str(PACKAGE_MODELS_RUN_DIR / "verified_20260916" / "resnet" / "best_model.pt"),
-        "Mixed-corpus dilated ResNet; same scope as R002 CNN with a wider "
-        "receptive field (121 frames).",
-    ),
-    "R002 BiLSTM (mixed corpus · all conditions)": (
-        str(PACKAGE_MODELS_RUN_DIR / "verified_20260916" / "lstm" / "best_model.pt"),
-        "Mixed-corpus bidirectional LSTM; best last-division miss rate on "
-        "the mixed test split (0.0%), slower to train/predict.",
-    ),
-    "R003 CNN (RDM-Gluc only · long experiments)": (
-        str(PACKAGE_MODELS_RUN_DIR / "rdm_only_20260916" / "cnn" / "best_model.pt"),
-        "Specialist for long RDM-Gluc-like experiments: best exclusion "
-        "detection (F1 0.85) and tail recall 0.99. Do NOT use for short "
-        "≤10 h trajectories from other conditions.",
-    ),
-    "R003 ResNet (RDM-Gluc only · long experiments)": (
-        str(PACKAGE_MODELS_RUN_DIR / "rdm_only_20260916" / "resnet" / "best_model.pt"),
-        "RDM-only specialist; zero last-division misses on the RDM-Gluc "
-        "test split. Not for other conditions.",
-    ),
-    "R003 BiLSTM (RDM-Gluc only · long experiments)": (
-        str(PACKAGE_MODELS_RUN_DIR / "rdm_only_20260916" / "lstm" / "best_model.pt"),
-        "RDM-only specialist; balanced division/exclusion behavior on long "
-        "experiments. Not for other conditions.",
-    ),
-}
+# Shared package catalogue; the environment override above still controls the default.
 AI_MODEL_CUSTOM_TAG = "Custom path…"
 
 
@@ -159,33 +121,8 @@ DIVISION_CONFLICT_DROP_RATIO = 0.75
 TRAJECTORY_STATISTICS_SCHEMA_VERSION = 2
 
 
-# High-contrast palette for cell-cycle segments (Tol "bright" extended with
-# distinct hues). Chosen so neighboring cycles stay distinguishable for
-# color-vision-deficient users and never repeat within one trajectory.
-TRAJECTORY_TRACE_COLORS = (
-    '#0077BB',  # blue
-    '#EE7733',  # orange
-    '#009988',  # teal
-    '#CC3311',  # vermillion
-    '#33BBEE',  # cyan
-    '#EE3377',  # magenta
-    '#BBBB00',  # olive-yellow
-    '#882255',  # wine
-    '#44AA99',  # blue-teal
-    '#117733',  # green
-    '#AA4499',  # purple
-    '#661100',  # brown
-    '#6699CC',  # pale blue
-    '#DDCC77',  # sand
-    '#999933',  # olive
-    '#332288',  # indigo
-)
-
-# Semantic marker colors/sizes for review overlays. Exclusion markers stay
-# SMALL so they cannot cover neighboring observations of long trajectories.
-APPLIED_EXCLUSION_MARKER = dict(symbol='x', size=7, color='#dc2626', line=dict(width=1.5))
-AI_EXCLUSION_MARKER = dict(symbol='x-open', size=6, color='#f97316', line=dict(width=1))
-AI_DIVISION_MARKER = dict(symbol='diamond-open', size=9, color='#7c3aed', line=dict(width=1.5))
+# Cycle palette, review markers and plot-run splitting are shared with the
+# training-review app so both trajectory views use one visual contract.
 
 
 AI_DEVICE_OPTIONS = (
@@ -454,50 +391,6 @@ def selected_fov_cell_indices(plot_state, allowed_indices=None):
     if allowed_indices is not None:
         selected_indices.intersection_update(set(allowed_indices))
     return selected_indices
-
-
-def trajectory_plot_runs(
-    trajectory,
-    excluded_indices,
-    boundary_indices=(),
-    *,
-    presorted=False,
-):
-    """Return ``(group, frame)`` runs split at exclusions and boundaries."""
-    ordered = (
-        trajectory
-        if presorted
-        else trajectory.sort_values('time_h', kind='stable')
-    )
-    excluded = set(excluded_indices)
-    boundaries = set(boundary_indices)
-    runs = []
-    run_start = None
-    boundary_group = 0
-
-    for position, cell_id in enumerate(ordered['fov_cell_index'].tolist()):
-        if cell_id in excluded:
-            if run_start is not None:
-                runs.append((
-                    boundary_group,
-                    ordered.iloc[run_start:position].copy(),
-                ))
-                run_start = None
-            continue
-
-        if run_start is None:
-            run_start = position
-        if cell_id in boundaries:
-            runs.append((
-                boundary_group,
-                ordered.iloc[run_start:position + 1].copy(),
-            ))
-            run_start = None
-            boundary_group += 1
-
-    if run_start is not None:
-        runs.append((boundary_group, ordered.iloc[run_start:].copy()))
-    return runs
 
 
 def ai_scope_keys(scope, ordered_keys, current_key):
@@ -2778,48 +2671,16 @@ else:
         else:
             st.sidebar.warning("No trajectories selected.")
 
-    # --- Keyboard Shortcuts Logic ---
+    # Shared handler with the training-review app: arrows navigate, and the
+    # same letter keys trigger the matching label action.
     import streamlit.components.v1 as components
-    
-    # JavaScript to listen for key presses and click buttons
-    components.html("""
-        <script>
-        const host = window.parent;
-        const doc = window.parent.document;
-        const handlerName = '__momaLineageKeyHandler';
-        if (host[handlerName]) {
-            doc.removeEventListener('keydown', host[handlerName]);
-        }
-        const keyHandler = function(e) {
-            // Image review has its own controls; never edit behind a popup.
-            if (doc.querySelector('[role="dialog"]')) return;
-            // Let text fields and slider thumbs handle their own arrow keys.
-            if (e.repeat || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)
-                || e.target.closest('[role="slider"]')) return;
-            
-            let btn;
-            if (e.key === 'ArrowLeft') {
-                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Prev'))?.parentElement;
-            } else if (e.key === 'ArrowRight') {
-                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Next'))?.parentElement;
-            } else if (e.key.toLowerCase() === 'k') {
-                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Trajectory'))?.parentElement;
-            } else if (e.key.toLowerCase() === 'e') {
-                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Exclude Selected'))?.parentElement;
-            } else if (e.key.toLowerCase() === 'r') {
-                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Restore Selected Exclusions'))?.parentElement;
-            } else if (e.key.toLowerCase() === 'd') {
-                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Mark Division'))?.parentElement;
-            } else if (e.key.toLowerCase() === 'm') {
-                btn = Array.from(doc.querySelectorAll('button p')).find(el => el.innerText.includes('Merge Cycles'))?.parentElement;
-            }
-            
-            if (btn && !btn.disabled) { // Only click if the button is not disabled
-                btn.click();
-            }
-        };
-        host[handlerName] = keyHandler;
-        doc.addEventListener('keydown', keyHandler);
-        </script>
-    """, height=0)
+    components.html(shortcut_script({
+        'ArrowLeft': 'Prev',
+        'ArrowRight': 'Next',
+        'k': 'Trajectory',
+        'e': 'Exclude Selected',
+        'r': 'Restore Selected Exclusions',
+        'd': 'Mark Division',
+        'm': 'Merge Cycles',
+    }), height=0)
 

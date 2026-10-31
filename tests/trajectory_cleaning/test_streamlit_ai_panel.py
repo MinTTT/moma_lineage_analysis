@@ -101,7 +101,7 @@ class StreamlitAIPanelTests(unittest.TestCase):
             app.run()
             self.assertEqual(
                 _element(app.selectbox, "Model checkpoint").value,
-                "R010 CNN (merged corpus · production)",
+                "R019 CNN (reviewed corpus · production)",
             )
             self.assertEqual(
                 app.session_state["ai_checkpoint_path"],

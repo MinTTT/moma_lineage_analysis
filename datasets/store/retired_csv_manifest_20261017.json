@@ -3,6 +3,16 @@
   "action": "retire legacy corpus CSVs after phase-2 sign-off",
   "signed_off_by": "user (message: sign-off, 2026-10-17)",
   "retired_at_utc": "2026-10-17T14:38:00Z",
+  "store_removal_note": {
+    "date": "2026-10-31",
+    "removed_lineage_ids": [
+      "verified_merged_20261016@v1",
+      "verified_merged_20261017@v1",
+      "verified_merged_20261029@v1"
+    ],
+    "reason": "user request: the merged corpora duplicate trajectory sets already held by the five batch corpora; the dataset versions were removed from the live store in R019",
+    "restore_note": "Their CSV hashes below remain historical pins, but export/restore commands only work against the pre-removal backup datasets/store/backups/lineage_20261030T181226.223866Z.sqlite3.gz (sha256 bad95fa07a659036cc70defb539a107f9ec7108c249d73e39adf727063e104f7)."
+  },
   "store": {
     "path": "datasets/store/lineage.sqlite3",
     "schema_version": 2,
@@ -132,6 +142,36 @@
       "rows": 373440,
       "trajectories": 1149,
       "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261017 --version 1 --output datasets/verified_merged_20261017/verified_training_data.csv"
+    },
+    {
+      "dataset_id": "verified_20261029",
+      "lineage_id": "verified_20261029@v1",
+      "content_ref": "verified_20261029@v1#f3c99c422a3d",
+      "kind": "batch",
+      "round_name": "R014",
+      "retired_path": "datasets/verified_20261029/verified_training_data.csv",
+      "bytes": 7490433,
+      "sha256": "95654104ae88a50a432064c5772c49e550a0fb6f6d969fbb2a74c0f72d8030e6",
+      "rows": 25728,
+      "trajectories": 48,
+      "retired_at_utc": "2026-10-28T17:48:53.426836Z",
+      "retirement_basis": "2026-10-17 user-approved SQLite-only storage policy; 2026-10-29 audit/train request; independent corpus data audit PASS before deletion",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261029 --version 1 --output datasets/verified_20261029/verified_training_data.csv"
+    },
+    {
+      "dataset_id": "verified_merged_20261029",
+      "lineage_id": "verified_merged_20261029@v1",
+      "content_ref": "verified_merged_20261029@v1#8decab478c80",
+      "kind": "merged",
+      "round_name": "R015",
+      "retired_path": "datasets/verified_merged_20261029/verified_training_data.csv",
+      "bytes": 121076935,
+      "sha256": "d8a288a1833858e95f5138d02f1473737d585c44d5cd7a6266b43c1fff9dd566",
+      "rows": 399168,
+      "trajectories": 1197,
+      "retired_at_utc": "2026-10-28T17:48:59.505292Z",
+      "retirement_basis": "2026-10-17 user-approved SQLite-only storage policy; 2026-10-29 audit/train request; independent corpus data audit PASS before deletion",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261029 --version 1 --output datasets/verified_merged_20261029/verified_training_data.csv"
     }
   ],
   "datasets_tree_bytes_after": "~29.4 MB (approximate; exact byte count omitted because it changes whenever docs or this record are edited)",
@@ -142,5 +182,21 @@
     "datasets_tree_bytes_after is re-measured when this record is touched; the post-retirement tree was ~29.4 MB (six CSVs removed, provenance JSONs and staged files kept).",
     "datasets_tree_bytes_after excludes transient SQLite -shm/-wal files and is re-measured whenever this record is refreshed; treat ~29.4 MB as approximate."
   ],
-  "datasets_tree_bytes_after_approximate": true
+  "datasets_tree_bytes_after_approximate": true,
+  "subsequent_retirements": [
+    {
+      "date": "2026-10-29",
+      "rounds": [
+        "R014",
+        "R015"
+      ],
+      "lineage_ids": [
+        "verified_20261029@v1",
+        "verified_merged_20261029@v1"
+      ],
+      "export_hashes_verified": true,
+      "independent_data_checks": 317,
+      "failures": 0
+    }
+  ]
 }

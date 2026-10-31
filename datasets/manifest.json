@@ -138,7 +138,12 @@
       "retired": true,
       "retired_in_round": "R013",
       "retired_at": "2026-10-17",
-      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261016 --version 1 --output datasets/verified_merged_20261016/verified_training_data.csv"
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261016 --version 1 --output datasets/verified_merged_20261016/verified_training_data.csv",
+      "store_removed": {
+        "date": "2026-10-31",
+        "reason": "user request: merged corpus duplicates trajectory sets already held by the five batch corpora; version removed from datasets/store/lineage.sqlite3 (observations and trajectories unchanged; pre-removal backup lineage_20261030T181226.223866Z.sqlite3.gz retains it)",
+        "removed_revision": 562
+      }
     },
     {
       "id": "verified_20261017",
@@ -218,21 +223,103 @@
       "retired": true,
       "retired_in_round": "R013",
       "retired_at": "2026-10-17",
-      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261017 --version 1 --output datasets/verified_merged_20261017/verified_training_data.csv"
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261017 --version 1 --output datasets/verified_merged_20261017/verified_training_data.csv",
+      "store_removed": {
+        "date": "2026-10-31",
+        "reason": "user request: merged corpus duplicates trajectory sets already held by the five batch corpora; version removed from datasets/store/lineage.sqlite3 (observations and trajectories unchanged; pre-removal backup lineage_20261030T181226.223866Z.sqlite3.gz retains it)",
+        "removed_revision": 562
+      }
+    },
+    {
+      "id": "verified_20261029",
+      "path": "verified_20261029/verified_training_data.csv",
+      "role": "batch corpus (round R014) 2026-10-29; SQLite training lineage",
+      "kind": "batch",
+      "round": "R014",
+      "lineage_id": "verified_20261029@v1",
+      "canonical_hash": "f3c99c422a3d5c668a40e1c6e3c36982067766581fd4e4203fc81d9aecdf60e2",
+      "sha256": "95654104ae88a50a432064c5772c49e550a0fb6f6d969fbb2a74c0f72d8030e6",
+      "rows": 25728,
+      "trajectories": 48,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "user_attested_2026-10-29",
+      "construction": "Current effective-label staging of 48 raw exports; 8 reused keys date-prefixed; no R004 exclusions",
+      "provenance_files": [
+        "verified_20261029/dataset_manifest.json",
+        "verified_20261029/qc_report.json",
+        "verified_20261029/rename_map.json",
+        "verified_20261029/staging_report.json"
+      ],
+      "trained_models": [],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R014, method 0.8.0)",
+      "retired": true,
+      "retired_in_round": "R014",
+      "retired_at": "2026-10-29",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_20261029 --version 1 --output datasets/verified_20261029/verified_training_data.csv"
+    },
+    {
+      "id": "verified_merged_20261029",
+      "path": "verified_merged_20261029/verified_training_data.csv",
+      "role": "merged corpus (round R015) 2026-10-29; SQLite training lineage",
+      "kind": "merged",
+      "round": "R015",
+      "lineage_id": "verified_merged_20261029@v1",
+      "canonical_hash": "8decab478c8037d93d412215fd338f1f8f12626b9979d897de9f112537549561",
+      "sha256": "d8a288a1833858e95f5138d02f1473737d585c44d5cd7a6266b43c1fff9dd566",
+      "rows": 399168,
+      "trajectories": 1197,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "user_attested_2026-10-29",
+      "construction": "Frozen verified_merged_20261017@v1 plus verified_20261029@v1, with R004 exclusion-run filter on the incoming batch (no drops)",
+      "provenance_files": [
+        "verified_merged_20261029/merge_manifest.json"
+      ],
+      "trained_models": [
+        "runs/merged_20261029/cnn/",
+        "runs/merged_20261029/resnet/",
+        "runs/merged_20261029/lstm/"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (round R015, method 0.8.0)",
+      "retired": true,
+      "retired_in_round": "R015",
+      "retired_at": "2026-10-29",
+      "restore_command": "python scripts/dataset_store.py export --dataset verified_merged_20261029 --version 1 --output datasets/verified_merged_20261029/verified_training_data.csv",
+      "store_removed": {
+        "date": "2026-10-31",
+        "reason": "user request: merged corpus duplicates trajectory sets already held by the five batch corpora; version removed from datasets/store/lineage.sqlite3 (observations and trajectories unchanged; pre-removal backup lineage_20261030T181226.223866Z.sqlite3.gz retains it)",
+        "removed_revision": 562
+      }
     }
   ],
   "dataset_store": {
     "path": "store/lineage.sqlite3",
     "schema_version": 2,
-    "verification": "scripts/dataset_store.py verify -> PASS (counts, canonical hashes, legacy CSV sha256, byte-identical exports, backup restore, rebuild determinism); independent audits 2026-10-17 PASS",
+    "verification": "2026-10-31: scripts/dataset_store.py verify PASS (ten versions: five WORKING reviewed originals + five database-native finalized versions; 387,217 observations / 1,155 trajectories; exports byte-identical to the pinned hashes for the retained corpora). The three verified_merged_* dataset versions were removed at the user's request (review revision 562) after proving every trajectory remains in a batch version; pre-removal backup lineage_20261030T181226.223866Z.sqlite3.gz. See runs/store_cleanup_20261031/ and runs/reviewed_20261031/.",
     "design_doc": "../docs/PLAN_DATASET_STORE.md",
-    "training_lineage": "verified_merged_20261017@v1",
-    "note": "Frozen corpora are stored once here (375,348 observations / 1,152 trajectories); each dataset version's export is byte-identical to its pinned CSV. The six legacy corpus CSVs were retired on 2026-10-17 (R013) and are restorable with each entry's restore_command; verification reports legacy_csv_state=retired and still checks the pinned export sha256.",
+    "training_lineage": "reviewed_20261031_verified_20260916_no_longruns@v1 + reviewed_20261031_verified_20261013@v1 + reviewed_20261031_verified_20261016@v1 + reviewed_20261031_verified_20261017@v1 + reviewed_20261031_verified_20261029@v1 (five-version composition, 385,815 rows / 1,152 trajectories)",
+    "note": "Ten versions: five reviewed working originals (frozen=0, original pins in review_version_state) and five review-finalized training-ready versions (frozen=1, R004 membership filter, database-native export hash). The three verified_merged_* dataset versions were removed from the live store on 2026-10-31 at the user's request because their trajectory sets duplicate the five batch corpora; their entries above keep the stored CSV hashes with store_removed markers. The older eight-version / 401,076-observation totals are historical (pre-review).",
     "phase": 3,
     "retirement_manifest": "store/retired_csv_manifest_20261017.json"
   },
   "notes": [
     "The R004 corpus is a frozen trainset: the upstream R002 corpus and raw curated exports that would be needed to REBUILD it from scratch are not part of this package (see the methods contract for the full provenance chain).",
-    "Train new models from the dataset store with: moma-trajectory-cleaning train --dataset-lineage verified_merged_20261017@v1 --store datasets/store/lineage.sqlite3 --require-human-verified --source-column source_dataset --output-dir <run_dir>. The legacy --input path requires the retired CSV to be restored first (see retired_csv_manifest_20261017.json)."
+    "Train from SQLite: moma-trajectory-cleaning train (repeat --dataset-lineage for each reviewed_20261031_* lineage id) --store datasets/store/lineage.sqlite3 --require-human-verified --source-column source_dataset --output-dir <run_dir>; the five-version composition is the R019 corpus.",
+    "R019/R020 deployment (2026-10-31): the R019 CNN was trained on the five reviewed_20261031_* lineages (385,815 rows / 1,152 trajectories, split 806/173/173) and promoted to production by user decision in R020. Production checkpoint: models/trajectory_cleaning_run/best_model.pt, sha256 816a8b392ec206dca578a093c6cbc2fc9ec5ba12480d6aca7c8b08349796af99. Run artifacts: runs/reviewed_20261031/. Previous R010 CNN and its archived promotion manifest: models/trajectory_cleaning_run/promotion_backups/20261030T184217.243155Z/."
   ]
 }

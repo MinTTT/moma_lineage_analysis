@@ -280,6 +280,19 @@ def _next_version(connection: sqlite3.Connection, dataset_id: str) -> int:
     return int(row or 0) + 1
 
 
+def assert_import_allowed(connection: sqlite3.Connection) -> None:
+    """Fence historical CSV ingestion after explicit training-store curation."""
+    exists = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='review_version_state'"
+    ).fetchone()
+    if exists and connection.execute("SELECT 1 FROM review_version_state LIMIT 1").fetchone():
+        raise ValueError(
+            "This store has reviewed working data. Historical CSV build/import is disabled "
+            "to prevent restoring permanently deleted trajectories; use the training-review "
+            "app to finalize current data, or build a separate historical store."
+        )
+
+
 def import_corpus(
     connection: sqlite3.Connection,
     *,
@@ -295,6 +308,9 @@ def import_corpus(
 ) -> dict[str, Any]:
     """Import one frozen corpus CSV as a new (or existing) dataset version."""
 
+    # An explicitly curated working store must not silently resurrect deleted
+    # trajectories from historical corpus CSVs during a maintenance rebuild.
+    assert_import_allowed(connection)
     csv_path = csv_path.resolve()
     legacy_sha = sha256_file(csv_path)
     # Keep provenance/identifier columns as text: hashes and keys that look
@@ -646,9 +662,44 @@ def verify_store(
     if export_dir is not None:
         export_dir.mkdir(parents=True, exist_ok=True)
 
+    dirty_version_ids: set[int] = set()
+    review_table = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='review_version_state'"
+    ).fetchone()
+    if review_table:
+        dirty_version_ids = {int(r[0]) for r in connection.execute("SELECT version_id FROM review_version_state")}
     for row in versions:
         version_id = int(row["version_id"])
         lineage_id = version_lineage_id(row["dataset_id"], row["version"])
+        if version_id in dirty_version_ids:
+            state = connection.execute("SELECT frozen FROM dataset_version WHERE version_id=?", (version_id,)).fetchone()
+            if state and not int(state["frozen"]):
+                frame = export_version(connection, version_id) if int(row["rows"]) else pd.DataFrame(columns=OUTPUT_COLUMNS)
+                digest = hashlib.sha256()
+                members = connection.execute(
+                    "SELECT t.trajectory_key,t.content_hash,m.ordinal FROM dataset_member m JOIN trajectory t ON t.trajectory_id=m.trajectory_id WHERE m.version_id=? ORDER BY t.trajectory_key", (version_id,)).fetchall()
+                for member in members:
+                    observed = frame.loc[frame["trajectory_key"].eq(member["trajectory_key"])]
+                    actual_trajectory_hash = trajectory_content_hash(
+                        (int(r.fov_cell_index), float(r.time_h), float(r.spine_length), bool(r.division_point), bool(r.excluded_point))
+                        for r in observed.itertuples(index=False))
+                    if actual_trajectory_hash != member["content_hash"]:
+                        failures.append(f"working trajectory hash mismatch: {member['trajectory_key']}")
+                    digest.update(f"{member['trajectory_key']}\t{actual_trajectory_hash}\n".encode())
+                actual = (len(frame), frame["trajectory_key"].nunique(), int(frame["division_point"].sum()), int(frame["excluded_point"].sum()), int((frame["division_point"] & frame["excluded_point"]).sum()) if len(frame) else 0)
+                expected = tuple(int(row[k]) for k in ("rows","trajectories","division_points","excluded_points","overlap_rows"))
+                ordinals = sorted(int(m["ordinal"]) for m in members)
+                ordered = not ordinals or ordinals == list(range(ordinals[0], ordinals[0]+len(ordinals)))
+                ok = actual == expected and digest.hexdigest() == row["canonical_hash"] and ordered
+                if not ok:
+                    failures.append(f"working version hash/count/order mismatch: {lineage_id}")
+                checks.append({"check": "dataset_version", "version": lineage_id,
+                    "status": "WORKING" if ok else "FAIL", "legacy_csv_state": "invalidated_by_review",
+                    "canonical_hash_matches_stored": digest.hexdigest() == row["canonical_hash"],
+                    "counts_match": actual == expected, "detail": "Working data verified; finalize a new lineage before training."})
+                if require_legacy_csv:
+                    failures.append(f"working reviewed lineage is not a historical CSV: {lineage_id}")
+                continue
         frame = export_version(connection, version_id)
 
         recalculated = hashlib.sha256()
@@ -676,7 +727,36 @@ def verify_store(
         legacy_file_sha = (
             sha256_file(repo_root / legacy_path) if legacy_exists else None
         )
-        if legacy_exists:
+        native_review = False
+        if not legacy_path and legacy_sha:
+            provenance = connection.execute(
+                "SELECT 1 FROM ingest_provenance WHERE version_id=? AND role='source_lineage'",
+                (version_id,),
+            ).fetchone()
+            kind = connection.execute("SELECT kind FROM dataset WHERE dataset_id=?", (row["dataset_id"],)).fetchone()
+            events_exist = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='review_event'").fetchone()
+            event_ok = False
+            if events_exist:
+                events = connection.execute(
+                    "SELECT payload_json FROM review_event WHERE event_type='finalize' AND lineage_id=?", (lineage_id,)).fetchall()
+                for event in events:
+                    try:
+                        metadata = json.loads(event["payload_json"])
+                        event_ok = (metadata.get("version_id") == version_id
+                            and metadata.get("canonical_hash") == row["canonical_hash"]
+                            and metadata.get("legacy_csv_sha256") == legacy_sha)
+                    except (ValueError, TypeError, AttributeError):
+                        event_ok = False
+                    if event_ok:
+                        break
+            native_review = bool(provenance and kind and kind["kind"] == "review_finalized" and event_ok)
+        if native_review:
+            # No legacy CSV ever existed for app-finalized data. Its byte-exact
+            # export hash is pinned in the database and independently recomputed.
+            actual_export_sha = hashlib.sha256(frame.to_csv(index=False).encode("utf-8")).hexdigest()
+            legacy_csv_ok = actual_export_sha == legacy_sha
+            legacy_csv_state = "database_native"
+        elif legacy_exists:
             legacy_csv_ok = legacy_file_sha == legacy_sha
             legacy_csv_state = "present"
         elif require_legacy_csv:

@@ -17,10 +17,15 @@ src/moma_lineage_analysis/
 ├── paths.py                        # package-anchored model directory
 ├── trajectory_cleaning/            # PyTorch sequence models + Streamlit AI API
 │   └── cli.py                      # `moma-trajectory-cleaning` train/predict CLI
-└── models/trajectory_cleaning_run/ # released checkpoints (R001/R002/R003 + promoted R010 CNN)
+├── trainset_review/                # `moma-trainset-review` training-data review app
+│   ├── cli.py                      # console launcher
+│   ├── streamlit_app.py            # review UI
+│   └── store.py                    # guarded review mutations / SQLite backend
+└── models/trajectory_cleaning_run/ # released checkpoints (R001/R002/R003 + promoted R019 CNN)
 datasets/                           # frozen verified training corpora (see datasets/README.md)
 tests/                              # unit + smoke + AppTest UI suites (incl. data fixture)
-docs/                               # METHODS_* contracts
+docs/                               # METHODS_* contracts + train-set review guide
+pyproject.toml                      # entry points: moma-lineage, moma-trajectory-cleaning, moma-trainset-review
 ```
 
 ## Install (editable)
@@ -236,6 +241,54 @@ To rebuild statistics downstream, filter `~excluded_point`, split by
 `trajectory_key`. These files are also the input format for the training-data
 pipeline (see `scripts/qc_raw_train_data.py` and `AGENTS.md` workflow A).
 
+## Review the training dataset
+
+A second, independent Streamlit app (`moma-trainset-review`) reviews the local
+SQLite training store. It has two tabs, **Review trajectories** and **Evaluate
+dataset**; the review plot uses the same shared style as the main app. Label
+edits autosave directly into SQLite (including table checkboxes) with per-edit
+backups and stale-session protection, and whole trajectories can be permanently
+deleted with one click below the plot. There is no dataset CSV/export tab or
+download. When labels are ready for training, the sidebar creates a frozen
+training-ready version. The production default is the R019 CNN; the R015
+CNN trained on the expanded corpus is selectable but not promoted.
+
+Click the red **Remove trajectory from database** button directly below the
+plot to delete the displayed trajectory immediately. No confirmation field or
+dialog is required. The app saves the deletion and advances to the next
+available trajectory; pre-delete backups and stale-session protection remain.
+
+Use the conda environment (the launcher is installed there but its Scripts
+directory is not on PATH):
+
+```powershell
+$py = 'G:\miniconda3\envs\Moma_cellpose\python.exe'
+& $py -m moma_lineage_analysis.trainset_review
+# or the installed launcher:
+& 'G:\miniconda3\envs\Moma_cellpose\Scripts\moma-trainset-review.exe' `
+    --server.address 127.0.0.1 --server.port 8502
+```
+
+The default database is `datasets/store/lineage.sqlite3`; set
+`MOMA_TRAINSET_STORE` or enter another existing database in the sidebar. Opening
+and browsing are read-only. Label edits are global across versions that share
+the trajectory; permanent deletion removes observations/memberships and has no
+in-app restore. Use the **Trajectory position** slider or **Trajectory number**
+input above the plot to jump in the filtered queue; both stay synchronized with
+the dropdown and arrows. Every dataset action shows its shortcut in the button:
+`D` add division, `M` remove division, `E` exclude, `R` restore, `C` clear, `F`
+resolve, `U` undo, `K` reviewed, `Delete` remove trajectory, `A` apply predictions
+and `T` make training-ready. `P` previews and `V` evaluates; letters accept either
+case. Text fields, sliders, comboboxes, tables and dialogs keep their own keys;
+hidden or disabled actions never fire. Training still requires a
+frozen training-ready version: tick **These labels are final for training** and
+click **Make training-ready** in the sidebar **Training version** section. It
+creates a new `reviewed_<timestamp>@v1` version stored in SQLite; it is not a
+file export. Training refuses working data.
+
+Full workflow, safety rules and caveats:
+[docs/TRAINSET_REVIEW.md](docs/TRAINSET_REVIEW.md).
+
 ## Tests
 
 ```powershell
@@ -245,31 +298,43 @@ python tests\smoke_min_spine_length_filter.py
 
 ## Train a trajectory-cleaning model
 
-The current retraining corpus is the merged 4-source corpus, stored as SQLite
-dataset lineage `verified_merged_20261017@v1` (373,440 rows / 1,149
-trajectories; provenance:
-`datasets/verified_merged_20261017/merge_manifest.json`). The frozen R004 corpus
-(`verified_20260916_no_longruns@v1`) is the historical production trainset; all
-corpora are stored once in `datasets/store/lineage.sqlite3` and catalogued in
-`datasets/manifest.json`. Training reads the store directly and records the
-dataset lineage IDs it used. The legacy corpus CSVs were retired in phase 3
-(2026-10-17) and are restorable byte-identically from the store:
+The current retraining corpus (round R019, 2026-10-31) is the composition of the
+five reviewed training-ready lineages `reviewed_20261031_*`
+(385,815 rows / 1,152 trajectories / eight sources), created after the user
+reviewed the five batch corpora and removed the three duplicate
+`verified_merged_*` dataset versions from the store. The merged versions only
+re-listed trajectories already held by the batch versions; their removal changed
+no observation or trajectory. R019 retrains CNN, ResNet, and BiLSTM with the
+unchanged seed-42 configuration on a 806/173/173 split. The validation rule
+selects the CNN (mean F1 0.9012); descriptive same-row panels do not support a
+promotion claim at the time of retraining; the user then authorized promotion
+(R020, 2026-10-31), so the R019 CNN is now production. See
+`runs/reviewed_20261031/model_comparison.json`,
+`runs/reviewed_20261031/production_comparison.json` and the model report.
+All corpora are stored once in `datasets/store/lineage.sqlite3` and catalogued
+in `datasets/manifest.json`; training records the dataset lineage IDs it used.
+Corpus CSVs are retired after verification (six in phase 3 on 2026-10-17;
+R014/R015 on 2026-10-29) and the retained ones are restorable byte-identically
+from the store:
 `python scripts\dataset_store.py export --dataset <id> --version 1 --output <path>`
-(see `datasets/store/retired_csv_manifest_20261017.json`), after which the CSV
-path also works:
+(see `datasets/store/retired_csv_manifest_20261017.json`).
 
 ```powershell
 # Store-direct training (lineage ids recorded in metrics.json)
 moma-trajectory-cleaning train `
-  --dataset-lineage verified_merged_20261017@v1 `
+  --dataset-lineage reviewed_20261031_verified_20260916_no_longruns@v1 `
+  --dataset-lineage reviewed_20261031_verified_20261013@v1 `
+  --dataset-lineage reviewed_20261031_verified_20261016@v1 `
+  --dataset-lineage reviewed_20261031_verified_20261017@v1 `
+  --dataset-lineage reviewed_20261031_verified_20261029@v1 `
   --store datasets\store\lineage.sqlite3 `
   --require-human-verified --source-column source_dataset `
   --output-dir runs\my_run
 
-# Legacy CSV path (same frames; --dataset-manifest required with the gate)
+# Legacy CSV path after exporting a corpus (same frames; --dataset-manifest required)
 moma-trajectory-cleaning train `
-  --input datasets\verified_merged_20261017\verified_training_data.csv `
-  --dataset-manifest datasets\verified_merged_20261017\merge_manifest.json `
+  --input <exported_corpus.csv> `
+  --dataset-manifest <corpus_manifest.json> `
   --require-human-verified --source-column source_dataset `
   --output-dir runs\my_run
 
@@ -277,11 +342,13 @@ moma-trajectory-cleaning predict --input my_trajectories.csv `
   --checkpoint runs\my_run\best_model.pt --output predictions.csv
 ```
 
-The deployed production checkpoint is the **R010 CNN**
+The deployed production checkpoint is the **R019 CNN**
 (`src/moma_lineage_analysis/models/trajectory_cleaning_run/best_model.pt`,
-sha256 `6e7c5a5896c90bd0de2b068af087f2d9c942b2de94e8deb87e419fd005cb230b`,
-promoted 2026-10-17); the previous R008 CNN is backed up
-under `promotion_backups/20261017T124420.980675Z`.
+sha256 `816a8b392ec206dca578a093c6cbc2fc9ec5ba12480d6aca7c8b08349796af99`,
+promoted 2026-10-31 by user decision); the previous R010 CNN is backed up with
+its promotion manifest under `promotion_backups/20261030T184217.243155Z`.
+R015 remains a selectable non-production checkpoint; promotion of a new model
+requires a separate user decision.
 
 ## Model checkpoints
 
@@ -289,4 +356,5 @@ The app's AI panel resolves checkpoints from the package-anchored
 `models/trajectory_cleaning_run/` directory (see
 `moma_lineage_analysis.paths.PACKAGE_MODELS_RUN_DIR`); no working-directory
 dependence. Override the default checkpoint with the `MOMA_AI_MODEL_PATH`
-environment variable.
+environment variable. The `moma-trainset-review` app uses the same registry;
+selecting **R015 CNN** does not change the production default.

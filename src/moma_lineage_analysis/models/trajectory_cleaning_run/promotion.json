@@ -2,37 +2,37 @@
   "artifacts": {
     "best_model.pt": {
       "destination": "G:\\python_code\\moma_lineage_analysis\\src\\moma_lineage_analysis\\models\\trajectory_cleaning_run\\best_model.pt",
-      "destination_sha256": "6e7c5a5896c90bd0de2b068af087f2d9c942b2de94e8deb87e419fd005cb230b",
-      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\merged_20261017\\cnn\\best_model.pt",
-      "source_sha256": "6e7c5a5896c90bd0de2b068af087f2d9c942b2de94e8deb87e419fd005cb230b"
+      "destination_sha256": "816a8b392ec206dca578a093c6cbc2fc9ec5ba12480d6aca7c8b08349796af99",
+      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\reviewed_20261031\\cnn\\best_model.pt",
+      "source_sha256": "816a8b392ec206dca578a093c6cbc2fc9ec5ba12480d6aca7c8b08349796af99"
     },
     "history.csv": {
       "destination": "G:\\python_code\\moma_lineage_analysis\\src\\moma_lineage_analysis\\models\\trajectory_cleaning_run\\history.csv",
-      "destination_sha256": "86605fd5cb9f1f533650136f5d15deb4eacf07f25242f0313bbd757cdc36b9e9",
-      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\merged_20261017\\cnn\\history.csv",
-      "source_sha256": "86605fd5cb9f1f533650136f5d15deb4eacf07f25242f0313bbd757cdc36b9e9"
+      "destination_sha256": "ed01562dc852c9685f66eb09e7b33bf2c8e3ef8340193b4bb9fec361d9661874",
+      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\reviewed_20261031\\cnn\\history.csv",
+      "source_sha256": "ed01562dc852c9685f66eb09e7b33bf2c8e3ef8340193b4bb9fec361d9661874"
     },
     "metrics.json": {
       "destination": "G:\\python_code\\moma_lineage_analysis\\src\\moma_lineage_analysis\\models\\trajectory_cleaning_run\\metrics.json",
-      "destination_sha256": "fcaad8bb2697fa28ed5185ca9be7a01b62d18a7961ef3d51037661535130c7cb",
-      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\merged_20261017\\cnn\\metrics.json",
-      "source_sha256": "fcaad8bb2697fa28ed5185ca9be7a01b62d18a7961ef3d51037661535130c7cb"
+      "destination_sha256": "bdd1c390189bf66ace7ea43e02921bd4122ec31c9015d38c533f5fbdb30bc987",
+      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\reviewed_20261031\\cnn\\metrics.json",
+      "source_sha256": "bdd1c390189bf66ace7ea43e02921bd4122ec31c9015d38c533f5fbdb30bc987"
     },
     "splits.json": {
       "destination": "G:\\python_code\\moma_lineage_analysis\\src\\moma_lineage_analysis\\models\\trajectory_cleaning_run\\splits.json",
-      "destination_sha256": "5a59924659b6e48df51b38a2b77354efec170caadc3d0a673312afe322900644",
-      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\merged_20261017\\cnn\\splits.json",
-      "source_sha256": "5a59924659b6e48df51b38a2b77354efec170caadc3d0a673312afe322900644"
+      "destination_sha256": "5fb772fcf0ecb3624c4c652f13f6d759b161844893b410f609eaa7b8a7a5f8c1",
+      "source": "G:\\python_code\\moma_lineage_analysis\\runs\\reviewed_20261031\\cnn\\splits.json",
+      "source_sha256": "5fb772fcf0ecb3624c4c652f13f6d759b161844893b410f609eaa7b8a7a5f8c1"
     }
   },
-  "backup_path": "G:\\python_code\\moma_lineage_analysis\\src\\moma_lineage_analysis\\models\\trajectory_cleaning_run\\promotion_backups\\20261017T124420.980675Z",
+  "backup_path": "G:\\python_code\\moma_lineage_analysis\\src\\moma_lineage_analysis\\models\\trajectory_cleaning_run\\promotion_backups\\20261030T184217.243155Z",
   "common_split_manifest": {
-    "sha256": "5a59924659b6e48df51b38a2b77354efec170caadc3d0a673312afe322900644",
-    "source": "G:\\python_code\\moma_lineage_analysis\\runs\\merged_20261017\\cnn\\splits.json"
+    "sha256": "5fb772fcf0ecb3624c4c652f13f6d759b161844893b410f609eaa7b8a7a5f8c1",
+    "source": "G:\\python_code\\moma_lineage_analysis\\runs\\reviewed_20261031\\cnn\\splits.json"
   },
   "destination_dir": "G:\\python_code\\moma_lineage_analysis\\src\\moma_lineage_analysis\\models\\trajectory_cleaning_run",
-  "promoted_at_utc": "2026-10-17T12:44:20.980675Z",
-  "run_dir": "G:\\python_code\\moma_lineage_analysis\\runs\\merged_20261017",
+  "promoted_at_utc": "2026-10-30T18:42:17.243155Z",
+  "run_dir": "G:\\python_code\\moma_lineage_analysis\\runs\\reviewed_20261031",
   "schema_version": 1,
   "selected_model": "cnn",
   "selection": {
@@ -48,22 +48,22 @@
     "uses_test_metrics": false,
     "validation_scores": {
       "cnn": {
-        "division_event_f1": 0.9953392024857588,
-        "excluded_point_f1": 0.8019966722129783,
-        "mean_f1": 0.8986679373493686,
-        "minimum_validation_loss": 0.010487969610866421
+        "division_event_f1": 0.9969095803010667,
+        "excluded_point_f1": 0.8055009823182712,
+        "mean_f1": 0.9012052813096689,
+        "minimum_validation_loss": 0.008989728908365122
       },
       "lstm": {
-        "division_event_f1": 0.9946035699460357,
-        "excluded_point_f1": 0.7338842975206612,
-        "mean_f1": 0.8642439337333485,
-        "minimum_validation_loss": 0.016581574141445357
+        "division_event_f1": 0.9965115120103657,
+        "excluded_point_f1": 0.7725490196078432,
+        "mean_f1": 0.8845302658091044,
+        "minimum_validation_loss": 0.014665181937773261
       },
       "resnet": {
-        "division_event_f1": 0.9961654057415277,
-        "excluded_point_f1": 0.7896440129449838,
-        "mean_f1": 0.8929047093432557,
-        "minimum_validation_loss": 0.011521703599272431
+        "division_event_f1": 0.9964150567616014,
+        "excluded_point_f1": 0.7237354085603113,
+        "mean_f1": 0.8600752326609563,
+        "minimum_validation_loss": 0.015367943611058175
       }
     }
   }

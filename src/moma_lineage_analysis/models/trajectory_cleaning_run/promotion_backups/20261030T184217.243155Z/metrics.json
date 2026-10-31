@@ -1,0 +1,255 @@
+{
+  "thresholds": {
+    "division_point": 0.6800000071525574,
+    "excluded_point": 0.8899999856948853
+  },
+  "validation": {
+    "point": {
+      "division_point": {
+        "threshold": 0.6800000071525574,
+        "support": 4842,
+        "precision": 0.991973657131097,
+        "recall": 0.9954564229657167,
+        "f1": 0.9937119884547985,
+        "average_precision": 0.999792417394535
+      },
+      "excluded_point": {
+        "threshold": 0.8899999856948853,
+        "support": 314,
+        "precision": 0.8397212543554007,
+        "recall": 0.767515923566879,
+        "f1": 0.8019966722129783,
+        "average_precision": 0.8837236496566349
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 4805,
+      "false_positive": 29,
+      "false_negative": 16,
+      "precision": 0.9940008274720729,
+      "recall": 0.9966811864758349,
+      "f1": 0.9953392024857588,
+      "mean_absolute_error_frames": 0.0018730489073881373
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 1020,
+        "recall": 0.996078431372549
+      },
+      "division_recall_tail_quintile": {
+        "support": 964,
+        "recall": 0.9979253112033195
+      },
+      "last_division_event": {
+        "trajectories_with_division": 172,
+        "last_event_missed": 1,
+        "miss_rate": 0.005813953488372093
+      }
+    }
+  },
+  "test": {
+    "point": {
+      "division_point": {
+        "threshold": 0.6800000071525574,
+        "support": 4939,
+        "precision": 0.991539081385979,
+        "recall": 0.9965580076938652,
+        "f1": 0.9940422094314854,
+        "average_precision": 0.9998992914438005
+      },
+      "excluded_point": {
+        "threshold": 0.8899999856948853,
+        "support": 306,
+        "precision": 0.9044117647058824,
+        "recall": 0.803921568627451,
+        "f1": 0.8512110726643599,
+        "average_precision": 0.9229975153366456
+      }
+    },
+    "division_event": {
+      "tolerance_frames": 1,
+      "true_positive": 4902,
+      "false_positive": 31,
+      "false_negative": 11,
+      "precision": 0.9937157916075411,
+      "recall": 0.9977610421331162,
+      "f1": 0.9957343083485679,
+      "mean_absolute_error_frames": 0.002039983680130559
+    },
+    "position": {
+      "division_recall_head_quintile": {
+        "support": 1027,
+        "recall": 0.997078870496592
+      },
+      "division_recall_tail_quintile": {
+        "support": 988,
+        "recall": 0.9949392712550608
+      },
+      "last_division_event": {
+        "trajectories_with_division": 173,
+        "last_event_missed": 1,
+        "miss_rate": 0.005780346820809248
+      }
+    }
+  },
+  "training_data": {
+    "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_merged_20261017\\verified_training_data.csv",
+    "sha256": "7ecc9753cf02c0dfc020fd70f6b077f997799d46d4f3af3fd89d12a16eaee2bc",
+    "rows": 373440,
+    "trajectories": 1149,
+    "target_columns": [
+      "division_point",
+      "excluded_point"
+    ]
+  },
+  "split_summary": {
+    "train": {
+      "trajectories": 804,
+      "rows": 261377,
+      "division_points": 22689,
+      "excluded_points": 1304,
+      "trajectories_by_source": {
+        "baseline_0_10h": 334,
+        "baseline_0_8h": 13,
+        "curated_20261013": 24,
+        "curated_20261016": 33,
+        "curated_20261017": 11,
+        "rdm_gluc_toggle_20260905": 382,
+        "starvation_20251111": 7
+      }
+    },
+    "validation": {
+      "trajectories": 172,
+      "rows": 55866,
+      "division_points": 4842,
+      "excluded_points": 314,
+      "trajectories_by_source": {
+        "baseline_0_10h": 71,
+        "baseline_0_8h": 3,
+        "curated_20261013": 5,
+        "curated_20261016": 7,
+        "curated_20261017": 2,
+        "rdm_gluc_toggle_20260905": 82,
+        "starvation_20251111": 2
+      }
+    },
+    "test": {
+      "trajectories": 173,
+      "rows": 56197,
+      "division_points": 4939,
+      "excluded_points": 306,
+      "trajectories_by_source": {
+        "baseline_0_10h": 72,
+        "baseline_0_8h": 3,
+        "curated_20261013": 5,
+        "curated_20261016": 7,
+        "curated_20261017": 2,
+        "rdm_gluc_toggle_20260905": 82,
+        "starvation_20251111": 2
+      }
+    }
+  },
+  "dataset_manifest": {
+    "schema_version": "1.0-merge",
+    "generated_at_utc": "2026-10-17T11:55:55.442339+00:00",
+    "human_verified": true,
+    "verification_basis": "constituent_corpora_attested",
+    "canonical_target_columns": [
+      "division_point",
+      "excluded_point"
+    ],
+    "feature_columns": [
+      "time_h",
+      "spine_length"
+    ],
+    "merge_rule": "concatenate verified corpora; keys are pre-namespaced and unique",
+    "r004_filter": {
+      "rule": "drop trajectory when longest contiguous exclusion run >= 5 frames",
+      "applied_to": [
+        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261013\\verified_training_data.csv",
+        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\verified_training_data.csv",
+        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261017\\verified_training_data.csv"
+      ],
+      "dropped": {
+        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261013\\verified_training_data.csv": [
+          "curated_20261013::FOV_121_CH_7"
+        ],
+        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\verified_training_data.csv": [
+          "curated_20261016::FOV_53_CH_11"
+        ],
+        "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261017\\verified_training_data.csv": [
+          "curated_20261017::FOV_14_CH_14"
+        ]
+      }
+    },
+    "sources": [
+      {
+        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20260916\\verified_training_data_no_longruns.csv",
+        "sha256": "a2b3793d2138d806f5d5a85c3f51e15b9629953b4c0ef54b9490b74f99bc0092",
+        "rows": 312317,
+        "trajectories": 1053,
+        "r004_filter_applied": false,
+        "pre_filtered_violations": []
+      },
+      {
+        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261013\\verified_training_data.csv",
+        "sha256": "15721ab757e956fc5c8a79855f67ce5713cc5a619a1b88ed2a80404b4c2870b3",
+        "rows": 22890,
+        "trajectories": 35,
+        "r004_filter_applied": true,
+        "dropped_trajectories": [
+          "curated_20261013::FOV_121_CH_7"
+        ],
+        "retained_rows": 22236,
+        "retained_trajectories": 34
+      },
+      {
+        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261016\\verified_training_data.csv",
+        "sha256": "e4fced1a3958840954e334ac49acfdeeb0d6f4b2602a35760154e5f2ea13cf76",
+        "rows": 31384,
+        "trajectories": 48,
+        "r004_filter_applied": true,
+        "dropped_trajectories": [
+          "curated_20261016::FOV_53_CH_11"
+        ],
+        "retained_rows": 30730,
+        "retained_trajectories": 47
+      },
+      {
+        "path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_20261017\\verified_training_data.csv",
+        "sha256": "247da098e97d060c4c24696ef4ed78862a0ef3932b717492d21f1c8219d8ad67",
+        "rows": 8757,
+        "trajectories": 16,
+        "r004_filter_applied": true,
+        "dropped_trajectories": [
+          "curated_20261017::FOV_14_CH_14"
+        ],
+        "retained_rows": 8157,
+        "retained_trajectories": 15
+      }
+    ],
+    "summary": {
+      "rows": 373440,
+      "trajectories": 1149,
+      "division_points": 32470,
+      "excluded_points": 1924,
+      "division_and_excluded_overlap": 295,
+      "source_datasets": {
+        "baseline_0_10h": 477,
+        "baseline_0_8h": 19,
+        "curated_20261013": 34,
+        "curated_20261016": 47,
+        "curated_20261017": 15,
+        "rdm_gluc_toggle_20260905": 546,
+        "starvation_20251111": 11
+      }
+    },
+    "output": {
+      "training_csv": "datasets\\verified_merged_20261017\\verified_training_data.csv",
+      "training_csv_sha256": "7ecc9753cf02c0dfc020fd70f6b077f997799d46d4f3af3fd89d12a16eaee2bc"
+    },
+    "manifest_path": "G:\\python_code\\moma_lineage_analysis\\datasets\\verified_merged_20261017\\merge_manifest.json",
+    "manifest_sha256": "94a54d9169ac66e81dde8728222fa7b067078ef8cd302ffaae967c96c4df6b6d"
+  }
+}
