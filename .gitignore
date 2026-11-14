@@ -1,12 +1,106 @@
+# Editor / local history
 .vscode
 .idea
 .history
-runs/*
+
+# Python artifacts
+__pycache__/
 __pyache__
 /src/moma_lineage_analysis/__pycache__
 *.pyc
+*.egg-info/
+
+# Runs (existing rule) and tests
+runs/*
 /tests/data
+
+# Datasets not versioned (existing rules)
 /datasets/raw_train_data
 /datasets/store/backups
 /datasets/store/review_backups
 /datasets/verified_20261029
+
+# SQLite transient files
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal
+
+# ---------------------------------------------------------------------------
+# Server / machine-specific configuration and secrets -- never commit
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.env
+!.env.example
+.ssh/
+.netrc
+*.pem
+*.key
+*.ppk
+id_rsa*
+id_ed25519*
+known_hosts
+*secret*
+*credential*
+*.kubeconfig
+.streamlit/secrets.toml
+sftp.json
+*server*.json
+*server*.yaml
+*server*.yml
+*server*.toml
+*server*.ini
+*server*.cfg
+*server*.conf
+*server*.csv
+*server_config*
+config.local.*
+local_config.*
+*.local.json
+*.local.yaml
+*.local.yml
+*.local.toml
+
+# Editor / IDE state (may hold machine-specific paths and remote settings)
+.vscode/
+.idea/
+.history/
+
+# ---------------------------------------------------------------------------
+# Model weights / checkpoints -- too large for git; distribute separately
+# ---------------------------------------------------------------------------
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+*.hdf5
+*.keras
+*.tflite
+*.pb
+*.joblib
+*.bin
+*.pkl
+*.pickle
+checkpoints/
+**/models/*_epoch_*
+
+# Small deployed trajectory-cleaning checkpoints shipped with the package
+# (each < 2 MB; required by moma_lineage_analysis at runtime)
+!src/moma_lineage_analysis/models/**/*.pt
+
+# ---------------------------------------------------------------------------
+# Runs and tests -- not versioned
+# ---------------------------------------------------------------------------
+runs/
+**/runs/
+outputs/
+wandb/
+mlruns/
+lightning_logs/
+tests/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/

@@ -303,6 +303,29 @@ the merged trajectory sets are subsets of the five batch versions. The
 pre-removal database is archived under `store/backups/`; the manifest entries
 of the removed corpora carry `store_removed` markers.
 
+## Add a new curated batch to a reviewed store (admin)
+
+Once review data exists, `scripts/dataset_store.py build` refuses every CSV
+import, because a historical corpus could bring back trajectories you deleted.
+A genuinely new batch is added outside the UI after the usual audit, staging,
+attestation and `datasets/manifest.json` entry (AGENTS.md Workflow A):
+
+```powershell
+python scripts\import_batch.py --dataset-dir verified_20261109 `
+  --expected-revision 567 `
+  --reason "user: load new curated raw exports"
+```
+
+The backend (`trainset_review.store.import_batch`) accepts only a new dataset id
+and a key namespace not yet used in the store, and refuses existing or
+permanently deleted keys and trajectories whose measurements match a stored one.
+It is global-revision CAS-guarded, takes an online snapshot, records an
+`import_batch` audit event and creates one frozen, human-verified version; it
+never changes existing trajectories or labels. R021 used it on 2026-11-09 for
+`verified_20261109@v1` (15 trajectories, revision 568). The new lineage appears
+in the app's dataset-version list; reviewing it there turns it into working
+data like any other version.
+
 ## What is and is not preserved
 
 - Before a mutation, the original version pins / counts / frozen flag /

@@ -56,6 +56,7 @@ CORPUS_METADATA = {
     "verified_merged_20261017": ("merged", "R010"),
     "verified_20261029": ("batch", "R014"),
     "verified_merged_20261029": ("merged", "R015"),
+    "verified_20261109": ("batch", "R021"),
 }
 
 

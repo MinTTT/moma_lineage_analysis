@@ -311,6 +311,15 @@ promotion claim at the time of retraining; the user then authorized promotion
 (R020, 2026-10-31), so the R019 CNN is now production. See
 `runs/reviewed_20261031/model_comparison.json`,
 `runs/reviewed_20261031/production_comparison.json` and the model report.
+Round R021 (2026-11-09) added a new curated batch, `verified_20261109@v1`
+(9,450 rows / 15 trajectories), to the reviewed store with
+`scripts/import_batch.py`. R022 (2026-11-10) trained 21 exclusion-focused CNN
+runs using this batch and the five reviewed lineages, omitting two redundant
+signal twins from the experimental split. Validation-AP checkpoint selection
+was strongest; the fixed seed42 improves clean-test exclusion AP/F1/recall, but
+seed43 loses recall, so production remains R019. See the
+[R022 report](runs/exclusion_20261110/REPORT.md). The six-lineage composition
+before deduplication is 395,265 rows / 1,167 trajectories.
 All corpora are stored once in `datasets/store/lineage.sqlite3` and catalogued
 in `datasets/manifest.json`; training records the dataset lineage IDs it used.
 Corpus CSVs are retired after verification (six in phase 3 on 2026-10-17;
@@ -320,7 +329,8 @@ from the store:
 (see `datasets/store/retired_csv_manifest_20261017.json`).
 
 ```powershell
-# Store-direct training (lineage ids recorded in metrics.json)
+# Store-direct training (lineage ids recorded in metrics.json); this is the R019
+# corpus - add `--dataset-lineage verified_20261109@v1` for the R021 batch
 moma-trajectory-cleaning train `
   --dataset-lineage reviewed_20261031_verified_20260916_no_longruns@v1 `
   --dataset-lineage reviewed_20261031_verified_20261013@v1 `

@@ -305,15 +305,49 @@
         "reason": "user request: merged corpus duplicates trajectory sets already held by the five batch corpora; version removed from datasets/store/lineage.sqlite3 (observations and trajectories unchanged; pre-removal backup lineage_20261030T181226.223866Z.sqlite3.gz retains it)",
         "removed_revision": 562
       }
+    },
+    {
+      "id": "verified_20261109",
+      "path": "verified_20261109/verified_training_data.csv",
+      "role": "batch corpus (round R021) 2026-11-09; SQLite training lineage",
+      "kind": "batch",
+      "round": "R021",
+      "lineage_id": "verified_20261109@v1",
+      "canonical_hash": "a8d2aac6acf30bc93e4947f529be94341a18aa7ec5e8a40b6c35bbde45dd3428",
+      "sha256": "e9ac78093bb53e7d8b0b65df85ca0d8703b0fe0c72f5df9aa111a7dd0aa89902",
+      "rows": 9450,
+      "trajectories": 15,
+      "targets": [
+        "division_point",
+        "excluded_point"
+      ],
+      "features": [
+        "time_h",
+        "spine_length"
+      ],
+      "human_verified": true,
+      "verification_basis": "user_attested_2026-11-09",
+      "construction": "Current effective-label staging of 15 raw exports (928 divisions after 1 coalesced_previous, 36 exclusions, overlap 0); 4 reused channel identifiers date-prefixed 20261109_ (no measurement-identical twin with any stored or deleted trajectory); no R004 exclusion-run drops; added to the reviewed store with scripts/import_batch.py (new-batch path, review event import_batch)",
+      "provenance_files": [
+        "verified_20261109/dataset_manifest.json",
+        "verified_20261109/qc_report.json",
+        "verified_20261109/rename_map.json",
+        "verified_20261109/staging_report.json"
+      ],
+      "trained_models": [
+        "runs/exclusion_20261110/training/ (R022 CNN study: seven arms x three seeds; two redundant historical signal twins omitted from experimental composition; no promotion)"
+      ],
+      "methods_contract": "docs/METHODS_TRAJECTORY_CLEANING_MODEL.md (batch R021 method 0.12.0; training study R022 method 0.13.0)"
     }
   ],
   "dataset_store": {
     "path": "store/lineage.sqlite3",
     "schema_version": 2,
-    "verification": "2026-10-31: scripts/dataset_store.py verify PASS (ten versions: five WORKING reviewed originals + five database-native finalized versions; 387,217 observations / 1,155 trajectories; exports byte-identical to the pinned hashes for the retained corpora). The three verified_merged_* dataset versions were removed at the user's request (review revision 562) after proving every trajectory remains in a batch version; pre-removal backup lineage_20261030T181226.223866Z.sqlite3.gz. See runs/store_cleanup_20261031/ and runs/reviewed_20261031/.",
+    "verification": "2026-11-09 (R021): scripts/dataset_store.py verify PASS after the new-batch import at review revision 568 (eleven versions: five WORKING reviewed originals + five database-native finalized versions + verified_20261109@v1 with legacy CSV present and byte-identical export; 396,667 observations / 1,170 trajectories); post-ingest backup store/backups/lineage_20261109T030631.059735Z.sqlite3.gz (sha256 ea86749b21f65a5194e412b3b56ae22e9c253f3c5aea3b9df487350190a8b3dd); see runs/raw_batch_20261109/. Previously 2026-10-31: scripts/dataset_store.py verify PASS (ten versions: five WORKING reviewed originals + five database-native finalized versions; 387,217 observations / 1,155 trajectories; exports byte-identical to the pinned hashes for the retained corpora). The three verified_merged_* dataset versions were removed at the user's request (review revision 562) after proving every trajectory remains in a batch version; pre-removal backup lineage_20261030T181226.223866Z.sqlite3.gz. See runs/store_cleanup_20261031/ and runs/reviewed_20261031/.",
     "design_doc": "../docs/PLAN_DATASET_STORE.md",
     "training_lineage": "reviewed_20261031_verified_20260916_no_longruns@v1 + reviewed_20261031_verified_20261013@v1 + reviewed_20261031_verified_20261016@v1 + reviewed_20261031_verified_20261017@v1 + reviewed_20261031_verified_20261029@v1 (five-version composition, 385,815 rows / 1,152 trajectories)",
-    "note": "Ten versions: five reviewed working originals (frozen=0, original pins in review_version_state) and five review-finalized training-ready versions (frozen=1, R004 membership filter, database-native export hash). The three verified_merged_* dataset versions were removed from the live store on 2026-10-31 at the user's request because their trajectory sets duplicate the five batch corpora; their entries above keep the stored CSV hashes with store_removed markers. The older eight-version / 401,076-observation totals are historical (pre-review).",
+    "note": "R021 (2026-11-09) added the frozen batch verified_20261109@v1 (15 trajectories / 9,450 rows) with scripts/import_batch.py; historical CSV build/import stays refused on this reviewed store. On 2026-11-09 the user moved store/backups/ and store/review_backups/ to the Recycle Bin, so earlier backups named below no longer exist at their recorded paths. Before R021: Ten versions: five reviewed working originals (frozen=0, original pins in review_version_state) and five review-finalized training-ready versions (frozen=1, R004 membership filter, database-native export hash). The three verified_merged_* dataset versions were removed from the live store on 2026-10-31 at the user's request because their trajectory sets duplicate the five batch corpora; their entries above keep the stored CSV hashes with store_removed markers. The older eight-version / 401,076-observation totals are historical (pre-review).",
+    "next_training_lineage": "the five reviewed_20261031_* lineages + verified_20261109@v1 (395,265 rows / 1,167 trajectories before deduplication); R022 trained 21 CNN runs on a deduplicated experimental subset (394,401 rows / 1,165 trajectories / 34,511 divisions / 1,773 exclusions, fixed split817/174/174), stored under runs/exclusion_20261110/; validation selects exclusion-AP checkpoint selection; production remains R019",
     "phase": 3,
     "retirement_manifest": "store/retired_csv_manifest_20261017.json"
   },

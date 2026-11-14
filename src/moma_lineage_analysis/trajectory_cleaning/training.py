@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass
+import json
+from numbers import Integral
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -22,6 +24,7 @@ from .data import (
     collate_trajectories,
 )
 from .models import ModelConfig, build_model
+from .sampling import ExclusionWindowDataset, collate_windows
 
 
 @dataclass(frozen=True)
@@ -36,6 +39,11 @@ class TrainConfig:
     seed: int = 42
     device: str = "auto"
     division_tolerance_frames: int = 1
+    exclusion_loss_weight: float = 1.0
+    checkpoint_metric: str = "validation_loss"
+    sampling: str = "trajectory"
+    window_core: int = 65
+    window_positive_fraction: float = 0.5
 
     def __post_init__(self) -> None:
         if self.epochs <= 0 or self.batch_size <= 0:
@@ -46,6 +54,21 @@ class TrainConfig:
             raise ValueError("Invalid focal or positive-weight setting")
         if self.patience <= 0 or self.division_tolerance_frames < 0:
             raise ValueError("patience must be positive and tolerance nonnegative")
+        if not np.isfinite(self.exclusion_loss_weight) or self.exclusion_loss_weight <= 0:
+            raise ValueError("exclusion_loss_weight must be finite and positive")
+        if self.checkpoint_metric not in {"validation_loss", "exclusion_ap"}:
+            raise ValueError("checkpoint_metric must be validation_loss or exclusion_ap")
+        if self.sampling not in {"trajectory", "exclusion_windows"}:
+            raise ValueError("sampling must be trajectory or exclusion_windows")
+        if (
+            isinstance(self.window_core, bool)
+            or not isinstance(self.window_core, Integral)
+            or self.window_core <= 0
+            or self.window_core % 2 != 1
+        ):
+            raise ValueError("window_core must be a positive odd integer")
+        if not np.isfinite(self.window_positive_fraction) or not 0 <= self.window_positive_fraction <= 1:
+            raise ValueError("window_positive_fraction must be finite and in [0, 1]")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -70,10 +93,18 @@ def set_reproducible_seed(seed: int) -> None:
 class MaskedFocalBCEWithLogitsLoss(nn.Module):
     """Independent binary losses for division and exclusion, ignoring padding."""
 
-    def __init__(self, positive_weight: torch.Tensor, gamma: float = 0.0) -> None:
+    def __init__(
+        self,
+        positive_weight: torch.Tensor,
+        gamma: float = 0.0,
+        exclusion_loss_weight: float = 1.0,
+    ) -> None:
         super().__init__()
         self.register_buffer("positive_weight", positive_weight.to(dtype=torch.float32))
         self.gamma = float(gamma)
+        if not np.isfinite(exclusion_loss_weight) or exclusion_loss_weight <= 0:
+            raise ValueError("exclusion_loss_weight must be finite and positive")
+        self.exclusion_loss_weight = float(exclusion_loss_weight)
 
     def forward(
         self,
@@ -95,6 +126,11 @@ class MaskedFocalBCEWithLogitsLoss(nn.Module):
             probability = torch.sigmoid(logits)
             target_probability = targets * probability + (1 - targets) * (1 - probability)
             losses = losses * (1 - target_probability).pow(self.gamma)
+        # Task weight scales BOTH exclusion classes. Retain the existing valid-
+        # entry denominator; dividing by the sum of weights would cancel it.
+        # Skip multiplication at 1.0 to preserve the legacy loss exactly.
+        if self.exclusion_loss_weight != 1.0:
+            losses = losses * losses.new_tensor([1.0, self.exclusion_loss_weight])
         valid = mask.unsqueeze(-1).expand_as(losses)
         return losses.masked_select(valid).mean()
 
@@ -145,15 +181,16 @@ def _run_epoch(
             features = batch["features"].to(device)
             targets = batch["targets"].to(device)
             mask = batch["mask"].to(device)
+            loss_mask = batch["loss_mask"].to(device) if "loss_mask" in batch else mask
             if training:
                 optimizer.zero_grad(set_to_none=True)
             logits = model(features, mask)
-            loss = loss_function(logits, targets, mask)
+            loss = loss_function(logits, targets, loss_mask)
             if training:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
                 optimizer.step()
-            point_count = int(mask.sum().item())
+            point_count = int(loss_mask.sum().item())
             total_loss += float(loss.detach().cpu()) * point_count
             total_points += point_count
     return total_loss / max(total_points, 1)
@@ -445,19 +482,44 @@ def train_model(
     validation_dataset: TrajectoryDataset,
     *,
     config: TrainConfig | None = None,
-) -> tuple[nn.Module, list[dict[str, float]], np.ndarray]:
-    """Train with early stopping and calibrate one threshold per output."""
+) -> tuple[nn.Module, list[dict[str, Any]], np.ndarray]:
+    """Train with validation-only checkpoint selection and threshold calibration.
+
+    Defaults retain full trajectories and the legacy minimum-loss path. Window
+    sampling changes row exposure and the effective objective, while retaining
+    batch size and optimizer steps per epoch. Validation always uses full rows.
+    """
 
     config = config or TrainConfig()
     set_reproducible_seed(config.seed)
     device = resolve_device(config.device)
     model = model.to(device)
-    train_loader = _loader(
-        train_dataset,
-        batch_size=config.batch_size,
-        shuffle=True,
-        seed=config.seed,
-    )
+    if config.checkpoint_metric == "exclusion_ap" and not any(
+        bool((record.targets[:, 1] >= 0.5).any()) for record in validation_dataset.records
+    ):
+        raise ValueError("exclusion_ap checkpoint selection requires positive exclusion support in validation")
+    window_dataset = None
+    if config.sampling == "exclusion_windows":
+        if {record.key for record in train_dataset.records}.intersection(
+            record.key for record in validation_dataset.records
+        ):
+            raise ValueError("exclusion_windows requires disjoint training and validation trajectory keys")
+        window_dataset = ExclusionWindowDataset(
+            train_dataset, model, core=config.window_core,
+            positive_fraction=config.window_positive_fraction, seed=config.seed,
+        )
+        train_loader = DataLoader(
+            window_dataset, batch_size=config.batch_size, shuffle=False,
+            collate_fn=collate_windows,
+            generator=torch.Generator().manual_seed(config.seed),
+        )
+    else:
+        train_loader = _loader(
+            train_dataset,
+            batch_size=config.batch_size,
+            shuffle=True,
+            seed=config.seed,
+        )
     validation_loader = _loader(
         validation_dataset,
         batch_size=config.batch_size,
@@ -471,6 +533,7 @@ def train_model(
     loss_function = MaskedFocalBCEWithLogitsLoss(
         positive_weight,
         gamma=config.focal_gamma,
+        exclusion_loss_weight=config.exclusion_loss_weight,
     ).to(device)
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -479,10 +542,14 @@ def train_model(
     )
 
     best_loss = float("inf")
+    best_ap = -float("inf")
+    best_epoch = 0
     best_state: dict[str, torch.Tensor] | None = None
     epochs_without_improvement = 0
-    history: list[dict[str, float]] = []
+    history: list[dict[str, Any]] = []
     for epoch in range(1, config.epochs + 1):
+        if window_dataset is not None:
+            window_dataset.set_epoch(epoch)
         train_loss = _run_epoch(
             model,
             train_loader,
@@ -503,17 +570,50 @@ def train_model(
                 "validation_loss": float(validation_loss),
             }
         )
-        if validation_loss < best_loss - 1e-7:
+        if window_dataset is not None:
+            history[-1].update({
+                "sampling_seed": config.seed + epoch,
+                "window_halo": window_dataset.halo,
+                "window_samples": json.dumps(window_dataset.sample_manifest(), default=str),
+            })
+        if config.checkpoint_metric == "exclusion_ap":
+            predictions = collect_predictions(
+                model, validation_dataset, batch_size=config.batch_size, device=device,
+            )
+            exclusion_targets = np.concatenate([record["targets"][:, 1] for record in predictions])
+            exclusion_probabilities = np.concatenate([record["probabilities"][:, 1] for record in predictions])
+            validation_ap = float(average_precision_score(exclusion_targets, exclusion_probabilities))
+            if not np.isfinite(validation_ap):
+                raise ValueError("exclusion_ap checkpoint selection requires finite validation average precision")
+            improved = validation_ap > best_ap
+            if improved:
+                best_ap = validation_ap
+            history[-1].update({
+                "validation_exclusion_ap": validation_ap,
+                "selection_metric": config.checkpoint_metric,
+                "selection_value": validation_ap,
+            })
+        else:
+            # Keep the original loss comparison and tolerance exactly.
+            improved = validation_loss < best_loss - 1e-7
+        if improved:
             best_loss = validation_loss
+            best_epoch = epoch
             best_state = deepcopy(model.state_dict())
             epochs_without_improvement = 0
         else:
             epochs_without_improvement += 1
-            if epochs_without_improvement >= config.patience:
-                break
+        if config.checkpoint_metric == "exclusion_ap":
+            history[-1]["best_epoch"] = best_epoch
+            history[-1]["best_selection_value"] = best_ap
+        if epochs_without_improvement >= config.patience:
+            break
     if best_state is None:
         raise RuntimeError("Training did not produce a valid model state")
     model.load_state_dict(best_state)
+    if config.checkpoint_metric == "exclusion_ap":
+        for row in history:
+            row["selected_checkpoint"] = int(row["epoch"]) == best_epoch
 
     validation_predictions = collect_predictions(
         model,

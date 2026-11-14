@@ -249,6 +249,11 @@ def train_command(args: argparse.Namespace) -> None:
         seed=args.seed,
         device=args.device,
         division_tolerance_frames=args.division_tolerance_frames,
+        exclusion_loss_weight=getattr(args, "exclusion_loss_weight", 1.0),
+        checkpoint_metric=getattr(args, "checkpoint_metric", "validation_loss"),
+        sampling=getattr(args, "sampling", "trajectory"),
+        window_core=getattr(args, "window_core", 65),
+        window_positive_fraction=getattr(args, "window_positive_fraction", 0.5),
     )
     set_reproducible_seed(args.seed)
     model = build_model(model_config)
@@ -311,6 +316,15 @@ def train_command(args: argparse.Namespace) -> None:
         },
         "training_data": training_data,
     }
+    if train_config.checkpoint_metric == "exclusion_ap":
+        selected = next(row for row in history if row["selected_checkpoint"])
+        metadata["checkpoint_selection"] = {
+            "metric": "validation_exclusion_ap",
+            "direction": "maximize",
+            "epoch": int(selected["epoch"]),
+            "value": float(selected["validation_exclusion_ap"]),
+            "epochs_trained": len(history),
+        }
     if dataset_manifest is not None:
         metadata["dataset_manifest"] = dataset_manifest
     if dataset_lineage is not None:
@@ -341,6 +355,8 @@ def train_command(args: argparse.Namespace) -> None:
             trajectory_column=args.trajectory_column,
         ),
     }
+    if "checkpoint_selection" in metadata:
+        metrics["checkpoint_selection"] = metadata["checkpoint_selection"]
     if dataset_manifest is not None:
         metrics["dataset_manifest"] = dataset_manifest
     if dataset_lineage is not None:
@@ -426,6 +442,31 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--weight-decay", type=float, default=1e-4)
     train.add_argument("--focal-gamma", type=float, default=1.5)
     train.add_argument("--maximum-positive-weight", type=float, default=50.0)
+    train.add_argument(
+        "--exclusion-loss-weight", type=float, default=1.0,
+        help="Finite positive multiplier for both positive and negative exclusion losses (default: 1)",
+    )
+    train.add_argument(
+        "--checkpoint-metric", choices=["validation_loss", "exclusion_ap"],
+        default="validation_loss",
+        help="Minimize full validation loss (default), or maximize full validation exclusion AP",
+    )
+    train.add_argument(
+        "--sampling", choices=["trajectory", "exclusion_windows"], default="trajectory",
+        help=(
+            "Full trajectories (default), or training-only event/uniform observation windows. "
+            "Windows use fewer rows per update and change the effective objective; "
+            "batch size and steps per epoch stay unchanged. Requires CNN/ResNet context."
+        ),
+    )
+    train.add_argument(
+        "--window-core", type=int, default=65,
+        help="Positive odd core width contributing loss; model receptive-field halo is added (default: 65)",
+    )
+    train.add_argument(
+        "--window-positive-fraction", type=float, default=0.5,
+        help="Event-centered window fraction in [0, 1], rounded to whole windows (default: 0.5)",
+    )
     train.add_argument("--patience", type=int, default=15)
     train.add_argument("--seed", type=int, default=42)
     train.add_argument("--device", default="auto", help="auto, cpu, cuda, or cuda:N")

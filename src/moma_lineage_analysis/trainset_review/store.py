@@ -30,6 +30,10 @@ User-approved semantics (task-23):
 - Whole duplicate dataset versions can be removed (dataset-level counterpart
   of a trajectory delete) only when every trajectory stays referenced by
   another version; the removal is revision-guarded, backed up and audited.
+- A brand-new attested curated batch can be added with import_batch (new
+  dataset id and key namespace; no stored, deleted or measurement-identical
+  trajectory); it is revision-guarded, backed up and audited.  Historical CSV
+  import remains disabled once review data exists.
 - Only labels may change; time_h / spine_length (measurements) are immutable.
   New frozen versions created by finalize have no legacy CSV path but keep a
   review-native legacy_csv_sha256 equal to the byte-exact database export, and
@@ -77,6 +81,7 @@ __all__ = [
     "delete_trajectory",
     "finalize",
     "remove_dataset_versions",
+    "import_batch",
 ]
 
 REVIEW_SCHEMA_VERSION = 1
@@ -1933,6 +1938,114 @@ def remove_dataset_versions(
         db,
         expected_revision,
         "remove_dataset_versions",
+        actor,
+        mutate,
+        backup=True,
+    )
+
+
+def import_batch(
+    db: str | Path,
+    csv_path: str | Path,
+    expected_revision: int,
+    *,
+    repo_root: str | Path,
+    dataset_id: str,
+    label: str,
+    round_name: str | None,
+    verification_basis: str,
+    reason: str,
+    kind: str = "batch",
+    human_verified: bool = True,
+    actor: str = "user",
+) -> dict[str, Any]:
+    """Add a brand-new attested curated batch to a store that holds review data.
+
+    Historical CSV import stays disabled on reviewed stores (it could restore
+    permanently deleted trajectories).  This admin path admits only new data:
+    see `dataset_store.insert_new_batch_corpus` for the refusals (existing
+    dataset id or CSV, reused key namespace, deleted keys, measurement-identical
+    trajectories).  It is review-revision CAS-guarded, takes an online backup,
+    records an `import_batch` audit event and creates one frozen, attested
+    dataset version.  Existing trajectories, labels and versions are untouched.
+    """
+
+    if not isinstance(reason, str) or not reason.strip():
+        raise InvalidDataset("reason must be a non-empty string")
+    if not isinstance(dataset_id, str) or not DATASET_ID_PATTERN.match(dataset_id):
+        raise InvalidDataset(f"invalid dataset id: {dataset_id!r}")
+    root = Path(repo_root).resolve()
+    source = Path(csv_path).resolve()
+    if not source.is_file():
+        raise FileNotFoundError(f"batch corpus not found: {source}")
+    try:
+        source.relative_to(root)
+    except ValueError as error:
+        raise InvalidDataset(f"batch corpus must live under {root}") from error
+
+    def mutate(connection: sqlite3.Connection, new_revision: int):
+        try:
+            result = dataset_store.insert_new_batch_corpus(
+                connection,
+                repo_root=root,
+                csv_path=source,
+                dataset_id=dataset_id,
+                kind=kind,
+                label=label,
+                round_name=round_name,
+                verification_basis=verification_basis,
+                human_verified=human_verified,
+            )
+        except ReviewError:
+            raise
+        except ValueError as error:
+            raise InvalidDataset(str(error)) from error
+        store_totals = {
+            "versions": int(
+                connection.execute("SELECT COUNT(*) FROM dataset_version").fetchone()[0]
+            ),
+            "trajectories": int(
+                connection.execute("SELECT COUNT(*) FROM trajectory").fetchone()[0]
+            ),
+            "observations": int(
+                connection.execute("SELECT COUNT(*) FROM observation").fetchone()[0]
+            ),
+        }
+        payload = {
+            key: result[key]
+            for key in (
+                "dataset_id",
+                "version",
+                "version_id",
+                "lineage_id",
+                "content_ref",
+                "namespace",
+                "rows",
+                "trajectories",
+                "division_points",
+                "excluded_points",
+                "overlap_rows",
+                "canonical_hash",
+                "legacy_csv_sha256",
+                "inserted_trajectories",
+                "inserted_observations",
+                "guards",
+            )
+        }
+        payload["csv_path"] = str(source.relative_to(root))
+        payload["reason"] = reason
+        payload["store_totals"] = store_totals
+        event_info = {
+            "dataset_id": dataset_id,
+            "lineage_id": result["lineage_id"],
+            "event_payload": payload,
+        }
+        return event_info, dict(payload)
+
+    return _run_mutation(
+        db,
+        expected_revision,
+        "import_batch",
         actor,
         mutate,
         backup=True,

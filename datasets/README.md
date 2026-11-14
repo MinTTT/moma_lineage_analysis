@@ -21,6 +21,18 @@ new CNN, so the production checkpoint is now the R019 CNN (sha256
 See `runs/store_cleanup_20261031/`, `runs/reviewed_20261031/` and
 `runs/reviewed_20261031/production_promotion.json`.
 
+**R021 (2026-11-09):** 15 new curated exports were audited, staged and added to
+the reviewed store as `verified_20261109@v1` (**9,450 rows / 15 trajectories**)
+through the guarded new-batch path `scripts/import_batch.py`; historical CSV
+import stays disabled. R021 itself did not retrain a model. R022 (2026-11-10)
+then completed seven exclusion-focused CNN settings x seeds42/43/44 on the five
+reviewed lineages plus this batch, omitting two redundant historical signal twins
+only from the experiment (394,401 rows / 1,165 trajectories, split817/174/174).
+Validation selects exclusion-AP checkpoint selection. The predefined seed42
+improves held-out AP/F1/recall versus production, but seed43 loses recall;
+production remains R019. See `runs/exclusion_20261110/REPORT.md`, the batch section
+below and `runs/raw_batch_20261109/`.
+
 ## Contents
 
 | File | Role | Rows | Trajectories |
@@ -34,6 +46,7 @@ See `runs/store_cleanup_20261031/`, `runs/reviewed_20261031/` and
 | `verified_20261029@v1` | R014 curated batch 2026-10-29; merged in R015 and R019 | 25,728 | 48 |
 | `verified_merged_20261029@v1` | R015 retraining corpus (CSV retired; dataset version removed from the store in R019) | 399,168 | 1,197 |
 | `reviewed_20261031_*` (store only) | five R019 training-ready versions finalized from the reviewed batches; composition 385,815 rows / 1,152 trajectories | 385,815 | 1,152 |
+| `verified_20261109/verified_training_data.csv` (`verified_20261109@v1`) | R021 curated batch 2026-11-09; frozen, included in R022 CNN study; CSV retained | 9,450 | 15 |
 
 **Phase 3 (2026-10-17): the six historical corpus CSVs are retired** (deleted after
 user sign-off). The store holds the same rows (now reviewed working versions,
@@ -254,6 +267,51 @@ CSV sha256 `95654104ae88a50a432064c5772c49e550a0fb6f6d969fbb2a74c0f72d8030e6`.
 The redundant materialized corpus CSV was retired after independent data
 verification; staged provenance and human-readable reports remain.
 
+## Batch 2026-11-09 (R021, `verified_20261109/`)
+
+The raw inbox held 15 single-trajectory exports: 13 files of 657 rows,
+`FOV_76_CH_9` with 656 and `FOV_10_CH_15` with 253, totaling **9,450
+observations**. Technical QC (`verified_20261109/qc_report.json`) passed every
+hard gate; the only warning is one `division_point` row in `FOV_110_CH_18` that
+is not an effective division.
+
+Labels were staged with `--division-mode effective`: **928 divisions = 929 raw -
+1 `coalesced_previous` + 0 added**, 36 excluded observations and zero overlap
+(`staging_report.json`). The longest exclusion run is 2 frames, so the R004 rule
+drops none.
+
+Four reused channel identifiers receive a `20261109_` prefix in
+`verified_20261109/rename_map.json`: `FOV_10_CH_18` and `FOV_10_CH_22` (also in
+`baseline_0_10h`), `FOV_123_CH_6` (`curated_20261013`) and `FOV_15_CH_2`
+(`curated_20261017`). None has identical measurements, so these are naming
+collisions; biological identity is unestablished. No new trajectory is a
+measurement twin of any of the 1,155 stored trajectories or of the 45
+trajectories permanently deleted in review (checked against the revision-0
+pre-review snapshot, `runs/raw_batch_20261109/deleted_twin_check.json`).
+
+Attestation: `user_attested_2026-11-09` (the user's request to load these
+curated exports), `human_verified: true`. Combined staged source
+`staged/combined_curated_20261109.csv` (sha256
+`a80eba5c062235f20a3bff9b211868cc1ae666f327c3c370eb99f5b28eb8f15a`). Store lineage
+`verified_20261109@v1#a8d2aac6acf3` has canonical hash
+`a8d2aac6acf30bc93e4947f529be94341a18aa7ec5e8a40b6c35bbde45dd3428` and CSV
+sha256 `e9ac78093bb53e7d8b0b65df85ca0d8703b0fe0c72f5df9aa111a7dd0aa89902`. The
+corpus CSV is retained (not retired).
+
+**Ingestion.** The store already holds review data, so `dataset_store.py build`
+refuses historical imports. The batch was added with
+`python scripts\import_batch.py --dataset-dir verified_20261109 --expected-revision 567 --reason "..."`
+at review revision **568**. The path accepts only a new dataset id and key
+namespace, refuses existing or permanently deleted keys and
+measurement-identical trajectories, takes an online snapshot and writes an
+`import_batch` audit event. Store verify PASS afterwards; a fresh backup is
+`store/backups/lineage_20261109T030631.059735Z.sqlite3.gz`.
+
+Known pipeline property: the staging/combination scripts read CSVs with pandas'
+default float parser, so 1,867 `time_h` and 68 `spine_length` values differ from
+correctly rounded raw text by <=28 ULP (<=7.1e-15 h); every value agrees within
+1e-12, and earlier batches share this behaviour.
+
 ## Merged corpus 2026-10-29 and retraining (R015)
 
 `verified_merged_20261029@v1` extends the frozen
@@ -407,6 +465,7 @@ python scripts\dataset_store.py verify             # hashes, counts, byte-identi
 python scripts\dataset_store.py verify --require-legacy-csv  # strict pre-retirement mode
 python scripts\dataset_store.py export --dataset reviewed_20261031_verified_20261029 --output out.csv
 python scripts\remove_dataset_versions.py --expected-revision N --reason "..." --lineage-id <id>  # admin duplicate removal
+python scripts\import_batch.py --dataset-dir verified_<date> --expected-revision N --reason "..."  # add a NEW attested batch to a reviewed store
 python scripts\dataset_store.py backup             # VACUUM INTO + gzip
 ```
 
@@ -443,13 +502,15 @@ duplicates are different trajectory keys.
 
 ```powershell
 # Train from the dataset store (lineage ids recorded in metrics.json; canonical
-# split semantics of trajectory_cleaning.data.split_trajectory_keys)
+# split semantics of trajectory_cleaning.data.split_trajectory_keys).
+# The last --dataset-lineage adds the R021 batch; omit it to reproduce R019.
 moma-trajectory-cleaning train `
   --dataset-lineage reviewed_20261031_verified_20260916_no_longruns@v1 `
   --dataset-lineage reviewed_20261031_verified_20261013@v1 `
   --dataset-lineage reviewed_20261031_verified_20261016@v1 `
   --dataset-lineage reviewed_20261031_verified_20261017@v1 `
   --dataset-lineage reviewed_20261031_verified_20261029@v1 `
+  --dataset-lineage verified_20261109@v1 `
   --store datasets\store\lineage.sqlite3 `
   --require-human-verified `
   --source-column source_dataset `

@@ -293,6 +293,27 @@ def assert_import_allowed(connection: sqlite3.Connection) -> None:
         )
 
 
+def _load_corpus_frame(csv_path: Path) -> tuple[Path, str, pd.DataFrame]:
+    """Read and validate one attested corpus CSV (no database access)."""
+
+    csv_path = Path(csv_path).resolve()
+    legacy_sha = sha256_file(csv_path)
+    # Keep provenance/identifier columns as text: hashes and keys that look
+    # numeric (e.g. an all-zero sha placeholder) must not be coerced to ints.
+    frame = pd.read_csv(
+        csv_path,
+        dtype={
+            "trajectory_key": str,
+            "source_dataset": str,
+            "source_file": str,
+            "source_file_sha256": str,
+            "source_trajectory_key": str,
+        },
+    )
+    _validate_corpus_frame(frame, csv_path)
+    return csv_path, legacy_sha, frame
+
+
 def import_corpus(
     connection: sqlite3.Connection,
     *,
@@ -311,21 +332,7 @@ def import_corpus(
     # An explicitly curated working store must not silently resurrect deleted
     # trajectories from historical corpus CSVs during a maintenance rebuild.
     assert_import_allowed(connection)
-    csv_path = csv_path.resolve()
-    legacy_sha = sha256_file(csv_path)
-    # Keep provenance/identifier columns as text: hashes and keys that look
-    # numeric (e.g. an all-zero sha placeholder) must not be coerced to ints.
-    frame = pd.read_csv(
-        csv_path,
-        dtype={
-            "trajectory_key": str,
-            "source_dataset": str,
-            "source_file": str,
-            "source_file_sha256": str,
-            "source_trajectory_key": str,
-        },
-    )
-    _validate_corpus_frame(frame, csv_path)
+    csv_path, legacy_sha, frame = _load_corpus_frame(csv_path)
 
     existing = connection.execute(
         "SELECT version_id, version FROM dataset_version WHERE legacy_csv_sha256 = ?",
@@ -339,6 +346,213 @@ def import_corpus(
             "legacy_csv_sha256": legacy_sha,
             "status": "already_imported",
         }
+
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        result = _insert_corpus(
+            connection,
+            repo_root=repo_root,
+            csv_path=csv_path,
+            legacy_sha=legacy_sha,
+            frame=frame,
+            dataset_id=dataset_id,
+            kind=kind,
+            label=label,
+            round_name=round_name,
+            verification_basis=verification_basis,
+            human_verified=human_verified,
+            notes=notes,
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    return result
+
+
+def measurement_signature(observations: Iterable[tuple[int, float, float]]) -> str:
+    """Label-independent hash of a trajectory's immutable measurements."""
+
+    digest = hashlib.sha256()
+    for fov, time_h, spine in sorted(
+        (int(fov), float(time_h), float(spine)) for fov, time_h, spine in observations
+    ):
+        digest.update(
+            f"{fov}\t{_fmt_float(time_h)}\t{_fmt_float(spine)}\n".encode("utf-8")
+        )
+    return digest.hexdigest()
+
+
+def insert_new_batch_corpus(
+    connection: sqlite3.Connection,
+    *,
+    repo_root: Path,
+    csv_path: Path,
+    dataset_id: str,
+    kind: str,
+    label: str,
+    round_name: str | None,
+    verification_basis: str | None,
+    human_verified: bool,
+    notes: str | None = None,
+) -> dict[str, Any]:
+    """Insert a brand-new attested batch into a store that may hold review data.
+
+    `import_corpus` refuses every CSV once review data exists, because a
+    historical corpus could restore trajectories the user permanently deleted.
+    This narrower path admits only genuinely new data and refuses:
+
+    - a dataset id that already exists, or a CSV that was already imported;
+    - a key namespace (`<source_dataset>::`) already used by any stored
+      trajectory, so existing or curated data is never touched or shared;
+    - any trajectory key recorded as permanently deleted in the review log;
+    - any trajectory whose measurements (fov_cell_index, time_h, spine_length)
+      are identical to a stored trajectory or to another trajectory in the batch.
+
+    Measurements of trajectories deleted before this check are no longer in the
+    store; compare those against the pre-delete review snapshots out of band.
+    The caller owns the transaction (BEGIN IMMEDIATE ... COMMIT); nothing is
+    committed here.
+    """
+
+    if not human_verified:
+        raise ValueError("a new batch must be attested human_verified")
+    if not verification_basis:
+        raise ValueError("a new batch needs a verification_basis attestation")
+    csv_path, legacy_sha, frame = _load_corpus_frame(csv_path)
+
+    if connection.execute(
+        "SELECT 1 FROM dataset WHERE dataset_id = ?"
+        " UNION SELECT 1 FROM dataset_version WHERE dataset_id = ?",
+        (dataset_id, dataset_id),
+    ).fetchone():
+        raise ValueError(
+            f"dataset id {dataset_id!r} already exists; a new batch needs a new id"
+        )
+    if connection.execute(
+        "SELECT 1 FROM dataset_version WHERE legacy_csv_sha256 = ?", (legacy_sha,)
+    ).fetchone():
+        raise ValueError(f"{csv_path.name} is already imported into this store")
+
+    namespaces = sorted(frame["source_dataset"].astype(str).unique().tolist())
+    if len(namespaces) != 1 or not namespaces[0]:
+        raise ValueError(f"a new batch must use exactly one source_dataset: {namespaces}")
+    namespace = namespaces[0]
+    prefix = f"{namespace}::"
+    keys = frame["trajectory_key"].astype(str).drop_duplicates().tolist()
+    outside = [key for key in keys if not key.startswith(prefix)]
+    if outside:
+        raise ValueError(f"trajectory keys outside the {prefix!r} namespace: {outside[:3]}")
+    if connection.execute(
+        "SELECT 1 FROM trajectory WHERE source_dataset = ?"
+        " OR substr(trajectory_key, 1, ?) = ? LIMIT 1",
+        (namespace, len(prefix), prefix),
+    ).fetchone():
+        raise ValueError(
+            f"key namespace {namespace!r} is already used in this store; "
+            "a new batch needs a new namespace"
+        )
+    placeholders = ",".join("?" for _ in keys)
+    present = [
+        str(row[0])
+        for row in connection.execute(
+            f"SELECT trajectory_key FROM trajectory WHERE trajectory_key IN ({placeholders})",
+            tuple(keys),
+        )
+    ]
+    if present:
+        raise ValueError(f"trajectories already stored: {present[:3]}")
+    has_events = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='review_event'"
+    ).fetchone()
+    if has_events:
+        deleted = sorted(
+            str(row[0])
+            for row in connection.execute(
+                "SELECT DISTINCT trajectory_key FROM review_event"
+                f" WHERE event_type = 'delete_trajectory' AND trajectory_key IN ({placeholders})",
+                tuple(keys),
+            )
+        )
+        if deleted:
+            raise ValueError(
+                f"refusing to restore permanently deleted trajectories: {deleted[:3]}"
+            )
+
+    new_signatures: dict[str, str] = {}
+    for key, group in frame.groupby("trajectory_key", sort=False):
+        signature = measurement_signature(
+            zip(group["fov_cell_index"], group["time_h"], group["spine_length"])
+        )
+        if signature in new_signatures:
+            raise ValueError(
+                f"measurement-identical trajectories inside the batch: "
+                f"{new_signatures[signature]!r} and {key!r}"
+            )
+        new_signatures[signature] = str(key)
+    stored: dict[int, list[tuple[int, float, float]]] = {}
+    for row in connection.execute(
+        "SELECT trajectory_id, fov_cell_index, time_h, spine_length FROM observation"
+    ):
+        stored.setdefault(int(row[0]), []).append((int(row[1]), float(row[2]), float(row[3])))
+    twins: list[tuple[str, int]] = []
+    for trajectory_id, observations in stored.items():
+        match = new_signatures.get(measurement_signature(observations))
+        if match is not None:
+            twins.append((match, trajectory_id))
+    if twins:
+        names = {
+            int(row[0]): str(row[1])
+            for row in connection.execute(
+                "SELECT trajectory_id, trajectory_key FROM trajectory"
+            )
+        }
+        detail = [f"{key} == {names.get(tid, tid)}" for key, tid in twins[:3]]
+        raise ValueError(f"measurement-identical to stored trajectories: {detail}")
+
+    result = _insert_corpus(
+        connection,
+        repo_root=repo_root,
+        csv_path=csv_path,
+        legacy_sha=legacy_sha,
+        frame=frame,
+        dataset_id=dataset_id,
+        kind=kind,
+        label=label,
+        round_name=round_name,
+        verification_basis=verification_basis,
+        human_verified=human_verified,
+        notes=notes,
+    )
+    result["status"] = "imported_new_batch"
+    result["namespace"] = namespace
+    result["guards"] = {
+        "new_dataset_id": True,
+        "new_namespace": True,
+        "no_existing_keys": True,
+        "no_deleted_keys": True,
+        "stored_trajectories_compared": len(stored),
+        "measurement_twins": 0,
+    }
+    return result
+
+
+def _insert_corpus(
+    connection: sqlite3.Connection,
+    *,
+    repo_root: Path,
+    csv_path: Path,
+    legacy_sha: str,
+    frame: pd.DataFrame,
+    dataset_id: str,
+    kind: str,
+    label: str,
+    round_name: str | None,
+    verification_basis: str | None,
+    human_verified: bool,
+    notes: str | None,
+) -> dict[str, Any]:
+    """Insert a validated corpus inside the caller's open transaction."""
 
     provenance = _trajectory_provenance(frame)
     rename_lookup = _rename_lookup(repo_root)
@@ -354,166 +568,159 @@ def import_corpus(
         if positions and (positions[-1] - positions[0] + 1) != len(positions):
             raise ValueError(f"trajectory {key!r} rows are not contiguous")
 
-    connection.execute("BEGIN IMMEDIATE")
-    try:
-        connection.execute(
-            """INSERT INTO dataset
-               (dataset_id, kind, label, round_name, verification_basis,
-                human_verified, notes)
-               VALUES (?, ?, ?, ?, ?, ?, ?)
-               ON CONFLICT(dataset_id) DO UPDATE SET
-                 kind = excluded.kind,
-                 label = excluded.label,
-                 round_name = excluded.round_name,
-                 verification_basis = excluded.verification_basis,
-                 human_verified = excluded.human_verified,
-                 notes = COALESCE(excluded.notes, dataset.notes)""",
+    connection.execute(
+        """INSERT INTO dataset
+           (dataset_id, kind, label, round_name, verification_basis,
+            human_verified, notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(dataset_id) DO UPDATE SET
+             kind = excluded.kind,
+             label = excluded.label,
+             round_name = excluded.round_name,
+             verification_basis = excluded.verification_basis,
+             human_verified = excluded.human_verified,
+             notes = COALESCE(excluded.notes, dataset.notes)""",
+        (
+            dataset_id,
+            kind,
+            label,
+            round_name,
+            verification_basis,
+            int(human_verified),
+            notes,
+        ),
+    )
+
+    connection.execute(
+        """INSERT OR IGNORE INTO source_file
+           (filename, sha256, rows, corpus, imported_at)
+           VALUES (?, ?, ?, ?, ?)""",
+        (csv_path.name, legacy_sha, int(len(frame)), dataset_id, utc_now()),
+    )
+
+    provenance_lookup = provenance.set_index("trajectory_key")
+    key_to_id: dict[str, int] = {}
+    inserted_trajectories = 0
+    inserted_observations = 0
+
+    for key, group in frame.groupby("trajectory_key", sort=False):
+        key = str(key)
+        observations = [
             (
-                dataset_id,
-                kind,
-                label,
-                round_name,
-                verification_basis,
-                int(human_verified),
-                notes,
-            ),
-        )
-
-        connection.execute(
-            """INSERT OR IGNORE INTO source_file
-               (filename, sha256, rows, corpus, imported_at)
-               VALUES (?, ?, ?, ?, ?)""",
-            (csv_path.name, legacy_sha, int(len(frame)), dataset_id, utc_now()),
-        )
-
-        provenance_lookup = provenance.set_index("trajectory_key")
-        key_to_id: dict[str, int] = {}
-        inserted_trajectories = 0
-        inserted_observations = 0
-
-        for key, group in frame.groupby("trajectory_key", sort=False):
-            key = str(key)
-            observations = [
-                (
-                    int(row.fov_cell_index),
-                    float(row.time_h),
-                    float(row.spine_length),
-                    bool(row.division_point),
-                    bool(row.excluded_point),
-                )
-                for row in group.itertuples(index=False)
-            ]
-            content_hash = trajectory_content_hash(observations)
-            found = connection.execute(
-                "SELECT trajectory_id, content_hash FROM trajectory"
-                " WHERE trajectory_key = ?",
-                (key,),
-            ).fetchone()
-            if found is not None:
-                if found["content_hash"] != content_hash:
-                    raise ValueError(
-                        f"trajectory {key!r} already stored with different content;"
-                        " labels/features must not change in place"
-                    )
-                trajectory_id = int(found["trajectory_id"])
-            else:
-                info = provenance_lookup.loc[key]
-                suffix = key.split("::")[-1]
-                connection.execute(
-                    """INSERT INTO trajectory
-                       (trajectory_key, source_dataset, source_trajectory_key,
-                        source_file, source_file_sha256, rename_of, label_policy,
-                        content_hash)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        key,
-                        str(info["source_dataset"]),
-                        str(info["source_trajectory_key"]),
-                        str(info["source_file"]),
-                        str(info["source_file_sha256"]),
-                        rename_lookup.get(suffix),
-                        "effective",
-                        content_hash,
-                    ),
-                )
-                trajectory_id = int(
-                    connection.execute("SELECT last_insert_rowid()").fetchone()[0]
-                )
-                connection.executemany(
-                    """INSERT INTO observation
-                       (trajectory_id, fov_cell_index, time_h, spine_length,
-                        division_point, excluded_point)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
-                    [
-                        (trajectory_id, fov, time_h, spine, int(division), int(excluded))
-                        for fov, time_h, spine, division, excluded in observations
-                    ],
-                )
-                inserted_trajectories += 1
-                inserted_observations += len(observations)
-            key_to_id[key] = trajectory_id
-
-        version = _next_version(connection, dataset_id)
-        canonical = hashlib.sha256()
-        for key in sorted(key_to_id):
-            row = connection.execute(
-                "SELECT content_hash FROM trajectory WHERE trajectory_key = ?",
-                (key,),
-            ).fetchone()
-            canonical.update(f"{key}\t{row[0]}\n".encode("utf-8"))
-        canonical_hash = canonical.hexdigest()
-
-        division_points = int(frame["division_point"].astype(bool).sum())
-        excluded_points = int(frame["excluded_point"].astype(bool).sum())
-        overlap_rows = int(
-            (
-                frame["division_point"].astype(bool)
-                & frame["excluded_point"].astype(bool)
-            ).sum()
-        )
-
-        cursor = connection.execute(
-            """INSERT INTO dataset_version
-               (dataset_id, version, canonical_hash, rows, trajectories,
-                division_points, excluded_points, overlap_rows,
-                legacy_csv_path, legacy_csv_sha256, frozen, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
-            (
-                dataset_id,
-                version,
-                canonical_hash,
-                int(len(frame)),
-                int(len(key_to_id)),
-                division_points,
-                excluded_points,
-                overlap_rows,
-                str(csv_path.relative_to(repo_root)),
-                legacy_sha,
-                utc_now(),
-            ),
-        )
-        version_id = int(cursor.lastrowid)
-
-        connection.executemany(
-            "INSERT INTO dataset_member (version_id, trajectory_id, ordinal)"
-            " VALUES (?, ?, ?)",
-            [
-                (version_id, key_to_id[key], ordinal)
-                for key, ordinal in ordinal_by_key.items()
-            ],
-        )
-
-        for role, path_text, digest in _provenance_files(csv_path.parent, repo_root):
-            connection.execute(
-                "INSERT INTO ingest_provenance (version_id, role, path, sha256)"
-                " VALUES (?, ?, ?, ?)",
-                (version_id, role, path_text, digest),
+                int(row.fov_cell_index),
+                float(row.time_h),
+                float(row.spine_length),
+                bool(row.division_point),
+                bool(row.excluded_point),
             )
+            for row in group.itertuples(index=False)
+        ]
+        content_hash = trajectory_content_hash(observations)
+        found = connection.execute(
+            "SELECT trajectory_id, content_hash FROM trajectory"
+            " WHERE trajectory_key = ?",
+            (key,),
+        ).fetchone()
+        if found is not None:
+            if found["content_hash"] != content_hash:
+                raise ValueError(
+                    f"trajectory {key!r} already stored with different content;"
+                    " labels/features must not change in place"
+                )
+            trajectory_id = int(found["trajectory_id"])
+        else:
+            info = provenance_lookup.loc[key]
+            suffix = key.split("::")[-1]
+            connection.execute(
+                """INSERT INTO trajectory
+                   (trajectory_key, source_dataset, source_trajectory_key,
+                    source_file, source_file_sha256, rename_of, label_policy,
+                    content_hash)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    key,
+                    str(info["source_dataset"]),
+                    str(info["source_trajectory_key"]),
+                    str(info["source_file"]),
+                    str(info["source_file_sha256"]),
+                    rename_lookup.get(suffix),
+                    "effective",
+                    content_hash,
+                ),
+            )
+            trajectory_id = int(
+                connection.execute("SELECT last_insert_rowid()").fetchone()[0]
+            )
+            connection.executemany(
+                """INSERT INTO observation
+                   (trajectory_id, fov_cell_index, time_h, spine_length,
+                    division_point, excluded_point)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                [
+                    (trajectory_id, fov, time_h, spine, int(division), int(excluded))
+                    for fov, time_h, spine, division, excluded in observations
+                ],
+            )
+            inserted_trajectories += 1
+            inserted_observations += len(observations)
+        key_to_id[key] = trajectory_id
 
-        connection.commit()
-    except Exception:
-        connection.rollback()
-        raise
+    version = _next_version(connection, dataset_id)
+    canonical = hashlib.sha256()
+    for key in sorted(key_to_id):
+        row = connection.execute(
+            "SELECT content_hash FROM trajectory WHERE trajectory_key = ?",
+            (key,),
+        ).fetchone()
+        canonical.update(f"{key}\t{row[0]}\n".encode("utf-8"))
+    canonical_hash = canonical.hexdigest()
+
+    division_points = int(frame["division_point"].astype(bool).sum())
+    excluded_points = int(frame["excluded_point"].astype(bool).sum())
+    overlap_rows = int(
+        (
+            frame["division_point"].astype(bool)
+            & frame["excluded_point"].astype(bool)
+        ).sum()
+    )
+
+    cursor = connection.execute(
+        """INSERT INTO dataset_version
+           (dataset_id, version, canonical_hash, rows, trajectories,
+            division_points, excluded_points, overlap_rows,
+            legacy_csv_path, legacy_csv_sha256, frozen, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
+        (
+            dataset_id,
+            version,
+            canonical_hash,
+            int(len(frame)),
+            int(len(key_to_id)),
+            division_points,
+            excluded_points,
+            overlap_rows,
+            str(csv_path.relative_to(repo_root)),
+            legacy_sha,
+            utc_now(),
+        ),
+    )
+    version_id = int(cursor.lastrowid)
+
+    connection.executemany(
+        "INSERT INTO dataset_member (version_id, trajectory_id, ordinal)"
+        " VALUES (?, ?, ?)",
+        [
+            (version_id, key_to_id[key], ordinal)
+            for key, ordinal in ordinal_by_key.items()
+        ],
+    )
+
+    for role, path_text, digest in _provenance_files(csv_path.parent, repo_root):
+        connection.execute(
+            "INSERT INTO ingest_provenance (version_id, role, path, sha256)"
+            " VALUES (?, ?, ?, ?)",
+            (version_id, role, path_text, digest),
+        )
 
     return {
         "dataset_id": dataset_id,

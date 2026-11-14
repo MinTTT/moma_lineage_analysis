@@ -48,10 +48,11 @@ Training metadata must record the lineage id (and optionally the content ref).
 5. **`source_fov_cell_index` equals `fov_cell_index`** in all existing corpora and is
    reconstructed on export from `trajectory.source_*` plus the observation key.
 
-## Current contents (updated 2026-10-31, after R019 cleanup)
+## Current contents (updated 2026-11-09, after R021 batch import)
 
-The live database holds **five reviewed working versions and five
-review-finalized training-ready versions**. The user reviewed/edited the five
+The live database holds **five reviewed working versions, five
+review-finalized training-ready versions and one new frozen batch version**
+(`verified_20261109@v1`, added in R021). The user reviewed/edited the five
 batch versions through `moma-trainset-review` (labels edited in place; 45
 trajectories permanently deleted across the store), so the originals are
 `frozen = 0` working versions with their original pins preserved in
@@ -62,11 +63,13 @@ on 2026-10-31 at the user's request (revision 562): every trajectory they held
 is also a member of a batch version, so the removal deleted only 3,345
 membership rows, three version rows, their provenance and review-state rows -
 observations and trajectory rows were unchanged (387,217 / 1,155 before and
-after). The pre-removal database is archived as
+after). The pre-removal database was archived as
 `backups/lineage_20261030T181226.223866Z.sqlite3.gz` (sha256
 `bad95fa07a659036cc70defb539a107f9ec7108c249d73e39adf727063e104f7`) and in the
 review snapshot
 `review_backups/lineage_review_20261030T181234.830951Z_r561_remove_dataset_versions.sqlite3`.
+On 2026-11-09 the user moved `backups/` and `review_backups/` to the Recycle
+Bin, so those archives no longer exist at these paths unless restored.
 Historical R008/R010/R015 lineage ids therefore no longer resolve against the
 live store; their CSV hashes remain pinned in `datasets/manifest.json`
 (`store_removed` markers) and in `retired_csv_manifest_20261017.json`.
@@ -83,6 +86,7 @@ live store; their CSV hashes remain pinned in `datasets/manifest.json`
 | reviewed_20261031_verified_20261016@v1 | frozen training-ready | 25,499 | 39 | 2,192 / 237 |
 | reviewed_20261031_verified_20261017@v1 | frozen training-ready | 8,157 | 15 | 512 / 68 |
 | reviewed_20261031_verified_20261029@v1 | frozen training-ready | 25,728 | 48 | 2,562 / 102 |
+| verified_20261109@v1 | frozen batch (R021) | 9,450 | 15 | 928 / 36 |
 
 The five finalized versions apply the R004 long-exclusion-run filter to their
 new membership only and drop three trajectories
@@ -98,9 +102,19 @@ recorded, and corpus `kind`/`round_name` are explicit (production R004; batches
 R006/R007/R009; merged R008/R010). Observations, labels, hashes and exports were
 unchanged by the migration; a fresh rebuild is identical to the migrated database.
 
-Store totals (2026-10-31): **387,217 unique observations / 1,155 trajectories**;
-2,307 membership rows / 23 ingest-provenance records / ten dataset versions;
-review revision 567. Original R012 totals (375,348 observations / 1,152
+R021 (2026-11-09) added `verified_20261109@v1` with `scripts/import_batch.py`
+(`trainset_review.store.import_batch`). Historical CSV import remains refused on
+this reviewed store; the new-batch path accepts only a new dataset id and key
+namespace (`curated_20261109::`), refuses existing or permanently deleted keys
+and measurement-identical trajectories, takes an online snapshot and records an
+`import_batch` review event at revision 568. The new batch is a regular frozen,
+human-verified version with a present legacy CSV, so `verify` checks it by CSV
+sha256 and byte-identical export.
+
+Store totals (2026-11-09): **396,667 unique observations / 1,170 trajectories**;
+2,322 membership rows / 27 ingest-provenance records / eleven dataset versions;
+review revision 568; 29,126,656 bytes. The R019 totals (387,217 / 1,155;
+2,307 / 23 / ten versions; revision 567) are historical. Original R012 totals (375,348 observations / 1,152
 trajectories) and the pre-review eight-version totals (401,076 / 1,200) are
 historical. Duplicate audit: two content-identical trajectory pairs remain -
 `rdm_gluc_toggle_20260905::FOV_0_CH_16` / `curated_20261017::20261017_FOV_0_CH_16`

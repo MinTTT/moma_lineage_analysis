@@ -1366,6 +1366,92 @@ production checkpoint is now sha256
 `816a8b392ec206dca578a093c6cbc2fc9ec5ba12480d6aca7c8b08349796af99`; the
 previous R010 CNN is in `promotion_backups/20261030T184217.243155Z/`.
 
+## Exclusion improvement study (R022, 2026-11-10)
+
+The user requested production-error analysis, experiments with richer exclusion
+exposure and loss weighting, and a clean held-out comparison. The full study is
+[reported here](../../../runs/exclusion_20261110/REPORT.md); the protocol and
+validation-only selection lock were frozen before test inference. Production
+remains the R019 CNN; no deployment was requested.
+
+**Diagnostic.** On original production validation, 205/270 exclusions are
+identified (precision 0.8577, recall 0.7593, F1 0.8055), with 65 misses and
+34 false positives. Exclusion contributes 83.04% of actual validation focal-BCE;
+thus increasing its weight is not a remedy for division-dominated loss at this
+checkpoint. Forty missed rows lie in exclusion runs of 2-4 observations, and
+18 misses occur in one trajectory. These are correlated descriptive findings,
+not independent source effects or proof of incorrect annotations. No linked
+validation morphology is available.
+
+**Design.** Seven CNN arms (baseline, positive cap100/cap222, whole exclusion
+loss x2/x3, training-only event windows, exclusion-AP checkpoint selection), each
+with seeds42/43/44, use identical hidden64/kernel5/RF17 architecture, optimizer,
+learning rate and focal gamma. Six lineages include the new R021 batch; two
+redundant signal twins are omitted from the experiment, not deleted from SQLite.
+The 394,401-row / 1,165-trajectory population is split 817/174/174, preserving
+remaining R019 assignments and using the standard seed42 split for the new
+source. Windows preserve full-trajectory normalization and RF halo8 around a
+loss core65; 817 windows per epoch preserve 52 optimizer steps but reduce loss
+points per step. Original full-train labels supply positive weights.
+
+| Arm | Mean validation exclusion AP | Mean exclusion F1 | Mean division-event F1 |
+|---|---:|---:|---:|
+| Baseline | 0.8694 | 0.7916 | 0.9970 |
+| Positive cap100 | 0.8644 | 0.7807 | 0.9972 |
+| Positive cap222 | 0.8454 | 0.7701 | 0.9968 |
+| Whole exclusion loss x2 | 0.8828 | 0.7960 | 0.9968 |
+| Whole exclusion loss x3 | 0.8842 | 0.7990 | 0.9965 |
+| Exclusion-event windows | 0.8325 | 0.7573 | 0.9953 |
+| **Checkpoint selection by exclusion AP** | **0.8952** | **0.8204** | **0.9975** |
+
+The predeclared study ranking maximizes three-seed mean validation exclusion AP
+with division-event F1 >= baseline mean -0.002 and exclusion F1 >= baseline
+mean -0.01; caps100/222 and windows fail the latter guardrail. This research
+criterion does not change the default production-promotion rule. Thresholds
+retain validation-only point-F1 calibration; seed42 is fixed, not chosen by test.
+
+**Held-out comparison.** Clean test contains 174 trajectories / 58,991 rows /
+274 exclusions, with no signal twin of R019 training. Production versus the
+predefined AP-selected seed42 gives:
+
+| Metric | R019 production | R022 AP-selected seed42 |
+|---|---:|---:|
+| Exclusion AP | 0.8779 | 0.9007 |
+| Exclusion precision | 0.8638 | 0.8667 |
+| Exclusion recall | 0.7409 | 0.8066 |
+| Exclusion F1 | 0.7976 | 0.8355 |
+| Division-event F1 | 0.9965 | 0.9978 |
+
+It detects 221 rather than 203 exclusions, with 34 rather than 32 false
+positives. Paired trajectory bootstrap (5,000 replicates, seed20261110) gives
+candidate-minus-production AP +0.0227 [0.0081,0.0385], F1 +0.0379
+[0.0094,0.0671], recall +0.0657 [0.0324,0.1005]. These are fixed-model,
+uncorrected percentile95% intervals, not FOV or seed uncertainty. Production
+validation-only recalibration leaves its predictions unchanged.
+
+**Seed variability limits the claim.** Selected test AP values are
+0.9007/0.8750/0.9002 and F1 0.8355/0.7692/0.8321; means +/- seed SD are
+AP 0.8919 +/- 0.0147 and F1 0.8123 +/- 0.0373. Seed43 loses recall (0.6569),
+so mean recall0.7652 does not beat retrained baseline0.7689. Two of three seeds
+improve F1 over production; one does not. The two-trajectory new-batch panel has
+only two positive labels and production already detects both. Historical test
+reuse, shared FOVs, small positive support and multiple comparisons prevent a
+strong generalization or seed-robust recall claim. This is a promising candidate
+for review and a larger acquisition-held-out study, not an automatic replacement.
+
+**Implementation and evidence.** Opt-in controls keep original training defaults
+and checkpoint inference unchanged; tests verify exact legacy loss/optimizer
+updates plus padding, sampling, halo/core masks, AP restoration and leakage/
+selection locks. All 21 checkpoints, histories, validation predictions and the
+post-lock comparison are retained under `runs/exclusion_20261110/`. The first
+report attempt was stopped by its source-hash guard because a reporting script
+was being finalized; it is archived separately, and the identical locked
+comparison succeeded after script handoff. No model or seed was changed based
+on that attempt. Dataset and deployed checkpoint hashes remain protected. Final
+independent verification is PASS_WITH_DOCUMENTED_CAVEATS (464 checks, zero
+failures, all 24 metric rows and 45 intervals independently replayed). Full
+regression: 483 passed / 3 skipped / 59 subtests in 105.97 s.
+
 ## Recommended use
 
 1. Use the promoted CNN for human-reviewed AI previews, not unattended deletion.

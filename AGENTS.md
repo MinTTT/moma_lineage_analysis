@@ -50,6 +50,7 @@ moma_lineage_analysis/
 │   │   ├── data.py                    # data contract, normalizer, TrajectoryDataset, splits
 │   │   ├── models.py                  # CNNLabeler, ResNetLabeler, LSTMLabeler
 │   │   ├── training.py                # losses, train loop, threshold calibration, evaluate_model, load_checkpoint
+│   │   ├── sampling.py                # opt-in normalized exclusion windows with core/halo masks (R022)
 │   │   ├── streamlit_api.py           # AI preview API + division/exclusion conflict resolver
 │   │   ├── prepare_verified_training_data.py  # build attested corpora from verified CSVs
 │   │   ├── dataset_store.py           # local SQLite dataset store (schema/import/export/verify)
@@ -66,7 +67,10 @@ moma_lineage_analysis/
 │   ├── stage_verified_labels.py       # canonical label staging (R002 policy / effective mode)
 │   ├── merge_corpora.py               # merge verified corpora + R004 filter on incoming batches
 │   ├── dataset_store.py               # build/verify/export/backup the SQLite dataset store
-│   └── remove_dataset_versions.py     # admin removal of duplicate dataset versions (R019)
+│   ├── remove_dataset_versions.py     # admin removal of duplicate dataset versions (R019)
+│   ├── import_batch.py                # guarded import of a NEW attested batch into a reviewed store (R021)
+│   ├── exclusion_study.py             # fixed-split CNN exclusion study and validation-only lock (R022)
+│   └── exclusion_compare.py           # post-lock comparison and paired cluster bootstrap (R022)
 ├── datasets/                          # frozen verified corpora + integrity manifest + store/ (section 11)
 ├── docs/
 │   ├── METHODS_TRAJECTORY_CLEANING_MODEL.md  # scientific contract (rounds R001-..., method versions)
@@ -132,6 +136,20 @@ batch size 16 trajectories, seed 42, device auto. Early stopping restores the
 minimum-validation-loss state; per-label thresholds are calibrated on validation
 point F1 only (grid 0.05-0.95). `division_tolerance_frames = 1`.
 
+R022 adds opt-in exclusion controls with backward-compatible defaults:
+`exclusion_loss_weight=1.0` (scale both exclusion classes, division unchanged),
+`checkpoint_metric="validation_loss"` or `"exclusion_ap"`, and
+`sampling="trajectory"` or `"exclusion_windows"` (`window_core=65`,
+`window_positive_fraction=0.5`). Windows are training-only, sliced after
+full-trajectory normalization with a CNN/ResNet receptive-field halo and a
+separate core-loss mask; LSTM windows are refused. Positive weights come from
+full original training records. The existing `--maximum-positive-weight` option
+was already available before R022. Default loss/optimizer updates/history are
+verified against the legacy loop; the new controls do not change old checkpoint
+inference. R022's exclusion-focused model selection is registered separately in
+`runs/exclusion_20261110/protocol.json`; it does not change the default
+promotion rule.
+
 ### 3.4 Splitting and evaluation rules
 
 - `split_trajectory_keys` keeps complete trajectories together; optional
@@ -182,6 +200,8 @@ point F1 only (grid 0.05-0.95). `division_tolerance_frames = 1`.
 | R018 (2026-10-29) | existing SQLite store; no new corpus row | 399,168 / 1,197 current R015 data; training-ready versions created on demand | independent training-review app; direct SQLite autosave, shared keyboard shortcuts, user-authorized label edits/permanent trajectory deletion via guarded backend; R015 selectable but non-production; independent review PASS |
 | R019 (2026-10-31) | five reviewed batch versions composed (no merged corpus) | 385,815 / 1,152 | user-requested removal of the three duplicate `verified_merged_*` dataset versions; five `reviewed_20261031_*` training-ready versions finalized with the R004 membership filter; cnn/resnet/lstm retrained with unchanged configuration |
 | R020 (2026-10-31) | - | - | promotion (deployment only): user-authorized promotion of the R019 CNN to production (sha256 `816a8b39...`); previous R010 CNN + promotion manifest backed up; registry/pins/labels/docs updated |
+| R021 (2026-11-09) | `verified_20261109@v1` | 9,450 / 15 | effective-label batch: 928 divisions (929 raw - 1 coalesced), 36 exclusions, overlap 0, max exclusion run 2 (no R004 drops); four reused identifiers date-prefixed `20261109_`; added to the reviewed store via the new guarded `scripts/import_batch.py` at review revision 568; included in the later R022 study |
+| R022 (2026-11-10) | six R019+R021 frozen lineages; omit two redundant signal twins only from experiment | 394,401 / 1,165 | seven CNN arms x seeds42/43/44, fixed817/174/174 split; validation exclusion-AP checkpoint selection wins (AP0.89523); fixedseed42 clean-test AP0.90066/F1 0.83554 vs production0.87794/0.79764, but seed43 loses recall; no promotion |
 
 ---
 
@@ -276,6 +296,18 @@ Steps (all from the repo root, `$py` = conda python above):
    missing CSV for a dataset the store does not hold is an error - restore it from
    `datasets/store/retired_csv_manifest_20261017.json` first.
 
+   **Reviewed store (current state since R018):** `build` refuses every CSV import
+   once review data exists, so a historical corpus cannot resurrect permanently
+   deleted trajectories. Add a NEW batch instead with
+   `python scripts\import_batch.py --dataset-dir <batch> --expected-revision N --reason "..."`
+   (read the current revision with `trainset_review.store.revision`). It reads the
+   batch's `datasets/manifest.json` entry and refuses an existing dataset id, a
+   reused key namespace, existing or deleted keys and measurement-identical
+   trajectories; it is CAS-guarded, snapshots first and writes an `import_batch`
+   audit event. Its twin check only sees trajectories still in the store, so also
+   compare the batch with deleted trajectories using a pre-deletion snapshot.
+   Then run `verify` and `backup` as above.
+
    Keep raw exports in place unless the user rotates them; freeze staged
    outputs because the combined staged CSV's hash is recorded in the corpus
    manifest (per-file staged CSVs are not hashed by the manifest).
@@ -295,16 +327,25 @@ Train all three architectures sequentially (same data/split, so their
 ```powershell
 foreach ($m in @('cnn','resnet','lstm')) {
   & $py -m moma_lineage_analysis.trajectory_cleaning.cli train `
-    --dataset-lineage verified_merged_20261029@v1 `
+    --dataset-lineage reviewed_20261031_verified_20260916_no_longruns@v1 `
+    --dataset-lineage reviewed_20261031_verified_20261013@v1 `
+    --dataset-lineage reviewed_20261031_verified_20261016@v1 `
+    --dataset-lineage reviewed_20261031_verified_20261017@v1 `
+    --dataset-lineage reviewed_20261031_verified_20261029@v1 `
     --store datasets\store\lineage.sqlite3 `
     --require-human-verified `
     --source-column source_dataset `
     --model $m `
-    --output-dir runs\merged_20261029\$m `
+    --output-dir runs\new_training\$m `
     --device auto
 }
 ```
 
+- The example composes the production R019 training inputs. Add
+  `--dataset-lineage verified_20261109@v1` to include the R021 batch in a new
+  generic split. To reproduce R022, use `scripts/exclusion_study.py` instead: it
+  freezes its own deduplicated split and delays test inference until selection
+  is locked. A generic CLI training call evaluates test immediately.
 - Training reads the frozen corpora from the SQLite store (phase 2):
   `--dataset-lineage <id>` is read-only and repeatable (compose versions; shared
   observations are collapsed only when identical); the lineage ids plus canonical
@@ -511,18 +552,18 @@ evidence: `runs/trainset_review_implementation/`.
 
 ---
 
-## 9. Current state (lineage updated 2026-10-26; model/data as of 2026-10-31)
+## 9. Current state (lineage updated 2026-10-26; model as of 2026-10-31; data as of 2026-11-09)
 
 - Lineage-construction method `1.1.0`, round R002 (2026-10-26), `LOGIC_VERSION 2.3`; app statistics schema 2. Founder divisions count non-self children before the root stop; exact daughter-length conservation is accepted, with strict upper and first-daughter bounds retained. Fresh **Time Unit** is `s`; explicit `d` remains supported and unknown units raise `ValueError`. Statistics use stable numeric-time copies, finite positive fit observations, centered OLS with rank checks and explicit residual R², and `RuntimeWarning` for invalid observations/degenerate fits. Reconstruct with **Process Data** for new lineage rules; cached-statistics invalidation does not migrate existing annotations. Regression commands/outcomes are tracked in `docs/METHODS_LINEAGE_TRAJECTORY_CONSTRUCTION.md`; R001 results remain historical.
 - Upstream spine length/width are already µm and area µm² (`Cell` and `CellDT` calibrate by `umppx` before export); `time_s` comes from `time_points_seconds`. Do not rescale numerical lengths or change the minimum-length filter to repair the earlier pixels wording. `fov_cell_index` is a unique observation ID within the loaded FOV, not persistent identity.
-- Cleaning-model method version `0.11.1`; R014/R015 are closed, R016 is closed, R018 is closed and R019 is independently verified PASS. R020 (2026-10-31) is the deployment round: the R019 CNN was promoted to production on explicit user request (checkpoint sha256 `816a8b39...`; previous R010 CNN backed up). R019 (2026-10-31) removed the three duplicate `verified_merged_*` dataset versions, finalized the five reviewed batches as `reviewed_20261031_*` training-ready lineages (R004 membership filter), and retrained cnn/resnet/lstm on their composition. R018 remains the independent training-review app. R001-R016 history and lineage method 1.1.0 / LOGIC_VERSION 2.3 are unchanged.
+- Cleaning-model method version `0.13.0`. R022 (2026-11-10) completed diagnostics, 21 CNN runs and a validation-locked comparison: exclusion-AP checkpoint selection wins the registered study; fixedseed42 improves test AP/F1/recall versus production, but seed43 loses recall and the new panel has only two exclusions. Production remains R019; no promotion authorized. See `runs/exclusion_20261110/REPORT.md`. R021 (2026-11-09) audited 15 new curated exports and added them to the reviewed store as `verified_20261109@v1` (9,450 rows / 15 trajectories / 928 divisions / 36 exclusions) through the new guarded `scripts/import_batch.py`; store verify PASS, no model retrained, production unchanged. R014/R015 are closed, R016 is closed, R018 is closed and R019 is independently verified PASS. R020 (2026-10-31) is the deployment round: the R019 CNN was promoted to production on explicit user request (checkpoint sha256 `816a8b39...`; previous R010 CNN backed up). R019 (2026-10-31) removed the three duplicate `verified_merged_*` dataset versions, finalized the five reviewed batches as `reviewed_20261031_*` training-ready lineages (R004 membership filter), and retrained cnn/resnet/lstm on their composition. R018 remains the independent training-review app. R001-R016 history and lineage method 1.1.0 / LOGIC_VERSION 2.3 are unchanged.
 - Production checkpoint: **R019 CNN**, sha256
   `816a8b392ec206dca578a093c6cbc2fc9ec5ba12480d6aca7c8b08349796af99`,
   promoted 2026-10-31 (R020, user decision) from `runs/reviewed_20261031/cnn/`;
   previous R010 CNN (`6e7c5a58...`) plus its archived `promotion.json` backed up
   at
   `src/moma_lineage_analysis/models/trajectory_cleaning_run/promotion_backups/20261030T184217.243155Z/`.
-- Current retraining corpus (R019): composition of the five reviewed
+- Production training corpus (R019): composition of the five reviewed
   training-ready lineages `reviewed_20261031_*` = 385,815 rows / 1,152
   trajectories / 33,665 divisions / 1,740 exclusions / 49 legacy overlap rows,
   eight sources. The reviewed population differs from R015 (user review
@@ -537,6 +578,15 @@ evidence: `runs/trainset_review_implementation/`.
   [+0.0049, +0.0489] vs R008 CNN on the R010 test split and +0.0335
   [+0.0120, +0.0598] on the R008 test split; replicates on leakage-free
   subsets (+0.0358 / +0.0337); division metrics unchanged/saturated.
+- Dataset store (2026-11-09, R021): eleven versions over 396,667 unique
+  observations / 1,170 trajectories (2,322 memberships / 27 ingest-provenance
+  rows; review revision 568; 29,126,656 bytes) - the R019 state below plus the
+  frozen batch `verified_20261109@v1`. Verify PASS (5 WORKING + 5
+  database-native + new version present/byte-identical); post-ingest backup
+  `store/backups/lineage_20261109T030631.059735Z.sqlite3.gz`. The next training
+  composition (five reviewed lineages + `verified_20261109@v1`) is 395,265 rows /
+  1,167 trajectories / 34,593 divisions / 1,776 exclusions / 49 overlap / nine
+  sources. Evidence: `runs/raw_batch_20261109/`.
 - Dataset store (2026-10-31, R019): ten versions over 387,217 unique
   observations / 1,155 trajectories - five reviewed working originals
   (`frozen = 0`) and five `reviewed_20261031_*` training-ready versions
@@ -651,6 +701,31 @@ evidence: `runs/trainset_review_implementation/`.
   split, threshold or training run changed. Health checks: load-checkpoint +
   predict smoke finite; post-promotion full pytest 430 passed / 3 skipped / 59
   subtests.
+- R022 exclusion study (2026-11-10): original production validation has65 misses,
+  40 in exclusion runs of2-4 rows;18 misses occur in one trajectory. Exclusion
+  contributes83.04% of actual focal validation loss, so division does not
+  dominate it. Diagnostic37checks PASS; no linked raw morphology available.
+  The study retains the old CNN/RF17/optimizer and defaults, fixes seed42/43/44,
+  and evaluates baseline, cap100, cap222, whole-exclusion x2/x3, event windows,
+  and validation-exclusion-AP checkpoint selection. Two redundant time/length
+  twins are omitted from the experimental population only; no database rows
+  change. Fixed split817/174/174,394,401 rows/1,165 trajectories. Class weights
+  come only from original training rows; normalized windows use core65+halo8
+  and52 updates/epoch, changing rows/update. ValidationAP means0.86936 baseline,
+  0.86441cap100,0.84538cap222,0.88282x2,0.88418x3,0.83247windows,
+  0.89523APselection; the latter is locked before held-out inference.
+  Clean test174trajectories/274exclusions: fixed42 AP0.90066,F1 0.83554,
+  recall0.80657,precision0.86667,division-eventF1 0.99780 versus production
+  AP0.87794,F1 0.79764,recall0.74088,precision0.86383,division0.99654.
+  APdelta+0.02271[0.00808,0.03849],F1delta+0.03790[0.00945,0.06708] from
+  paired-trajectory5000bootstrapdraws, no multiplicity correction. Candidate
+  seeds42/43/44 F1=0.83554/0.76923/0.83212; seed43 recall0.65693 means the
+  method is not seed-robust. Three-seed mean AP0.89195+/-0.01469 and
+  F1 0.81230+/-0.03733, meanrecall0.76521 below retrainedbaseline0.76886.
+  New-batch panel only2trajectories/2positive labels; no broad new-data claim.
+  All21validation/lock artifacts independently verified227checks PASS after
+  preliminary57checks. Final post-lock verification and fullsuite are recorded
+  under `runs/exclusion_20261110/`; R019 deployed artifacts stay unchanged.
 - Open items: FOV-held-out cross-validation and per-source uncertainty. Width tuning may now proceed if
   the user wants it, since the R016 context question is answered for the
   screened schedules; three seeds do not provide FOV robustness. The R019
@@ -706,6 +781,15 @@ evidence: `runs/trainset_review_implementation/`.
   Permanent deletion has no in-app restore; backups under `review_backups/`
   beside the database are archival recovery, not an automatic undo. Do not
   claim edited historical frozen versions remain byte-identical.
+- On 2026-11-09 the user moved `datasets/store/review_backups/` (561 review
+  snapshots) and `datasets/store/backups/` (six store backups, including the R019
+  pre-removal backup) to the Recycle Bin. `review_event.snapshot_path` values
+  and backup paths named in this file and the methods contract no longer resolve
+  unless restored. R021 created a new pre-import snapshot and post-ingest backup.
+- The batch staging/combination scripts read CSVs with pandas' default float
+  parser, so staged `time_h`/`spine_length` can differ from correctly rounded raw
+  text by a few ULP (R021: <=28 ULP, <=7.1e-15 h). Compare measurements with a
+  1e-12 tolerance or against staged files, not against a correctly rounded parse.
 - R019 removed the three `verified_merged_*` dataset versions from the live
   store (user request). Their historical lineage ids no longer resolve there;
   use `store/backups/lineage_20261030T181226.223866Z.sqlite3.gz` for any
@@ -729,7 +813,9 @@ evidence: `runs/trainset_review_implementation/`.
 
 ## 11. Dataset store (phases 1-3)
 
-`datasets/store/lineage.sqlite3` holds ten versions over 387,217 unique
+`datasets/store/lineage.sqlite3` holds eleven versions over 396,667 unique
+observations / 1,170 trajectories after R021 (2026-11-09) added the frozen batch
+`verified_20261109@v1`. Before that it held ten versions over 387,217 unique
 observations / 1,155 trajectories after the R019 review and cleanup (2026-10-31):
 five reviewed working originals (`frozen = 0`) and five review-finalized
 training-ready versions (`reviewed_20261031_*`, `frozen = 1`, R004 membership
@@ -773,6 +859,12 @@ raw exports remain.
   whole duplicate versions only when every trajectory stays referenced by
   another version; it is review-revision CAS-guarded, takes an online backup and
   writes a `remove_dataset_versions` audit event.
+- **New-batch import (admin, R021):** `python scripts\import_batch.py
+  --dataset-dir <batch> --expected-revision N --reason ...` adds a brand-new
+  attested batch to a store that holds review data (where `build` refuses). It
+  requires a new dataset id and key namespace, refuses existing or permanently
+  deleted keys and measurement-identical trajectories, is review-revision
+  CAS-guarded, takes an online backup and writes an `import_batch` audit event.
 - **Schema:** `datasets/store/SCHEMA.md`; design and phase plan:
   `docs/PLAN_DATASET_STORE.md`.
 - **Phase 2 (done 2026-10-17):** store-direct training + `dataset_lineage` in
